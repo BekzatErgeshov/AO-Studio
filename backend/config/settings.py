@@ -49,6 +49,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    "core.middleware.LocalhostRedirectMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
@@ -148,6 +149,8 @@ SIMPLE_JWT = {
 # Вход через Google: OAuth Client ID (тип «Web application») из Google Cloud Console.
 # Пусто — кнопка Google на сайте не показывается.
 GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "")
+# Окно входа Google общается с сайтом через window.opener — строгий "same-origin" его ломает (белое окно)
+SECURE_CROSS_ORIGIN_OPENER_POLICY = "same-origin-allow-popups"
 
 CORS_ALLOWED_ORIGINS = [
     o
