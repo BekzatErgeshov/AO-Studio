@@ -17,3 +17,7 @@ frontend/dist/
 Thumbs.db
 .vscode/
 .idea/
+.vercel
+.env.local
+
+.env*

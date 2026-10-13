@@ -14,13 +14,21 @@ load_dotenv(BASE_DIR / ".env")
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "dev-insecure-change-me-ao-studio")
 DEBUG = os.environ.get("DJANGO_DEBUG", "1") == "1"
 ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "*").split(",")
+
+# На Vercel: VERCEL=1 и адреса деплоя приходят из окружения
+ON_VERCEL = os.environ.get("VERCEL") == "1"
+VERCEL_HOSTS = [
+    h for h in (os.environ.get("VERCEL_URL"), os.environ.get("VERCEL_PROJECT_PRODUCTION_URL"),
+                os.environ.get("VERCEL_BRANCH_URL")) if h
+]
+ALLOWED_HOSTS += VERCEL_HOSTS
 CSRF_TRUSTED_ORIGINS = [
     o
     for o in os.environ.get(
         "CSRF_TRUSTED_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173"
     ).split(",")
     if o
-]
+] + [f"https://{h}" for h in VERCEL_HOSTS]
 
 INSTALLED_APPS = [
     "core",  # свой runserver (собирает фронтенд) — должен быть перед staticfiles
@@ -76,7 +84,8 @@ WSGI_APPLICATION = "config.wsgi.application"
 DATABASES = {
     "default": dj_database_url.config(
         default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
-        conn_max_age=600,
+        # В серверных функциях соединения не переиспользуются между вызовами
+        conn_max_age=0 if ON_VERCEL else 600,
     )
 }
 
@@ -101,6 +110,18 @@ FRONTEND_DIST = FRONTEND_DIR / "dist"
 WHITENOISE_ROOT = FRONTEND_DIST if FRONTEND_DIST.exists() else None
 
 STATIC_URL = "static/"
+# На Vercel статика админки отдаётся WhiteNoise прямо из пакетов (без collectstatic)
+WHITENOISE_USE_FINDERS = ON_VERCEL
+
+# Загружаемые файлы: на Vercel — в Vercel Blob, локально — в backend/media
+STORAGES = {
+    "default": {
+        "BACKEND": "core.storage.VercelBlobStorage"
+        if os.environ.get("BLOB_READ_WRITE_TOKEN")
+        else "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+}
 STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"

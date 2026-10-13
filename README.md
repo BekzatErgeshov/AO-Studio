@@ -116,11 +116,30 @@ Auth: `POST /api/auth/register/`, `login/`, `logout/`, `token/refresh/`; `GET /a
 
 Игра: `POST /api/game/start/` `{room_id, teams:[{name,color}]}`, `GET /api/game/{id}/`, `PATCH /api/game/{id}/score/` `{team_id, delta|score}`, `PATCH /api/game/{id}/finish/`.
 
-## Деплой
+## Деплой (Vercel)
 
-**Railway (бэкенд):** корень сервиса — `backend/`, добавьте плагин PostgreSQL (он выставит `DATABASE_URL`),
-задайте переменные из `backend/.env.example`. Запуск описан в `Procfile` (миграции → collectstatic → gunicorn).
-Файлы `media/` на Railway без подключённого Volume теряются при передеплое — подключите Volume к `/app/media`.
+Весь проект живёт в одном проекте Vercel (`ao-studio`):
 
-**Vercel (фронтенд):** корень — `frontend/`, переменная `VITE_API_URL` = URL бэкенда на Railway.
-`vercel.json` уже настроен на SPA-роутинг. Не забудьте добавить домен Vercel в `CORS_ALLOWED_ORIGINS` на бэкенде.
+- **Фронтенд** — собирается из `frontend/` в статику (`frontend/dist`).
+- **Бэкенд** — Django работает как Python-функция `api/index.py`; запросы `/api`, `/admin`, `/static` направляются туда (см. `vercel.json`).
+- **База** — Neon Postgres из маркетплейса Vercel (переменная `DATABASE_URL`).
+- **Файлы** (аватары, фото вопросов) — Vercel Blob (`BLOB_READ_WRITE_TOKEN`), см. `backend/core/storage.py`.
+
+Переменные окружения проекта: `DJANGO_SECRET_KEY`, `DJANGO_DEBUG=0`, `DJANGO_ALLOWED_HOSTS=.vercel.app`,
+`DATABASE_URL`, `BLOB_READ_WRITE_TOKEN`, при необходимости `GOOGLE_CLIENT_ID`.
+
+Деплой:
+
+```bash
+vercel deploy --prod
+```
+
+Миграции выполняются с локальной машины против базы Neon:
+
+```bash
+vercel env pull .env.local
+# DATABASE_URL взять из DATABASE_URL_UNPOOLED в .env.local
+python backend/manage.py migrate
+```
+
+Для входа через Google добавьте домен сайта в «Authorized JavaScript origins» и задайте `GOOGLE_CLIENT_ID` в Vercel.
