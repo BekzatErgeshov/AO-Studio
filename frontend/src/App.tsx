@@ -1,0 +1,97 @@
+import { Loader2 } from 'lucide-react'
+import { useEffect, type ReactNode } from 'react'
+import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
+import AuthModal from './components/AuthModal'
+import Layout from './components/Layout'
+import StartGameModal from './components/StartGameModal'
+import { ADMIN_URL, setUnauthorizedHandler } from './lib/api'
+import CreateRoom from './pages/CreateRoom'
+import Blind from './pages/game/Blind'
+import Classic from './pages/game/Classic'
+import Results from './pages/game/Results'
+import Strategic from './pages/game/Strategic'
+import Home from './pages/Home'
+import Profile from './pages/Profile'
+import Rooms from './pages/Rooms'
+import { useAuth } from './store/auth'
+import { useUI } from './store/ui'
+
+function RequireAuth({ children }: { children: ReactNode }) {
+  const { user, ready } = useAuth()
+  if (!ready) {
+    return (
+      <div className="flex justify-center py-32 text-muted">
+        <Loader2 className="animate-spin" />
+      </div>
+    )
+  }
+  return user ? children : <Navigate to="/login" replace />
+}
+
+/** /login — главная с открытой модалкой входа */
+function LoginRoute() {
+  const openAuth = useUI((s) => s.openAuth)
+  const user = useAuth((s) => s.user)
+  const navigate = useNavigate()
+  useEffect(() => {
+    if (user) navigate('/profile', { replace: true })
+    else openAuth('login', () => navigate('/profile'))
+  }, [user, openAuth, navigate])
+  return <Home />
+}
+
+const isAdminPath = (path: string) => /\/admin\/?$/.test(path)
+
+export default function App() {
+  const init = useAuth((s) => s.init)
+  const clear = useAuth((s) => s.clear)
+  const navigate = useNavigate()
+  const { pathname } = useLocation()
+
+  // Любая страница + /admin (например /rooms/admin) → админка Django
+  useEffect(() => {
+    if (isAdminPath(pathname)) window.location.replace(ADMIN_URL)
+  }, [pathname])
+
+  useEffect(() => {
+    void init()
+  }, [init])
+
+  // 401 после неудачного обновления токена → разлогин и /login
+  useEffect(() => {
+    setUnauthorizedHandler(() => {
+      clear()
+      navigate('/login')
+    })
+  }, [clear, navigate])
+
+  if (isAdminPath(pathname)) {
+    return (
+      <div className="flex min-h-screen items-center justify-center gap-3 text-muted">
+        <Loader2 className="animate-spin" /> Открываем админку…
+      </div>
+    )
+  }
+
+  return (
+    <>
+      <Routes>
+        <Route element={<Layout />}>
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<LoginRoute />} />
+          <Route path="/rooms" element={<Rooms />} />
+          <Route path="/profile" element={<RequireAuth><Profile /></RequireAuth>} />
+          <Route path="/create" element={<RequireAuth><CreateRoom /></RequireAuth>} />
+          <Route path="/rooms/:id/edit" element={<RequireAuth><CreateRoom /></RequireAuth>} />
+        </Route>
+        <Route path="/game/classic" element={<RequireAuth><Classic /></RequireAuth>} />
+        <Route path="/game/strategic" element={<RequireAuth><Strategic /></RequireAuth>} />
+        <Route path="/game/blind" element={<RequireAuth><Blind /></RequireAuth>} />
+        <Route path="/game/results" element={<Results />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+      <AuthModal />
+      <StartGameModal />
+    </>
+  )
+}

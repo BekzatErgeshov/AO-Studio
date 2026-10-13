@@ -1,0 +1,285 @@
+@import 'tailwindcss';
+
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
+:root {
+  --green: #10b981;
+  --green-dark: #059669;
+  --green-light: #34d399;
+  --green-glow: rgba(16, 185, 129, 0.2);
+
+  /* Тёмная тема по умолчанию */
+  --bg: #0a0f1e;
+  --surface: #111827;
+  --fg: #f1f5f9;
+  --muted: #94a3b8;
+  --glass: rgba(255, 255, 255, 0.05);
+  --glass-strong: rgba(255, 255, 255, 0.08);
+  --line: rgba(255, 255, 255, 0.1);
+  --shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  --input: rgba(255, 255, 255, 0.04);
+  color-scheme: dark;
+}
+
+[data-theme='light'] {
+  --bg: #ffffff;
+  --surface: #f8fafc;
+  --fg: #0f172a;
+  --muted: #64748b;
+  --glass: rgba(255, 255, 255, 0.7);
+  --glass-strong: rgba(255, 255, 255, 0.9);
+  --line: rgba(15, 23, 42, 0.1);
+  --shadow: 0 8px 32px rgba(15, 23, 42, 0.08);
+  --input: rgba(15, 23, 42, 0.03);
+  color-scheme: light;
+}
+
+@theme inline {
+  --font-sans: 'Roboto Slab', Georgia, serif;
+  --color-green: var(--green);
+  --color-green-dark: var(--green-dark);
+  --color-green-light: var(--green-light);
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: 'Roboto Slab', Georgia, serif;
+  -webkit-font-smoothing: antialiased;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+/* Мягкое зелёное свечение на фоне */
+.bg-aurora {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(600px 400px at 15% 10%, rgba(16, 185, 129, 0.12), transparent 70%),
+    radial-gradient(500px 400px at 85% 80%, rgba(5, 150, 105, 0.1), transparent 70%);
+}
+
+@layer components {
+.glass {
+  background: var(--glass);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+}
+
+.glass-strong {
+  background: var(--glass-strong);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+}
+
+[data-theme='dark'] .glass-strong {
+  background: rgba(17, 24, 39, 0.85);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 0.875rem;
+  padding: 0.7rem 1.25rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.btn-primary {
+  background: linear-gradient(135deg, var(--green), var(--green-dark));
+  color: #fff;
+  box-shadow: 0 6px 24px var(--green-glow);
+}
+.btn-primary:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 32px rgba(16, 185, 129, 0.35);
+}
+.btn-outline {
+  border: 1.5px solid var(--green);
+  color: var(--green);
+  background: transparent;
+}
+.btn-outline:not(:disabled):hover {
+  background: var(--green-glow);
+}
+.btn-ghost {
+  color: var(--fg);
+  background: var(--glass);
+  border: 1px solid var(--line);
+}
+.btn-ghost:not(:disabled):hover {
+  border-color: var(--green);
+  color: var(--green);
+}
+.btn-danger {
+  color: #f87171;
+  border: 1.5px solid rgba(248, 113, 113, 0.4);
+  background: transparent;
+}
+.btn-danger:not(:disabled):hover {
+  background: rgba(248, 113, 113, 0.1);
+}
+
+.input {
+  width: 100%;
+  border-radius: 0.75rem;
+  padding: 0.7rem 0.95rem;
+  background: var(--input);
+  border: 1px solid var(--line);
+  color: var(--fg);
+  outline: none;
+  font-family: inherit;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.input::placeholder {
+  color: var(--muted);
+}
+.input:focus {
+  border-color: var(--green);
+  box-shadow: 0 0 0 3px var(--green-glow);
+}
+.input.invalid {
+  border-color: #f87171;
+}
+
+select.input option {
+  background: var(--surface);
+  color: var(--fg);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.85rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  border: 1px solid var(--line);
+  background: var(--glass);
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.chip:hover {
+  color: var(--fg);
+}
+.chip.active {
+  background: var(--green-glow);
+  border-color: var(--green);
+  color: var(--green-light);
+}
+[data-theme='light'] .chip.active {
+  color: var(--green-dark);
+}
+
+.text-gradient {
+  background: linear-gradient(135deg, var(--green-light), var(--green), var(--green-dark));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: 99px;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  scrollbar-width: none;
+}
+
+/* Flip-карточки слепого режима */
+.flip-scene {
+  perspective: 1000px;
+}
+.flip-card {
+  transform-style: preserve-3d;
+}
+.flip-face {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+}
+
+kbd {
+  font-family: ui-monospace, monospace;
+  font-size: 0.75em;
+  padding: 0.1rem 0.4rem;
+  border-radius: 0.35rem;
+  border: 1px solid var(--line);
+  background: var(--glass);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Режим проектора: скрываем элементы управления ведущего */
+.projector .host-only {
+  display: none !important;
+}
+
+/* Плавающие эмодзи на фоне */
+.float-item {
+  translate: -50% -50%;
+  animation-name: float-drift;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  animation-direction: alternate;
+  will-change: transform;
+}
+@keyframes float-drift {
+  0% {
+    transform: translate(0, 0) rotate(calc(var(--rot) * -1));
+  }
+  33% {
+    transform: translate(calc(var(--drift) * 0.6), calc(var(--drift) * -1)) rotate(0deg);
+  }
+  66% {
+    transform: translate(calc(var(--drift) * -0.5), calc(var(--drift) * -0.4)) rotate(calc(var(--rot) * 0.5));
+  }
+  100% {
+    transform: translate(calc(var(--drift) * 0.3), var(--drift)) rotate(var(--rot));
+  }
+}
+[data-theme='light'] .floating-emojis {
+  opacity: 0.55;
+}

@@ -1,0 +1,6 @@
+{% extends "admin/index.html" %}
+{% load ao_admin %}
+{% block content %}
+  {% ao_stats %}
+  {{ block.super }}
+{% endblock %}

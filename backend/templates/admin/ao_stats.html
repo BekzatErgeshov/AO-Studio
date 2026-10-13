@@ -1,0 +1,14 @@
+<div class="row mb-3">
+  {% for c in cards %}
+    <div class="col-lg-3 col-6">
+      <a href="{% url c.url %}" class="small-box bg-success d-block" style="color:#fff">
+        <div class="inner">
+          <h3>{{ c.value }}</h3>
+          <p class="mb-0">{{ c.label }}</p>
+          <small style="opacity:.8">{{ c.sub }}</small>
+        </div>
+        <div class="icon"><i class="{{ c.icon }}"></i></div>
+      </a>
+    </div>
+  {% endfor %}
+</div>

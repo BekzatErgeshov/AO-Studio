@@ -1,0 +1,245 @@
+import { animate, motion, useInView } from 'framer-motion'
+import { ChevronDown, Gamepad2, Heart, Layers, ListChecks, Play, Rocket, Sparkles, Star, Target, Trophy, Users } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import Logo from '../components/Logo'
+import { scrollToAbout } from '../components/Layout'
+import { api } from '../lib/api'
+import type { GameFormat, PlatformStats } from '../lib/types'
+import { FORMATS } from '../lib/utils'
+import { useAuth } from '../store/auth'
+import { useUI } from '../store/ui'
+
+function CountUp({ to, suffix = '' }: { to: number; suffix?: string }) {
+  const ref = useRef<HTMLSpanElement>(null)
+  const inView = useInView(ref, { once: true })
+  const [val, setVal] = useState(0)
+  useEffect(() => {
+    if (!inView) return
+    const c = animate(0, to, { duration: 1.8, ease: 'easeOut', onUpdate: (v) => setVal(Math.round(v)) })
+    return () => c.stop()
+  }, [inView, to])
+  return (
+    <span ref={ref}>
+      {val.toLocaleString('ru-RU')}
+      {suffix}
+    </span>
+  )
+}
+
+const reveal = {
+  initial: { opacity: 0, y: 30 },
+  whileInView: { opacity: 1, y: 0 },
+  viewport: { once: true, margin: '-80px' },
+  transition: { duration: 0.6 },
+}
+
+const formatDetails: Record<GameFormat, { icon: typeof Layers; points: string[] }> = {
+  classic: { icon: ListChecks, points: ['Вопросы по категориям', 'Все команды отвечают одновременно', 'Проверка после каждой категории'] },
+  strategic: { icon: Target, points: ['Сетка «категория × стоимость»', 'Команды ходят по очереди', 'Автоматический подсчёт баллов'] },
+  blind: { icon: Sparkles, points: ['Пронумерованные скрытые карточки', 'Эффектный переворот', 'Бонусы: x2, пропуск хода, кража'] },
+}
+
+const steps = [
+  { icon: Users, title: 'Зарегистрируйтесь', text: 'Создайте аккаунт за пару секунд — нужен только логин, email и пароль.' },
+  { icon: Layers, title: 'Создайте АО', text: 'Выберите формат, добавьте категории и вопросы с фото и баллами.' },
+  { icon: Gamepad2, title: 'Соберите команды', text: 'Выберите комнату, впишите названия команд — цвета назначатся сами.' },
+  { icon: Trophy, title: 'Играйте!', text: 'Выводите на проектор, отмечайте ответы — табло и пьедестал посчитаются сами.' },
+]
+
+export default function Home() {
+  const user = useAuth((s) => s.user)
+  const { openAuth, openStart } = useUI()
+  const navigate = useNavigate()
+  const [stats, setStats] = useState<PlatformStats | null>(null)
+
+  useEffect(() => {
+    api.get<PlatformStats>('/stats/').then(({ data }) => setStats(data)).catch(() => {})
+  }, [])
+
+  const onCreate = () => (user ? navigate('/create') : openAuth('register', () => navigate('/create')))
+  const onStart = () => (user ? openStart() : openAuth('register', () => openStart()))
+
+  return (
+    <div>
+      {/* HERO */}
+      <section className="relative flex min-h-[calc(100vh-56px)] flex-col items-center justify-center overflow-hidden px-4 text-center md:min-h-screen">
+        <motion.div
+          initial={{ scale: 0.5, opacity: 0, rotate: -10 }}
+          animate={{ scale: 1, opacity: 1, rotate: 0 }}
+          transition={{ type: 'spring', damping: 12 }}
+          className="mb-8"
+        >
+          <Logo size={84} />
+        </motion.div>
+
+        <motion.h1
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1, duration: 0.6 }}
+          className="text-5xl font-extrabold tracking-tight sm:text-6xl lg:text-7xl"
+        >
+          <span className="text-gradient">Akyl-Ordo</span> Studio
+        </motion.h1>
+
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2, duration: 0.6 }}
+          className="mt-5 max-w-2xl text-lg text-muted sm:text-xl"
+        >
+          Приложение для создания и проведения интеллектуальных командных игр Акыл Ордо
+        </motion.p>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3, duration: 0.6 }}
+          className="glass mt-10 flex w-full max-w-md flex-col gap-3 rounded-3xl p-3 sm:flex-row"
+        >
+          <button onClick={onCreate} className="btn btn-primary flex-1 py-4 text-base">
+            🎯 Создать АО
+          </button>
+          <button onClick={onStart} className="btn btn-outline flex-1 py-4 text-base">
+            <Play size={18} fill="currentColor" /> Начать АО
+          </button>
+        </motion.div>
+
+        <motion.button
+          onClick={scrollToAbout}
+          className="absolute bottom-8 text-muted hover:text-green"
+          animate={{ y: [0, 8, 0] }}
+          transition={{ repeat: Infinity, duration: 2 }}
+          aria-label="Подробнее"
+        >
+          <ChevronDown size={32} />
+        </motion.button>
+      </section>
+
+      <div className="mx-auto max-w-6xl space-y-28 px-4 pb-20 sm:px-6">
+        {/* ЧТО ТАКОЕ АКЫЛ ОРДО */}
+        <motion.section id="about" {...reveal} className="scroll-mt-20 pt-10">
+          <div className="glass grid gap-8 rounded-3xl p-8 md:grid-cols-[1fr_1.4fr] md:p-12">
+            <div>
+              <span className="text-sm font-semibold uppercase tracking-widest text-green">О игре</span>
+              <h2 className="mt-3 text-3xl font-extrabold sm:text-4xl">Что такое Акыл Ордо?</h2>
+            </div>
+            <div className="space-y-4 text-muted sm:text-lg">
+              <p>
+                <b className="text-fg">«Акыл Ордо»</b> — интеллектуальная командная игра, в которой команды
+                соревнуются в эрудиции, логике и скорости мышления. Её проводят в школах, вузах, на кружках и мероприятиях.
+              </p>
+              <p>
+                <b className="text-fg">AO Studio</b> заменяет Word, PowerPoint и ручной подсчёт баллов единым интерактивным интерфейсом:
+                создавайте вопросы, выводите их на проектор, отмечайте ответы — табло обновится само.
+              </p>
+            </div>
+          </div>
+        </motion.section>
+
+        {/* ФОРМАТЫ */}
+        <section>
+          <motion.div {...reveal} className="mb-10 text-center">
+            <span className="text-sm font-semibold uppercase tracking-widest text-green">Форматы</span>
+            <h2 className="mt-3 text-3xl font-extrabold sm:text-4xl">3 формата игры</h2>
+          </motion.div>
+          <div className="grid gap-5 md:grid-cols-3">
+            {(Object.keys(FORMATS) as GameFormat[]).map((f, i) => {
+              const Icon = formatDetails[f].icon
+              return (
+                <motion.div
+                  key={f}
+                  {...reveal}
+                  transition={{ duration: 0.5, delay: i * 0.12 }}
+                  whileHover={{ y: -6 }}
+                  className="glass group rounded-3xl p-7 transition-colors hover:border-green/50"
+                >
+                  <div className="mb-5 flex items-center justify-between">
+                    <span className="text-4xl">{FORMATS[f].emoji}</span>
+                    <div className="rounded-2xl bg-green/15 p-3 text-green transition group-hover:bg-green group-hover:text-white">
+                      <Icon size={22} />
+                    </div>
+                  </div>
+                  <h3 className="text-xl font-bold">{FORMATS[f].label}</h3>
+                  <p className="mt-2 text-sm text-muted">{FORMATS[f].description}</p>
+                  <ul className="mt-5 space-y-2 text-sm">
+                    {formatDetails[f].points.map((p) => (
+                      <li key={p} className="flex items-center gap-2">
+                        <span className="h-1.5 w-1.5 rounded-full bg-green" /> {p}
+                      </li>
+                    ))}
+                  </ul>
+                </motion.div>
+              )
+            })}
+          </div>
+        </section>
+
+        {/* КАК ИГРАТЬ */}
+        <section>
+          <motion.div {...reveal} className="mb-10 text-center">
+            <span className="text-sm font-semibold uppercase tracking-widest text-green">Инструкция</span>
+            <h2 className="mt-3 text-3xl font-extrabold sm:text-4xl">Как создать и играть</h2>
+          </motion.div>
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {steps.map((s, i) => (
+              <motion.div key={s.title} {...reveal} transition={{ duration: 0.5, delay: i * 0.1 }} className="glass relative rounded-3xl p-6">
+                <div className="absolute right-5 top-4 text-5xl font-extrabold text-green/15">{i + 1}</div>
+                <div className="mb-4 inline-flex rounded-2xl bg-gradient-to-br from-green to-green-dark p-3 text-white">
+                  <s.icon size={22} />
+                </div>
+                <h3 className="font-bold">{s.title}</h3>
+                <p className="mt-2 text-sm text-muted">{s.text}</p>
+              </motion.div>
+            ))}
+          </div>
+          <motion.div {...reveal} className="mt-8 flex justify-center">
+            <button onClick={onCreate} className="btn btn-primary px-8 py-3.5">
+              <Rocket size={18} /> Создать первую игру
+            </button>
+          </motion.div>
+        </section>
+
+        {/* СТАТИСТИКА */}
+        <motion.section {...reveal}>
+          <div className="glass grid gap-8 rounded-3xl p-8 text-center sm:grid-cols-3 md:p-12">
+            {[
+              { icon: Users, value: stats?.users ?? 0, label: 'Пользователей', suffix: '' },
+              { icon: Gamepad2, value: stats?.rooms ?? 0, label: 'AO комнат создано', suffix: '' },
+              { icon: Star, value: stats?.rating ?? 0, label: 'Рейтинг приложения', suffix: '%' },
+            ].map((s) => (
+              <div key={s.label}>
+                <s.icon className="mx-auto mb-3 text-green" size={28} />
+                <div className="text-gradient text-5xl font-extrabold">
+                  {stats ? <CountUp to={s.value} suffix={s.suffix} /> : '—'}
+                </div>
+                <div className="mt-2 text-muted">{s.label}</div>
+              </div>
+            ))}
+          </div>
+        </motion.section>
+      </div>
+
+      {/* FOOTER */}
+      <footer className="border-t border-line px-4 py-10 sm:px-6">
+        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-6 text-sm text-muted md:flex-row">
+          <div className="flex items-center gap-3">
+            <Logo size={32} />
+            <div>
+              <div className="font-bold text-fg">AO Studio</div>
+              <div className="text-xs">Платформа для интеллектуальных игр Акыл Ордо</div>
+            </div>
+          </div>
+          <div className="flex flex-wrap justify-center gap-5">
+            <button onClick={() => navigate('/rooms')} className="hover:text-green">AO Rooms</button>
+            <button onClick={onCreate} className="hover:text-green">Создать АО</button>
+            <button onClick={scrollToAbout} className="hover:text-green">Об игре</button>
+          </div>
+          <div className="flex items-center gap-1">
+            © {new Date().getFullYear()} AO Studio. Сделано с <Heart size={14} className="text-green" fill="currentColor" />
+          </div>
+        </div>
+      </footer>
+    </div>
+  )
+}

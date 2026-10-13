@@ -1,0 +1,208 @@
+import { AnimatePresence, motion } from 'framer-motion'
+import { Eye, EyeOff, Loader2 } from 'lucide-react'
+import { useEffect, useState, type FormEvent } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { errorMessage, fieldErrors } from '../lib/api'
+import { useAuth } from '../store/auth'
+import { useUI } from '../store/ui'
+import GoogleButton from './GoogleButton'
+import Logo from './Logo'
+import Modal from './Modal'
+
+type Errors = Record<string, string>
+
+function Field({
+  label, name, type = 'text', value, onChange, error, autoComplete, autoFocus,
+}: {
+  label: string
+  name: string
+  type?: string
+  value: string
+  onChange: (v: string) => void
+  error?: string
+  autoComplete?: string
+  autoFocus?: boolean
+}) {
+  const [show, setShow] = useState(false)
+  const isPass = type === 'password'
+  return (
+    <label className="block">
+      <span className="mb-1.5 block text-sm font-medium text-muted">{label}</span>
+      <div className="relative">
+        <input
+          name={name}
+          type={isPass && show ? 'text' : type}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className={`input ${error ? 'invalid' : ''} ${isPass ? 'pr-11' : ''}`}
+          autoComplete={autoComplete}
+          autoFocus={autoFocus}
+        />
+        {isPass && (
+          <button
+            type="button"
+            tabIndex={-1}
+            onClick={() => setShow((s) => !s)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-fg"
+            aria-label={show ? 'Скрыть пароль' : 'Показать пароль'}
+          >
+            {show ? <EyeOff size={18} /> : <Eye size={18} />}
+          </button>
+        )}
+      </div>
+      <AnimatePresence>
+        {error && (
+          <motion.span
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="mt-1 block text-xs text-red-400"
+          >
+            {error}
+          </motion.span>
+        )}
+      </AnimatePresence>
+    </label>
+  )
+}
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+export default function AuthModal() {
+  const { authModal, closeAuth, openAuth, afterAuth } = useUI()
+  const { login, register, loginWithGoogle } = useAuth()
+  const navigate = useNavigate()
+  const mode = authModal ?? 'register'
+
+  const [form, setForm] = useState({ login: '', username: '', email: '', password: '', password_confirm: '' })
+  const [errors, setErrors] = useState<Errors>({})
+  const [general, setGeneral] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    setErrors({})
+    setGeneral('')
+  }, [authModal])
+
+  const set = (k: keyof typeof form) => (v: string) => {
+    setForm((f) => ({ ...f, [k]: v }))
+    setErrors((e) => ({ ...e, [k]: '' }))
+  }
+
+  const validate = (): Errors => {
+    const e: Errors = {}
+    if (mode === 'login') {
+      if (!form.login.trim()) e.login = 'Введите логин или email'
+      if (!form.password) e.password = 'Введите пароль'
+      return e
+    }
+    if (!form.username.trim()) e.username = 'Введите логин'
+    else if (!/^[\w.@+-]{3,150}$/.test(form.username)) e.username = 'От 3 символов: буквы, цифры и @ . + - _'
+    if (!form.email.trim()) e.email = 'Введите email'
+    else if (!EMAIL_RE.test(form.email)) e.email = 'Некорректный email'
+    if (!form.password) e.password = 'Введите пароль'
+    else if (form.password.length < 8) e.password = 'Минимум 8 символов'
+    if (form.password_confirm !== form.password) e.password_confirm = 'Пароли не совпадают'
+    return e
+  }
+
+  const submit = async (ev: FormEvent) => {
+    ev.preventDefault()
+    const e = validate()
+    setErrors(e)
+    setGeneral('')
+    if (Object.values(e).some(Boolean)) return
+    setLoading(true)
+    try {
+      if (mode === 'login') {
+        await login(form.login.trim(), form.password)
+      } else {
+        await register({
+          username: form.username.trim(),
+          email: form.email.trim(),
+          password: form.password,
+          password_confirm: form.password_confirm,
+        })
+      }
+      const after = afterAuth
+      closeAuth()
+      setForm({ login: '', username: '', email: '', password: '', password_confirm: '' })
+      if (after) after()
+      else if (mode === 'register') navigate('/profile')
+    } catch (err) {
+      const fe = fieldErrors(err)
+      if (fe.detail || fe.non_field_errors || !Object.keys(fe).length) setGeneral(errorMessage(err))
+      else setErrors(fe)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const onGoogle = async (credential: string) => {
+    setGeneral('')
+    setLoading(true)
+    try {
+      const { created } = await loginWithGoogle(credential)
+      const after = afterAuth
+      closeAuth()
+      if (after) after()
+      else if (created) navigate('/profile')
+    } catch (err) {
+      setGeneral(errorMessage(err, 'Не удалось войти через Google.'))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <Modal open={!!authModal} onClose={closeAuth} size="sm" hideClose={false}>
+      <div className="mb-6 flex flex-col items-center text-center">
+        <Logo size={52} />
+        <h2 className="mt-4 text-2xl font-extrabold">{mode === 'login' ? 'С возвращением!' : 'Создайте аккаунт'}</h2>
+        <p className="mt-1 text-sm text-muted">
+          {mode === 'login' ? 'Войдите, чтобы продолжить' : 'Чтобы создавать и проводить игры Акыл Ордо'}
+        </p>
+      </div>
+
+      <div className="mb-5 grid grid-cols-2 rounded-xl border border-line p-1">
+        {(['register', 'login'] as const).map((m) => (
+          <button
+            key={m}
+            onClick={() => openAuth(m, afterAuth ?? undefined)}
+            className={`relative rounded-lg py-2 text-sm font-semibold transition ${mode === m ? 'text-white' : 'text-muted'}`}
+          >
+            {mode === m && (
+              <motion.span layoutId="auth-tab" className="absolute inset-0 rounded-lg bg-gradient-to-br from-green to-green-dark" />
+            )}
+            <span className="relative">{m === 'register' ? 'Регистрация' : 'Вход'}</span>
+          </button>
+        ))}
+      </div>
+
+      <form onSubmit={submit} className="space-y-4" noValidate>
+        {mode === 'login' ? (
+          <>
+            <Field label="Логин или Email" name="login" value={form.login} onChange={set('login')} error={errors.login} autoComplete="username" autoFocus />
+            <Field label="Пароль" name="password" type="password" value={form.password} onChange={set('password')} error={errors.password} autoComplete="current-password" />
+          </>
+        ) : (
+          <>
+            <Field label="Логин" name="username" value={form.username} onChange={set('username')} error={errors.username} autoComplete="username" autoFocus />
+            <Field label="Email" name="email" type="email" value={form.email} onChange={set('email')} error={errors.email} autoComplete="email" />
+            <Field label="Пароль" name="password" type="password" value={form.password} onChange={set('password')} error={errors.password} autoComplete="new-password" />
+            <Field label="Подтверждение пароля" name="password_confirm" type="password" value={form.password_confirm} onChange={set('password_confirm')} error={errors.password_confirm} autoComplete="new-password" />
+          </>
+        )}
+
+        {general && <div className="rounded-xl border border-red-400/30 bg-red-400/10 px-4 py-2.5 text-sm text-red-400">{general}</div>}
+
+        <button type="submit" disabled={loading} className="btn btn-primary w-full py-3">
+          {loading && <Loader2 size={18} className="animate-spin" />}
+          {mode === 'login' ? 'Войти' : 'Зарегистрироваться'}
+        </button>
+      </form>
+
+      <GoogleButton mode={mode} onCredential={onGoogle} />
+    </Modal>
+  )
+}

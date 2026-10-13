@@ -1,0 +1,126 @@
+# AO Studio — Акыл Ордо
+
+Веб-приложение для создания, хранения, поиска и проведения интеллектуальных командных игр **«Акыл Ордо»**.
+Три формата игры: 📘 Классический, 🎯 Стратегический («Своя игра»), 🎲 Слепой (карточки с бонусами).
+
+| Слой | Технологии |
+|---|---|
+| Бэкенд | Django 6 + DRF, JWT (simplejwt), PostgreSQL / SQLite |
+| Фронтенд | React 19 + Vite + TypeScript, Tailwind CSS 4, Framer Motion, Zustand, Axios, @dnd-kit, canvas-confetti, lucide-react |
+
+## Структура
+
+```
+backend/            Django-проект
+  config/           настройки, корневые URL
+  users/            пользователь, регистрация/вход/профиль
+  rooms/            AO комнаты, категории, вопросы, лайки, статистика
+  game/             игровые сессии и команды
+frontend/           React-приложение
+  src/pages/        Главная, AO Rooms, Профиль, Создать АО, игры (game/)
+  src/components/   Layout, модалки, карточки, игровые компоненты
+  src/store/        Zustand: auth, ui (тема/модалки), game
+  src/lib/          api (axios + JWT), звуки (Web Audio), типы, утилиты
+```
+
+## Локальный запуск
+
+Весь проект (сайт + API + админка) запускается **одной командой** `python manage.py runserver`.
+Перед стартом она сама проверяет, менялся ли фронтенд, и при необходимости собирает его
+(`npm install` при первом запуске + `npm run build`). Нужен установленный Node.js, но запускать npm вручную не нужно.
+
+```bash
+cd backend
+python -m venv venv
+venv\Scripts\activate            # macOS/Linux: source venv/bin/activate
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py seed_demo       # демо-пользователь и 3 примера комнат
+python manage.py runserver
+```
+
+База данных берётся из `DATABASE_URL` в файле `backend/.env` (он не коммитится). Пример:
+
+```
+DATABASE_URL=postgres://ao_studio:<пароль>@127.0.0.1:5432/ao_studio
+```
+
+Чтобы создать базу в локальном PostgreSQL (от имени `postgres`):
+
+```sql
+CREATE ROLE ao_studio LOGIN PASSWORD '<пароль>';
+CREATE DATABASE ao_studio OWNER ao_studio ENCODING 'UTF8' TEMPLATE template0;
+```
+
+Без `.env` / `DATABASE_URL` проект работает на SQLite (`backend/db.sqlite3`).
+
+Откройте http://127.0.0.1:8000 — сайт, админка: http://127.0.0.1:8000/admin/.
+Запуск без проверки фронтенда: `python manage.py runserver --skip-build`.
+
+**Режим разработки фронтенда (необязательно).** Если активно правите React и хотите, чтобы изменения
+появлялись мгновенно без перезапуска, параллельно запустите `npm run dev` в папке `frontend` и откройте
+http://localhost:5173 — Vite проксирует `/api`, `/media` и `/admin` на Django.
+
+Демо-вход: логин и пароль указаны в `backend/rooms/management/commands/seed_demo.py`.
+
+## Вход через Google
+
+1. https://console.cloud.google.com → создайте проект → «APIs & Services» → «OAuth consent screen»: тип External,
+   название приложения, email поддержки; в «Test users» добавьте свои Google-аккаунты (пока приложение в режиме тестирования).
+2. «Credentials» → «Create credentials» → «OAuth client ID» → тип **Web application**.
+   В «Authorized JavaScript origins» добавьте: `http://localhost`, `http://localhost:8000`, `http://localhost:5173`
+   (и домен сайта после деплоя). Redirect URI не нужны.
+3. Скопируйте Client ID в `backend/.env`: `GOOGLE_CLIENT_ID=xxxx.apps.googleusercontent.com` — сервер перезапустится сам.
+4. Открывайте сайт по **http://localhost:8000** (Google не принимает адрес `127.0.0.1`).
+
+Новый пользователь создаётся автоматически (логин — из email, аватар — из Google). Если аккаунт с таким email
+уже есть, Google привязывается к нему. Client ID не секретный; Client secret проекту не нужен.
+
+## Админка
+
+Django admin с темой Jazzmin. Открывается по `/admin`, а также с любой страницы сайта, если дописать `/admin`
+к пути (например `/rooms/admin`). Там можно смотреть, добавлять, редактировать и удалять пользователей, комнаты,
+категории, вопросы (с фото), лайки, игровые сессии и команды; на главной админки — статистика.
+
+Создать или обновить администратора:
+
+```bash
+python manage.py ensure_admin --username <логин> --password <пароль>
+```
+
+На Railway задайте `DJANGO_ADMIN_USERNAME` и `DJANGO_ADMIN_PASSWORD` — команда выполняется при каждом деплое (см. `Procfile`).
+
+## Горячие клавиши в игре
+
+| Клавиша | Действие |
+|---|---|
+| `Space` | Классический: следующий вопрос / категория. Стратегический и Слепой: показать ответ |
+| `Enter` | Правильно |
+| `Escape` | Неправильно |
+| `P` | Пауза таймера |
+| `F` | Режим проектора (полный экран, кнопки ведущего скрыты) |
+
+## API
+
+Auth: `POST /api/auth/register/`, `login/`, `logout/`, `token/refresh/`; `GET /api/auth/me/`, `PATCH me/update/`, `DELETE me/delete/` (тело `{username}`).
+
+Комнаты: `GET/POST /api/rooms/`, `GET/PATCH/DELETE /api/rooms/{id}/`, `GET /api/rooms/my/`, `POST /api/rooms/{id}/like/`,
+`POST /api/rooms/{id}/questions/`, `POST /api/rooms/{id}/categories/`, `PATCH/DELETE /api/questions/{id}/`, `DELETE /api/categories/{id}/`,
+`GET /api/rooms/categories-list/`, `GET /api/stats/`.
+
+Фильтры списка: `search`, `fmt` (`classic|strategic|blind`), `qcount` (`5-10|10-20|20+`), `categories` (через запятую),
+`show` (`all|mine|liked|available`). Параметр формата называется `fmt`, потому что `format` в DRF зарезервирован.
+
+`POST /api/rooms/` и `PATCH` принимают комнату целиком с вложенными `categories[].questions[]` (или `questions[]` для слепого формата);
+фото загружается отдельно: `PATCH /api/questions/{id}/` (multipart, поле `photo`).
+
+Игра: `POST /api/game/start/` `{room_id, teams:[{name,color}]}`, `GET /api/game/{id}/`, `PATCH /api/game/{id}/score/` `{team_id, delta|score}`, `PATCH /api/game/{id}/finish/`.
+
+## Деплой
+
+**Railway (бэкенд):** корень сервиса — `backend/`, добавьте плагин PostgreSQL (он выставит `DATABASE_URL`),
+задайте переменные из `backend/.env.example`. Запуск описан в `Procfile` (миграции → collectstatic → gunicorn).
+Файлы `media/` на Railway без подключённого Volume теряются при передеплое — подключите Volume к `/app/media`.
+
+**Vercel (фронтенд):** корень — `frontend/`, переменная `VITE_API_URL` = URL бэкенда на Railway.
+`vercel.json` уже настроен на SPA-роутинг. Не забудьте добавить домен Vercel в `CORS_ALLOWED_ORIGINS` на бэкенде.
