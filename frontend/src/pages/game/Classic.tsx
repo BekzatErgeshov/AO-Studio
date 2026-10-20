@@ -1,12 +1,13 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { ArrowRight, Check, ChevronRight, Eye, Sparkles, Users } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import CircularTimer from '../../components/game/CircularTimer'
 import GameShell from '../../components/game/GameShell'
 import Scoreboard from '../../components/game/Scoreboard'
 import { useCountdown, useHotkeys, usePersistentState } from '../../hooks/useGameHooks'
 import { useLiveAnswers, usePublishState } from '../../hooks/useLive'
+import { checkAnswer } from '../../lib/answers'
 import { sounds } from '../../lib/sounds'
 import type { LiveState } from '../../lib/types'
 import { useGame } from '../../store/game'
@@ -112,6 +113,49 @@ export default function Classic() {
     }
     setMarks(next)
     if (added) sounds.correct()
+  }
+
+  // ---------- Автопроверка ----------
+  // Онлайн: на разборе совпавшие ответы засчитываются сами. Каждую пару «вопрос-команда» проверяем один раз,
+  // чтобы ручная правка ведущего не перезаписывалась при следующем опросе.
+  const autoChecked = useRef<Set<string>>(new Set())
+  useEffect(() => {
+    if (!online || phase !== 'review' || !cat) return
+    const next = { ...marks }
+    let added = 0
+    for (const cq of cat.questions) {
+      for (const t of teams) {
+        const a = answers[cq.id]?.[t.id]
+        const key = `${cq.id}-${t.id}`
+        if (!a || autoChecked.current.has(key)) continue
+        autoChecked.current.add(key)
+        const cur = next[cq.id] ?? []
+        if (a.matches && !cur.includes(t.id)) {
+          next[cq.id] = [...cur, t.id]
+          addScore(t.id, cq.points)
+          added++
+        }
+      }
+    }
+    if (added) {
+      setMarks(next)
+      sounds.correct()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [online, phase, cat?.id, answers])
+
+  // На одном экране: ведущий вписывает ответ команды — проверка и отметка сразу
+  const [typed, setTyped] = useState<Record<string, { text: string; result?: boolean }>>({})
+  const checkTyped = (questionId: number, points: number, answer: string, teamId: number) => {
+    const key = `${questionId}-${teamId}`
+    const text = typed[key]?.text ?? ''
+    if (!text.trim()) return
+    const ok = checkAnswer(text, answer)
+    setTyped((m) => ({ ...m, [key]: { text, result: ok } }))
+    const on = (marks[questionId] ?? []).includes(teamId)
+    if (ok !== on) toggleMark(questionId, points, teamId)
+    else if (ok) sounds.correct()
+    else sounds.wrong()
   }
 
   if (!room || room.format !== 'classic') return <Navigate to="/rooms" replace />
@@ -252,6 +296,33 @@ export default function Classic() {
                           )
                         })}
                       </div>
+                      {!online && (
+                        <div className="host-only mt-2 grid gap-2 pl-10 sm:grid-cols-2 lg:grid-cols-3">
+                          {teams.map((t) => {
+                            const key = `${cq.id}-${t.id}`
+                            const entry = typed[key]
+                            return (
+                              <form
+                                key={t.id}
+                                onSubmit={(e) => {
+                                  e.preventDefault()
+                                  checkTyped(cq.id, cq.points, cq.answer, t.id)
+                                }}
+                              >
+                                <input
+                                  className={`input py-1.5 text-sm ${
+                                    entry?.result === true ? 'border-green!' : entry?.result === false ? 'invalid' : ''
+                                  }`}
+                                  placeholder={`Ответ «${t.name}» + Enter`}
+                                  value={entry?.text ?? ''}
+                                  onChange={(e) => setTyped((m) => ({ ...m, [key]: { text: e.target.value } }))}
+                                  autoComplete="off"
+                                />
+                              </form>
+                            )
+                          })}
+                        </div>
+                      )}
                     </motion.div>
                   ))}
                 </div>

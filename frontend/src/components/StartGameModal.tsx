@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { ArrowLeft, Loader2, Monitor, Plus, Rocket, Search, Smartphone, Trash2, Users } from 'lucide-react'
+import { ArrowLeft, Loader2, Monitor, Plus, Rocket, Search, Smartphone, Trash2, User, Users } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api, errorMessage } from '../lib/api'
@@ -89,8 +89,8 @@ export default function StartGameModal() {
         api.post<GameSession>('/game/start/', {
           room_id: room.id,
           mode,
-          // Онлайн: команды подключатся сами по коду
-          teams: online ? [] : named.map((t) => ({ name: t.name, color: t.color })),
+          // Онлайн: команды подключатся сами по коду; Один: команда — сам игрок
+          teams: mode === 'offline' ? named.map((t) => ({ name: t.name, color: t.color })) : [],
         }),
       ])
       startGame(session.id, detail, session.teams, mode, session.code)
@@ -99,7 +99,7 @@ export default function StartGameModal() {
         .filter((k) => k.startsWith('ao_progress'))
         .forEach((k) => sessionStorage.removeItem(k))
       closeStart()
-      navigate(online ? '/game/lobby' : `/game/${detail.format}`)
+      navigate(mode === 'solo' ? '/game/solo' : online ? '/game/lobby' : `/game/${detail.format}`)
     } catch (err) {
       setError(errorMessage(err, 'Не удалось начать игру.'))
     } finally {
@@ -119,7 +119,7 @@ export default function StartGameModal() {
               <ArrowLeft size={18} />
             </button>
           )}
-          <span>{step === 1 ? '▶️ Выберите AO комнату' : '👥 Настройка команд'}</span>
+          <span>{step === 1 ? '▶️ Выберите AO комнату' : '🎮 Как играем'}</span>
         </div>
       }
     >
@@ -183,27 +183,56 @@ export default function StartGameModal() {
               </div>
             )}
 
-            {/* Режим игры */}
-            <div className="mb-5 grid grid-cols-2 gap-2">
+            {/* Режим игры: Один / Команда */}
+            <div className="mb-3 grid grid-cols-2 gap-2">
               {([
-                { v: 'offline', icon: Monitor, title: 'Офлайн', text: 'Один экран: ведущий отмечает ответы сам' },
-                { v: 'online', icon: Smartphone, title: 'Онлайн', text: 'Команды отвечают со своих устройств по коду' },
-              ] as const).map((o) => (
-                <button
-                  key={o.v}
-                  type="button"
-                  onClick={() => setMode(o.v)}
-                  className={`rounded-xl border p-3 text-left transition ${mode === o.v ? 'border-green bg-green/10' : 'border-line hover:border-green/40'}`}
-                >
-                  <div className="flex items-center gap-2 font-semibold">
-                    <o.icon size={18} className={mode === o.v ? 'text-green' : 'text-muted'} /> {o.title}
-                  </div>
-                  <div className="mt-1 text-xs text-muted">{o.text}</div>
-                </button>
-              ))}
+                { v: 'solo', icon: User, title: 'Один', text: 'Играю сам: выбираю вопросы, ввожу ответы, сайт проверяет' },
+                { v: 'team', icon: Users, title: 'Команда', text: 'Командная игра с ведущим и табло' },
+              ] as const).map((o) => {
+                const on = o.v === 'solo' ? mode === 'solo' : mode !== 'solo'
+                return (
+                  <button
+                    key={o.v}
+                    type="button"
+                    onClick={() => setMode(o.v === 'solo' ? 'solo' : 'offline')}
+                    className={`rounded-xl border p-3 text-left transition ${on ? 'border-green bg-green/10' : 'border-line hover:border-green/40'}`}
+                  >
+                    <div className="flex items-center gap-2 font-semibold">
+                      <o.icon size={18} className={on ? 'text-green' : 'text-muted'} /> {o.title}
+                    </div>
+                    <div className="mt-1 text-xs text-muted">{o.text}</div>
+                  </button>
+                )
+              })}
             </div>
 
-            {mode === 'online' ? (
+            {/* Команда: где играют команды */}
+            {mode !== 'solo' && (
+              <div className="mb-5 grid grid-cols-2 gap-1 rounded-xl border border-line p-1">
+                {([
+                  { v: 'offline', icon: Monitor, title: 'На одном экране' },
+                  { v: 'online', icon: Smartphone, title: 'Со своих устройств' },
+                ] as const).map((o) => (
+                  <button
+                    key={o.v}
+                    type="button"
+                    onClick={() => setMode(o.v)}
+                    className={`flex items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-sm font-medium transition ${
+                      mode === o.v ? 'bg-green/15 text-green' : 'text-muted hover:text-fg'
+                    }`}
+                  >
+                    <o.icon size={16} /> {o.title}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {mode === 'solo' ? (
+              <div className="rounded-xl border border-dashed border-line p-4 text-sm text-muted">
+                Вы проходите комнату в одиночку: нажимаете на любой вопрос, вводите ответ — сайт <b className="text-fg">сразу проверяет</b> его
+                и начисляет баллы. В конце — итог и работа над ошибками.
+              </div>
+            ) : mode === 'online' ? (
               <div className="rounded-xl border border-dashed border-line p-4 text-sm text-muted">
                 После запуска появится <b className="text-fg">код комнаты</b> и QR-код. Команды открывают сайт на телефоне или
                 компьютере, вводят код и название команды — и сразу появляются у вас в списке. Подходит и для зала, и для
@@ -271,7 +300,7 @@ export default function StartGameModal() {
             {error && <div className="mt-4 rounded-xl border border-red-400/30 bg-red-400/10 px-4 py-2.5 text-sm text-red-400">{error}</div>}
 
             <button onClick={begin} disabled={starting || (mode === 'offline' && !teams.length)} className="btn btn-primary mt-5 w-full py-3.5 text-base">
-              {starting ? <Loader2 size={20} className="animate-spin" /> : <Rocket size={20} />} {mode === 'online' ? 'Создать онлайн-игру' : 'Начать игру'}
+              {starting ? <Loader2 size={20} className="animate-spin" /> : <Rocket size={20} />} {mode === 'online' ? 'Создать игру с кодом' : mode === 'solo' ? 'Играть' : 'Начать игру'}
             </button>
           </motion.div>
         )}

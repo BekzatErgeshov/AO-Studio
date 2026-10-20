@@ -24,7 +24,12 @@ class GameSession(models.Model):
 
     MODE_OFFLINE = "offline"
     MODE_ONLINE = "online"
-    MODE_CHOICES = [(MODE_OFFLINE, "Офлайн (один экран)"), (MODE_ONLINE, "Онлайн (команды с устройств)")]
+    MODE_SOLO = "solo"
+    MODE_CHOICES = [
+        (MODE_SOLO, "Один (одиночная игра)"),
+        (MODE_OFFLINE, "Команда — на одном экране"),
+        (MODE_ONLINE, "Команда — со своих устройств"),
+    ]
 
     room = models.ForeignKey(AORoom, on_delete=models.CASCADE, related_name="sessions")
     host = models.ForeignKey(

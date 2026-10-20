@@ -44,8 +44,12 @@ class GameStartView(APIView):
             code=generate_code() if online else None,
             state={"view": "lobby"} if online else {},
         )
+        teams = data["teams"]
+        if data["mode"] == GameSession.MODE_SOLO:
+            # Одиночная игра: единственная «команда» — сам игрок
+            teams = [{"name": request.user.username, "color": "#10B981"}]
         Team.objects.bulk_create(
-            [Team(session=session, name=t["name"], color=t["color"]) for t in data["teams"]]
+            [Team(session=session, name=t["name"], color=t["color"]) for t in teams]
         )
         return Response(GameSessionSerializer(session).data, status=status.HTTP_201_CREATED)
 

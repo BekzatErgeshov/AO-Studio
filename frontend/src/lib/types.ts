@@ -60,7 +60,8 @@ export interface Team {
   score: number
 }
 
-export type GameMode = 'offline' | 'online'
+/** solo — «Один»; offline/online — «Команда» на одном экране / со своих устройств */
+export type GameMode = 'solo' | 'offline' | 'online'
 
 export interface GameSession {
   id: number

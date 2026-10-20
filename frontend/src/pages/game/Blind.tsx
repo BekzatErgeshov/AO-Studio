@@ -8,6 +8,7 @@ import GameShell from '../../components/game/GameShell'
 import Scoreboard from '../../components/game/Scoreboard'
 import { useCountdown, useHotkeys, usePersistentState } from '../../hooks/useGameHooks'
 import { useLiveAnswers, usePublishState } from '../../hooks/useLive'
+import { checkAnswer } from '../../lib/answers'
 import { sounds } from '../../lib/sounds'
 import type { LiveState } from '../../lib/types'
 import { shuffle } from '../../lib/utils'
@@ -154,6 +155,32 @@ export default function Blind() {
   const { answers, pick: teamPick, online } = useLiveAnswers(current ? [current.id] : [])
   const activeAnswer = current && active ? answers[current.id]?.[active.id] : undefined
 
+  // ---------- Автопроверка ответа ----------
+  const [typed, setTyped] = useState('')
+  const [verdict, setVerdict] = useState<{ team: string; text: string; correct: boolean } | null>(null)
+  useEffect(() => setTyped(''), [openId])
+  useEffect(() => {
+    if (!verdict) return
+    const t = setTimeout(() => setVerdict(null), 4000)
+    return () => clearTimeout(t)
+  }, [verdict])
+
+  const autoJudge = (text: string) => {
+    if (stage !== 'question' || !current || !active || !text.trim()) return
+    const ok = checkAnswer(text, current.answer)
+    setVerdict({ team: active.name, text: text.trim(), correct: ok })
+    judge(ok)
+  }
+
+  // Онлайн: ответ команды пришёл с её устройства — проверяем сразу
+  const judgedFor = useRef<number | null>(null)
+  useEffect(() => {
+    if (stage !== 'question' || !current || !activeAnswer || judgedFor.current === current.id) return
+    judgedFor.current = current.id
+    autoJudge(activeAnswer.text)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeAnswer?.text, current?.id, stage])
+
   // Команда выбрала карточку со своего устройства — открываем её
   const lastPick = useRef<string | null>(null)
   useEffect(() => {
@@ -176,6 +203,22 @@ export default function Blind() {
     >
       <div className="grid flex-1 gap-4 p-4 sm:p-6 xl:grid-cols-[1fr_320px]">
         <section className="flex flex-col">
+          {/* Результат автопроверки */}
+          <AnimatePresence>
+            {verdict && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                className={`mb-3 rounded-2xl border p-3 text-center font-semibold ${
+                  verdict.correct ? 'border-green/50 bg-green/10 text-green' : 'border-red-400/40 bg-red-400/10 text-red-400'
+                }`}
+              >
+                {verdict.correct ? '✅' : '❌'} «{verdict.team}»: {verdict.text} — {verdict.correct ? 'верно, баллы начислены' : 'неверно'}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           <AnimatePresence mode="wait">
             {active && (
               <motion.div
@@ -344,6 +387,27 @@ export default function Blind() {
                           </motion.div>
                         )}
                       </AnimatePresence>
+
+                      {!online && active && (
+                        <form
+                          className="host-only flex gap-2"
+                          onSubmit={(e) => {
+                            e.preventDefault()
+                            autoJudge(typed)
+                          }}
+                        >
+                          <input
+                            className="input py-3 text-lg"
+                            placeholder={`Ответ команды «${active.name}» — проверим автоматически`}
+                            value={typed}
+                            onChange={(e) => setTyped(e.target.value)}
+                            autoComplete="off"
+                          />
+                          <button type="submit" disabled={!typed.trim()} className="btn btn-primary px-5">
+                            Проверить
+                          </button>
+                        </form>
+                      )}
 
                       {online && active && (
                         <div className="host-only rounded-2xl border border-line bg-fg/[0.03] p-3">

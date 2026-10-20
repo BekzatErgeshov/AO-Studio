@@ -29,6 +29,7 @@ class GameStartSerializer(serializers.Serializer):
 
     def validate(self, attrs):
         # Офлайн — команды вводит ведущий; онлайн — команды подключаются сами по коду
+        # Один — команда создаётся автоматически из имени игрока
         if attrs["mode"] == GameSession.MODE_OFFLINE and not attrs["teams"]:
             raise serializers.ValidationError({"teams": "Нужна хотя бы одна команда."})
         return attrs
