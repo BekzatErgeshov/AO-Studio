@@ -8,7 +8,10 @@ import { ADMIN_URL, setUnauthorizedHandler } from './lib/api'
 import CreateRoom from './pages/CreateRoom'
 import Blind from './pages/game/Blind'
 import Classic from './pages/game/Classic'
+import Lobby from './pages/game/Lobby'
 import Results from './pages/game/Results'
+import Join from './pages/play/Join'
+import Play from './pages/play/Play'
 import Strategic from './pages/game/Strategic'
 import Home from './pages/Home'
 import Profile from './pages/Profile'
@@ -88,6 +91,11 @@ export default function App() {
         <Route path="/game/strategic" element={<RequireAuth><Strategic /></RequireAuth>} />
         <Route path="/game/blind" element={<RequireAuth><Blind /></RequireAuth>} />
         <Route path="/game/results" element={<Results />} />
+        <Route path="/game/lobby" element={<RequireAuth><Lobby /></RequireAuth>} />
+        {/* Онлайн-режим: устройства команд (без аккаунта) */}
+        <Route path="/join" element={<Join />} />
+        <Route path="/join/:code" element={<Join />} />
+        <Route path="/play/:code" element={<Play />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <AuthModal />

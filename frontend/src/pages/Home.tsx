@@ -106,6 +106,16 @@ export default function Home() {
         </motion.div>
 
         <motion.button
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.45 }}
+          onClick={() => navigate('/join')}
+          className="mt-5 text-sm text-muted transition hover:text-green"
+        >
+          Есть код от ведущего? <span className="font-semibold text-green underline-offset-4 hover:underline">Войти в игру →</span>
+        </motion.button>
+
+        <motion.button
           onClick={scrollToAbout}
           className="absolute bottom-8 text-muted hover:text-green"
           animate={{ y: [0, 8, 0] }}

@@ -19,6 +19,7 @@ interface Props {
  */
 export default function GameShell({ children, hotkeys, onFinish }: Props) {
   const room = useGame((s) => s.room)
+  const code = useGame((s) => (s.mode === 'online' ? s.code : null))
   const navigate = useNavigate()
   const [projector, setProjector] = useState(false)
   const [exitOpen, setExitOpen] = useState(false)
@@ -58,8 +59,13 @@ export default function GameShell({ children, hotkeys, onFinish }: Props) {
         <Logo size={34} />
         <div className="min-w-0 flex-1">
           <div className="truncate font-bold leading-tight">{room.title}</div>
-          <div className="mt-0.5">
+          <div className="mt-0.5 flex flex-wrap items-center gap-2">
             <FormatBadge format={room.format} compact />
+            {code && (
+              <span className="rounded-lg border border-green/40 bg-green/10 px-2 py-0.5 font-mono text-xs font-bold tracking-widest text-green" title="Код для входа команд">
+                📱 {code}
+              </span>
+            )}
           </div>
         </div>
 

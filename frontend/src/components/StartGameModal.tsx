@@ -1,9 +1,9 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { ArrowLeft, Loader2, Plus, Rocket, Search, Trash2, Users } from 'lucide-react'
+import { ArrowLeft, Loader2, Monitor, Plus, Rocket, Search, Smartphone, Trash2, Users } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api, errorMessage } from '../lib/api'
-import type { GameSession, RoomDetail, RoomListItem } from '../lib/types'
+import type { GameMode, GameSession, RoomDetail, RoomListItem } from '../lib/types'
 import { plural, randomTeamColor, uid } from '../lib/utils'
 import { useGame } from '../store/game'
 import { useUI } from '../store/ui'
@@ -43,6 +43,7 @@ export default function StartGameModal() {
   const [teams, setTeams] = useState<TeamDraft[]>([])
   const [error, setError] = useState('')
   const [starting, setStarting] = useState(false)
+  const [mode, setMode] = useState<GameMode>('offline')
 
   // Сброс при открытии
   useEffect(() => {
@@ -82,20 +83,23 @@ export default function StartGameModal() {
     setStarting(true)
     setError('')
     try {
+      const online = mode === 'online'
       const [{ data: detail }, { data: session }] = await Promise.all([
         api.get<RoomDetail>(`/rooms/${room.id}/`),
         api.post<GameSession>('/game/start/', {
           room_id: room.id,
-          teams: named.map((t) => ({ name: t.name, color: t.color })),
+          mode,
+          // Онлайн: команды подключатся сами по коду
+          teams: online ? [] : named.map((t) => ({ name: t.name, color: t.color })),
         }),
       ])
-      startGame(session.id, detail, session.teams)
+      startGame(session.id, detail, session.teams, mode, session.code)
       // Чистим прогресс предыдущей игры
       Object.keys(sessionStorage)
         .filter((k) => k.startsWith('ao_progress'))
         .forEach((k) => sessionStorage.removeItem(k))
       closeStart()
-      navigate(`/game/${detail.format}`)
+      navigate(online ? '/game/lobby' : `/game/${detail.format}`)
     } catch (err) {
       setError(errorMessage(err, 'Не удалось начать игру.'))
     } finally {
@@ -179,6 +183,34 @@ export default function StartGameModal() {
               </div>
             )}
 
+            {/* Режим игры */}
+            <div className="mb-5 grid grid-cols-2 gap-2">
+              {([
+                { v: 'offline', icon: Monitor, title: 'Офлайн', text: 'Один экран: ведущий отмечает ответы сам' },
+                { v: 'online', icon: Smartphone, title: 'Онлайн', text: 'Команды отвечают со своих устройств по коду' },
+              ] as const).map((o) => (
+                <button
+                  key={o.v}
+                  type="button"
+                  onClick={() => setMode(o.v)}
+                  className={`rounded-xl border p-3 text-left transition ${mode === o.v ? 'border-green bg-green/10' : 'border-line hover:border-green/40'}`}
+                >
+                  <div className="flex items-center gap-2 font-semibold">
+                    <o.icon size={18} className={mode === o.v ? 'text-green' : 'text-muted'} /> {o.title}
+                  </div>
+                  <div className="mt-1 text-xs text-muted">{o.text}</div>
+                </button>
+              ))}
+            </div>
+
+            {mode === 'online' ? (
+              <div className="rounded-xl border border-dashed border-line p-4 text-sm text-muted">
+                После запуска появится <b className="text-fg">код комнаты</b> и QR-код. Команды открывают сайт на телефоне или
+                компьютере, вводят код и название команды — и сразу появляются у вас в списке. Подходит и для зала, и для
+                игры на расстоянии.
+              </div>
+            ) : (
+            <>
             <div className="mb-3 flex items-center gap-2 text-sm text-muted">
               <Users size={16} /> {teams.length} {plural(teams.length, 'команда', 'команды', 'команд')}
             </div>
@@ -233,11 +265,13 @@ export default function StartGameModal() {
             <button onClick={() => setTeams((ts) => [...ts, newTeam(ts)])} className="btn btn-ghost mt-3 w-full border-dashed">
               <Plus size={18} /> Добавить команду
             </button>
+            </>
+            )}
 
             {error && <div className="mt-4 rounded-xl border border-red-400/30 bg-red-400/10 px-4 py-2.5 text-sm text-red-400">{error}</div>}
 
-            <button onClick={begin} disabled={starting || !teams.length} className="btn btn-primary mt-5 w-full py-3.5 text-base">
-              {starting ? <Loader2 size={20} className="animate-spin" /> : <Rocket size={20} />} Начать игру
+            <button onClick={begin} disabled={starting || (mode === 'offline' && !teams.length)} className="btn btn-primary mt-5 w-full py-3.5 text-base">
+              {starting ? <Loader2 size={20} className="animate-spin" /> : <Rocket size={20} />} {mode === 'online' ? 'Создать онлайн-игру' : 'Начать игру'}
             </button>
           </motion.div>
         )}

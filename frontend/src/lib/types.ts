@@ -60,13 +60,71 @@ export interface Team {
   score: number
 }
 
+export type GameMode = 'offline' | 'online'
+
 export interface GameSession {
   id: number
   room: number
   host: number
-  status: 'active' | 'finished'
+  status: 'lobby' | 'active' | 'finished'
+  mode: GameMode
+  code: string | null
   created_at: string
   teams: Team[]
+}
+
+// ---------- Онлайн-режим: публичное состояние, которое видят команды ----------
+
+export interface LiveCell {
+  id: number
+  points?: number
+  n?: number
+  used: boolean
+  team?: number | null
+  correct?: boolean
+}
+
+export interface LiveState {
+  view?: 'lobby' | 'waiting' | 'question' | 'review' | 'grid' | 'tiles' | 'bonus' | 'results'
+  category?: string
+  number?: number
+  total?: number
+  question?: { id: number; text?: string; photo?: string | null; points?: number }
+  /** Принимаются ли сейчас ответы */
+  accepting?: boolean
+  /** Отвечает только эта команда (стратегический/слепой) */
+  answer_team?: number | null
+  /** Правильный ответ — появляется, когда ведущий его показал */
+  reveal?: string | null
+  /** Итоги категории (классический) */
+  items?: { id: number; text: string; answer: string; points: number; correct: number[] }[]
+  columns?: { name: string; cells: LiveCell[] }[]
+  tiles?: LiveCell[]
+  available?: number[]
+  active_team?: number | null
+  bonus?: 'double' | 'skip' | 'steal' | null
+}
+
+export interface LivePayload {
+  code: string
+  mode: GameMode
+  status: 'lobby' | 'active' | 'finished'
+  room: { title: string; format: GameFormat }
+  state: LiveState
+  version: number
+  timer: { left: number; running: boolean } | null
+  server_time: string
+  teams: Team[]
+  me: Team | null
+  my_answer: string | null
+}
+
+export interface LiveAnswer {
+  question_id: number
+  team_id: number
+  text: string
+  matches: boolean
+  submitted_at: string
 }
 
 export interface PlatformStats {

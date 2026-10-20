@@ -1,14 +1,15 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { Check, Crown, Eye, SkipForward, X } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import CircularTimer from '../../components/game/CircularTimer'
 import GameShell from '../../components/game/GameShell'
 import Scoreboard from '../../components/game/Scoreboard'
 import Modal from '../../components/Modal'
 import { useCountdown, useHotkeys, usePersistentState } from '../../hooks/useGameHooks'
+import { useLiveAnswers, usePublishState } from '../../hooks/useLive'
 import { sounds } from '../../lib/sounds'
-import type { Question } from '../../lib/types'
+import type { LiveState, Question } from '../../lib/types'
 import { useGame } from '../../store/game'
 
 interface Outcome {
@@ -84,6 +85,46 @@ export default function Strategic() {
     space: () => current && setShowAnswer((s) => !s),
     p: () => setRunning((r) => !r),
   })
+
+  // ---------- Онлайн: что видят команды, их ответы и выбор клетки ----------
+  const liveState: LiveState = current
+    ? {
+        view: 'question',
+        category: current.catName,
+        question: { id: current.id, text: current.text, photo: current.photo, points: current.points },
+        accepting: true,
+        answer_team: active?.id ?? null,
+        reveal: showAnswer ? current.answer : null,
+      }
+    : {
+        view: 'grid',
+        active_team: active?.id ?? null,
+        available: columns.flatMap((c) => c.questions.filter((q) => !results[q.id]).map((q) => q.id)),
+        columns: columns.map((c) => ({
+          name: c.name,
+          cells: c.questions.map((q) => ({
+            id: q.id,
+            points: q.points,
+            used: !!results[q.id],
+            team: results[q.id]?.teamId ?? null,
+            correct: results[q.id]?.correct,
+          })),
+        })),
+      }
+  usePublishState(liveState, current ? { left, running: running && !showAnswer } : null)
+  const { answers, pick, online } = useLiveAnswers(current ? [current.id] : [])
+  const activeAnswer = current && active ? answers[current.id]?.[active.id] : undefined
+
+  // Команда выбрала клетку со своего устройства — открываем её
+  const lastPick = useRef<string | null>(null)
+  useEffect(() => {
+    if (!pick || current || !active || pick.at === lastPick.current) return
+    lastPick.current = pick.at
+    if (pick.team_id !== active.id || results[pick.question_id]) return
+    const q = columns.flatMap((c) => c.questions).find((x) => x.id === pick.question_id)
+    if (q) open(q)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pick])
 
   if (!room || room.format !== 'strategic') return <Navigate to="/rooms" replace />
 
@@ -213,6 +254,22 @@ export default function Strategic() {
                 </motion.div>
               )}
             </AnimatePresence>
+
+            {online && active && (
+              <div className="host-only rounded-2xl border border-line bg-fg/[0.03] p-4">
+                <div className="text-xs uppercase tracking-widest text-muted">Ответ команды «{active.name}»</div>
+                {activeAnswer ? (
+                  <div className="mt-1 flex items-center gap-2 text-xl font-bold">
+                    {activeAnswer.text}
+                    {activeAnswer.matches && (
+                      <span className="rounded-md bg-green/15 px-2 py-0.5 text-xs font-semibold text-green">совпадает</span>
+                    )}
+                  </div>
+                ) : (
+                  <div className="mt-1 text-muted">Ждём ответ…</div>
+                )}
+              </div>
+            )}
 
             <div className="host-only grid gap-3 sm:grid-cols-[auto_1fr_1fr]">
               <button onClick={() => setShowAnswer((s) => !s)} className="btn btn-ghost">

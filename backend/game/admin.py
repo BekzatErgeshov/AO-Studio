@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.utils.html import format_html
 
-from .models import GameSession, Team
+from .models import Answer, GameSession, Team
 
 
 class TeamInline(admin.TabularInline):
@@ -12,8 +12,8 @@ class TeamInline(admin.TabularInline):
 
 @admin.register(GameSession)
 class GameSessionAdmin(admin.ModelAdmin):
-    list_display = ["id", "room", "host", "status", "teams_list", "created_at"]
-    list_filter = ["status", "room__format", "created_at"]
+    list_display = ["id", "room", "host", "mode", "code", "status", "teams_list", "created_at"]
+    list_filter = ["mode", "status", "room__format", "created_at"]
     list_editable = ["status"]
     search_fields = ["room__title", "host__username"]
     autocomplete_fields = ["room", "host"]
@@ -39,3 +39,12 @@ class TeamAdmin(admin.ModelAdmin):
         return format_html(
             '<span style="display:inline-block;width:18px;height:18px;border-radius:50%;background:{}"></span>', obj.color
         )
+
+
+@admin.register(Answer)
+class AnswerAdmin(admin.ModelAdmin):
+    list_display = ["text", "team", "question", "session", "submitted_at"]
+    list_filter = ["session__mode"]
+    search_fields = ["text", "team__name", "question__text"]
+    autocomplete_fields = ["team", "session"]
+    raw_id_fields = ["question"]

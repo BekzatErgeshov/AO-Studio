@@ -1,0 +1,437 @@
+import confetti from 'canvas-confetti'
+import { AnimatePresence, motion } from 'framer-motion'
+import { Check, Crown, Loader2, LogOut, Send, Trophy, Wifi, WifiOff, X } from 'lucide-react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
+import CircularTimer from '../../components/game/CircularTimer'
+import Logo from '../../components/Logo'
+import { getTeamToken, teamTokenKey, useLiveState, useServerTimer } from '../../hooks/useLive'
+import { api, errorMessage } from '../../lib/api'
+import { sounds } from '../../lib/sounds'
+import type { LiveCell, LivePayload, Team } from '../../lib/types'
+
+const BONUS: Record<string, { emoji: string; title: string; text: string }> = {
+  double: { emoji: '🌟', title: 'Двойные баллы!', text: 'За правильный ответ — x2' },
+  skip: { emoji: '⏭️', title: 'Пропуск хода!', text: 'Команда пропускает ход' },
+  steal: { emoji: '🎯', title: 'Кража вопроса!', text: 'После ответа команда выбирает ещё раз' },
+}
+
+function TeamChip({ team, big }: { team: Team; big?: boolean }) {
+  return (
+    <span className={`inline-flex items-center gap-2 font-semibold ${big ? 'text-lg' : ''}`}>
+      <span className="h-3 w-3 shrink-0 rounded-full" style={{ background: team.color, boxShadow: `0 0 8px ${team.color}` }} />
+      <span className="truncate">{team.name}</span>
+    </span>
+  )
+}
+
+function Standings({ teams, meId }: { teams: Team[]; meId?: number }) {
+  const ranked = [...teams].sort((a, b) => b.score - a.score)
+  return (
+    <div className="space-y-1.5">
+      {ranked.map((t, i) => (
+        <motion.div
+          layout
+          key={t.id}
+          className={`flex items-center gap-3 rounded-xl border px-3 py-2 ${t.id === meId ? 'border-green bg-green/10' : 'border-line bg-fg/[0.03]'}`}
+        >
+          <span className="w-5 text-center text-sm font-bold text-muted">{i + 1}</span>
+          <span className="min-w-0 flex-1">
+            <TeamChip team={t} />
+          </span>
+          <span className="text-lg font-extrabold tabular-nums">{t.score}</span>
+        </motion.div>
+      ))}
+    </div>
+  )
+}
+
+/** Поле ответа команды */
+function AnswerBox({ code, questionId, current }: { code: string; questionId: number; current: string | null }) {
+  const [text, setText] = useState(current ?? '')
+  const [sending, setSending] = useState(false)
+  const [error, setError] = useState('')
+  const [sent, setSent] = useState(current)
+
+  // Новый вопрос — чистое поле
+  useEffect(() => {
+    setText(current ?? '')
+    setSent(current)
+    setError('')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [questionId])
+
+  useEffect(() => setSent(current), [current])
+
+  const submit = async (e: FormEvent) => {
+    e.preventDefault()
+    if (!text.trim()) return
+    setSending(true)
+    setError('')
+    try {
+      const { data } = await api.post<{ text: string }>(
+        `/live/${code}/answer/`,
+        { question_id: questionId, text: text.trim() },
+        { headers: { 'X-Team-Token': getTeamToken(code) ?? '' } },
+      )
+      setSent(data.text)
+      sounds.flip()
+    } catch (err) {
+      setError(errorMessage(err))
+    } finally {
+      setSending(false)
+    }
+  }
+
+  const changed = text.trim() !== (sent ?? '')
+
+  return (
+    <form onSubmit={submit} className="mt-5">
+      <div className="flex gap-2">
+        <input
+          className="input py-3.5 text-lg"
+          placeholder="Ваш ответ"
+          value={text}
+          maxLength={500}
+          onChange={(e) => setText(e.target.value)}
+          autoComplete="off"
+        />
+        <button type="submit" disabled={sending || !text.trim() || !changed} className="btn btn-primary px-5">
+          {sending ? <Loader2 size={20} className="animate-spin" /> : <Send size={20} />}
+        </button>
+      </div>
+      <AnimatePresence>
+        {sent && !changed && (
+          <motion.div initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="mt-2 flex items-center gap-1.5 text-sm text-green">
+            <Check size={16} /> Ответ отправлен. Можно изменить, пока ведущий принимает ответы.
+          </motion.div>
+        )}
+      </AnimatePresence>
+      {error && <div className="mt-2 text-sm text-red-400">{error}</div>}
+    </form>
+  )
+}
+
+function Board({ cells, columns, code, data }: { cells?: LiveCell[]; columns?: { name: string; cells: LiveCell[] }[]; code: string; data: LivePayload }) {
+  const myTurn = data.me && data.state.active_team === data.me.id
+  const [picked, setPicked] = useState<number | null>(null)
+  const [error, setError] = useState('')
+
+  const pick = async (id: number) => {
+    if (!myTurn) return
+    setPicked(id)
+    setError('')
+    try {
+      await api.post(`/live/${code}/pick/`, { question_id: id }, { headers: { 'X-Team-Token': getTeamToken(code) ?? '' } })
+    } catch (err) {
+      setPicked(null)
+      setError(errorMessage(err))
+    }
+  }
+
+  const cell = (c: LiveCell, label: string | number) => {
+    const team = c.team ? data.teams.find((t) => t.id === c.team) : null
+    const can = myTurn && !c.used
+    return (
+      <button
+        key={c.id}
+        disabled={!can}
+        onClick={() => pick(c.id)}
+        className={`relative flex aspect-[4/3] items-center justify-center rounded-xl border text-xl font-extrabold transition ${
+          c.used
+            ? 'border-line bg-fg/5 text-fg/20'
+            : picked === c.id
+              ? 'border-green bg-green text-white'
+              : can
+                ? 'border-green/60 bg-green/15 text-green active:scale-95'
+                : 'border-line bg-fg/[0.04] text-fg/70'
+        }`}
+      >
+        {label}
+        {c.used && team && (
+          <span className="absolute bottom-1 right-1.5 flex items-center gap-0.5">
+            <span className="h-2 w-2 rounded-full" style={{ background: team.color }} />
+            {c.correct ? <Check size={11} className="text-green" /> : <X size={11} className="text-red-400" />}
+          </span>
+        )}
+      </button>
+    )
+  }
+
+  return (
+    <div>
+      <div className={`mb-4 rounded-2xl border p-3 text-center font-bold ${myTurn ? 'border-green bg-green/15 text-green' : 'border-line'}`}>
+        {myTurn ? (
+          <motion.span animate={{ scale: [1, 1.05, 1] }} transition={{ repeat: Infinity, duration: 1.5 }} className="inline-block">
+            👑 Ваш ход! Выберите {columns ? 'вопрос' : 'карточку'}
+          </motion.span>
+        ) : (
+          <span className="text-muted">
+            Выбирает:{' '}
+            {(() => {
+              const t = data.teams.find((x) => x.id === data.state.active_team)
+              return t ? <TeamChip team={t} /> : '…'
+            })()}
+          </span>
+        )}
+      </div>
+      {error && <div className="mb-3 text-center text-sm text-red-400">{error}</div>}
+      {columns ? (
+        <div className="scrollbar-thin -mx-1 overflow-x-auto px-1">
+          <div className="grid min-w-max gap-2" style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(76px, 1fr))` }}>
+            {columns.map((col) => (
+              <div key={col.name} className="flex flex-col gap-2">
+                <div className="flex min-h-[44px] items-center justify-center rounded-xl bg-gradient-to-br from-green to-green-dark p-1.5 text-center text-xs font-bold uppercase text-white">
+                  {col.name}
+                </div>
+                {col.cells.map((c) => cell(c, c.points ?? ''))}
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-4 gap-2 sm:grid-cols-5">{(cells ?? []).map((c) => cell(c, c.n ?? ''))}</div>
+      )}
+    </div>
+  )
+}
+
+export default function Play() {
+  const { code = '' } = useParams()
+  const upper = code.toUpperCase()
+  const navigate = useNavigate()
+  const { data, error, fetchedAt } = useLiveState(upper)
+  const left = useServerTimer(data?.timer, fetchedAt)
+  const lastQuestion = useRef<number | null>(null)
+  const confettiDone = useRef(false)
+
+  const state = data?.state ?? {}
+  const finished = data?.status === 'finished' || state.view === 'results'
+
+  // Звук на новый вопрос, конфетти в конце
+  useEffect(() => {
+    const qid = state.view === 'question' ? state.question?.id ?? null : null
+    if (qid && qid !== lastQuestion.current) sounds.flip()
+    lastQuestion.current = qid
+  }, [state.view, state.question?.id])
+
+  useEffect(() => {
+    if (finished && !confettiDone.current) {
+      confettiDone.current = true
+      sounds.fanfare()
+      confetti({ particleCount: 140, spread: 90, origin: { y: 0.4 }, colors: ['#10B981', '#34D399', '#FBBF24', '#ffffff'] })
+    }
+  }, [finished])
+
+  if (!getTeamToken(upper)) return <Navigate to={`/join/${upper}`} replace />
+
+  if (error === 'not_found') {
+    return (
+      <Centered>
+        <div className="text-5xl">🔍</div>
+        <h1 className="mt-3 text-xl font-bold">Игра не найдена</h1>
+        <p className="mt-1 text-muted">Проверьте код у ведущего</p>
+        <Link to="/join" className="btn btn-primary mt-6">Ввести другой код</Link>
+      </Centered>
+    )
+  }
+
+  if (!data) {
+    return (
+      <Centered>
+        <Loader2 className="animate-spin text-green" size={32} />
+        <p className="mt-3 text-muted">Подключаемся к игре…</p>
+      </Centered>
+    )
+  }
+
+  // Ведущий убрал команду (или токен от другой игры)
+  if (!data.me) {
+    localStorage.removeItem(teamTokenKey(upper))
+    return (
+      <Centered>
+        <div className="text-5xl">🚪</div>
+        <h1 className="mt-3 text-xl font-bold">Вы не в этой игре</h1>
+        <p className="mt-1 text-muted">Возможно, ведущий убрал команду из списка.</p>
+        {data.status === 'lobby' && (
+          <button onClick={() => navigate(`/join/${upper}`)} className="btn btn-primary mt-6">Присоединиться снова</button>
+        )}
+      </Centered>
+    )
+  }
+
+  const me = data.me
+  const myTeam = data.teams.find((t) => t.id === me.id) ?? me
+  const place = [...data.teams].sort((a, b) => b.score - a.score).findIndex((t) => t.id === me.id) + 1
+  const q = state.question
+  const answeringTeam = state.answer_team ? data.teams.find((t) => t.id === state.answer_team) : null
+  const canAnswer = state.view === 'question' && state.accepting && q && (!state.answer_team || state.answer_team === me.id)
+
+  return (
+    <div className="relative min-h-screen pb-10">
+      <div className="bg-aurora" />
+
+      {/* Шапка: игра и моя команда */}
+      <header className="glass sticky top-0 z-20 flex items-center gap-3 rounded-none border-x-0 border-t-0 px-4 py-2.5">
+        <Logo size={30} />
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-xs text-muted">{data.room.title}</div>
+          <TeamChip team={myTeam} />
+        </div>
+        <div className="text-right">
+          <div className="text-xl font-extrabold leading-none tabular-nums">{myTeam.score}</div>
+          <div className="text-[10px] text-muted">{place} место</div>
+        </div>
+        <span title={error ? 'Нет связи' : 'Онлайн'} className={error ? 'text-red-400' : 'text-green'}>
+          {error ? <WifiOff size={16} /> : <Wifi size={16} />}
+        </span>
+      </header>
+
+      <main className="relative z-10 mx-auto max-w-2xl px-4 pt-5">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={`${finished ? 'results' : state.view}-${q?.id ?? ''}`}
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.25 }}
+          >
+            {finished ? (
+              <div className="glass rounded-3xl p-6 text-center">
+                <Trophy className="mx-auto text-yellow-400" size={44} />
+                <h1 className="mt-3 text-2xl font-extrabold">Игра окончена!</h1>
+                <p className="mt-1 text-muted">
+                  Ваша команда — <b className="text-fg">{place} место</b> с {myTeam.score} баллами
+                </p>
+                <div className="mt-6 text-left">
+                  <Standings teams={data.teams} meId={me.id} />
+                </div>
+                <Link
+                  to="/"
+                  onClick={() => localStorage.removeItem(teamTokenKey(upper))}
+                  className="btn btn-ghost mt-6"
+                >
+                  <LogOut size={16} /> На главную
+                </Link>
+              </div>
+            ) : data.status === 'lobby' || state.view === 'lobby' ? (
+              <div className="glass rounded-3xl p-6 text-center">
+                <div className="text-5xl">✅</div>
+                <h1 className="mt-3 text-2xl font-extrabold">Вы в игре!</h1>
+                <p className="mt-1 text-muted">Ждём, когда ведущий начнёт. Не закрывайте эту страницу.</p>
+                <div className="mt-6 text-left">
+                  <div className="mb-2 text-xs font-semibold uppercase tracking-widest text-muted">Команды ({data.teams.length})</div>
+                  <div className="flex flex-wrap gap-2">
+                    {data.teams.map((t) => (
+                      <span key={t.id} className={`rounded-full border px-3 py-1.5 text-sm ${t.id === me.id ? 'border-green bg-green/10' : 'border-line'}`}>
+                        <TeamChip team={t} />
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ) : state.view === 'question' && q ? (
+              <div className="glass rounded-3xl p-5 sm:p-6">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    {state.category && <div className="text-xs font-semibold uppercase tracking-widest text-green">📂 {state.category}</div>}
+                    <div className="mt-1 text-sm text-muted">
+                      {state.number && state.total ? `Вопрос ${state.number} из ${state.total} · ` : ''}
+                      {q.points ? <b className="text-fg">{q.points} балл.</b> : null}
+                    </div>
+                    {state.bonus && BONUS[state.bonus] && (
+                      <div className="mt-2 inline-flex rounded-full bg-green/15 px-3 py-1 text-xs font-semibold text-green">
+                        {BONUS[state.bonus].emoji} {BONUS[state.bonus].title}
+                      </div>
+                    )}
+                  </div>
+                  {left !== null && <CircularTimer left={left} total={Math.max(left, data.timer?.left ?? left, 1)} size={76} showControls={false} />}
+                </div>
+
+                {q.photo && <img src={q.photo} alt="" className="mt-4 max-h-[35vh] w-full rounded-2xl border border-line object-contain" />}
+                <p className="mt-4 whitespace-pre-line text-xl font-bold leading-snug sm:text-2xl">{q.text}</p>
+
+                {state.reveal ? (
+                  <div className="mt-5 rounded-2xl border border-green/40 bg-green/10 p-4 text-center">
+                    <div className="text-xs uppercase tracking-widest text-muted">Правильный ответ</div>
+                    <div className="mt-1 text-xl font-extrabold text-green">{state.reveal}</div>
+                    {data.my_answer && <div className="mt-2 text-sm text-muted">Ваш ответ: {data.my_answer}</div>}
+                  </div>
+                ) : canAnswer ? (
+                  <AnswerBox code={upper} questionId={q.id} current={data.my_answer} />
+                ) : answeringTeam && answeringTeam.id !== me.id ? (
+                  <div className="mt-5 rounded-2xl border border-line p-4 text-center text-muted">
+                    Отвечает команда <TeamChip team={answeringTeam} />
+                  </div>
+                ) : (
+                  <div className="mt-5 rounded-2xl border border-line p-4 text-center text-muted">
+                    {data.my_answer ? `Ваш ответ принят: «${data.my_answer}». Ждём ведущего…` : 'Приём ответов закрыт'}
+                  </div>
+                )}
+              </div>
+            ) : state.view === 'review' && state.items ? (
+              <div className="glass rounded-3xl p-5">
+                <h2 className="text-xl font-extrabold">✅ Правильные ответы</h2>
+                {state.category && <p className="text-sm text-muted">Категория «{state.category}»</p>}
+                <div className="mt-4 space-y-2.5">
+                  {state.items.map((it, i) => {
+                    const ok = it.correct.includes(me.id)
+                    return (
+                      <div key={it.id} className="rounded-2xl border border-line bg-fg/[0.03] p-3.5">
+                        <div className="flex items-start gap-2.5">
+                          <span className="mt-0.5 text-xs font-bold text-muted">{i + 1}.</span>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm text-muted">{it.text}</p>
+                            <p className="font-bold text-green">→ {it.answer}</p>
+                          </div>
+                          <span className={`shrink-0 rounded-lg px-2 py-1 text-xs font-bold ${ok ? 'bg-green text-white' : 'bg-fg/5 text-muted'}`}>
+                            {ok ? `+${it.points}` : '—'}
+                          </span>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            ) : state.view === 'grid' ? (
+              <Board columns={state.columns} code={upper} data={data} />
+            ) : state.view === 'tiles' ? (
+              <Board cells={state.tiles} code={upper} data={data} />
+            ) : state.view === 'bonus' && state.bonus && BONUS[state.bonus] ? (
+              <div className="py-10 text-center">
+                <motion.div animate={{ rotate: [0, -10, 10, 0], scale: [1, 1.2, 1] }} transition={{ duration: 0.8, repeat: 2 }} className="text-8xl">
+                  {BONUS[state.bonus].emoji}
+                </motion.div>
+                <div className="text-gradient mt-4 text-4xl font-extrabold">{BONUS[state.bonus].title}</div>
+                <p className="mt-2 text-muted">{BONUS[state.bonus].text}</p>
+              </div>
+            ) : (
+              <Centered inline>
+                <Loader2 className="animate-spin text-green" size={28} />
+                <p className="mt-3 text-muted">Ведущий готовит следующий вопрос…</p>
+              </Centered>
+            )}
+          </motion.div>
+        </AnimatePresence>
+
+        {!finished && data.status !== 'lobby' && (
+          <section className="mt-6">
+            <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-muted">
+              <Crown size={14} /> Табло
+            </div>
+            <Standings teams={data.teams} meId={me.id} />
+          </section>
+        )}
+      </main>
+    </div>
+  )
+}
+
+function Centered({ children, inline }: { children: React.ReactNode; inline?: boolean }) {
+  return (
+    <div className={`relative flex flex-col items-center justify-center px-4 text-center ${inline ? 'py-16' : 'min-h-screen'}`}>
+      {!inline && <div className="bg-aurora" />}
+      <div className="relative z-10 flex flex-col items-center">{children}</div>
+    </div>
+  )
+}

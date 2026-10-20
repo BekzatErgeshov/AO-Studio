@@ -5,11 +5,13 @@ from django.urls import include, path, re_path
 from django.views.static import serve
 
 from core.views import spa
+from game.urls import live_urlpatterns
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/auth/", include("users.urls")),
     path("api/game/", include("game.urls")),
+    path("api/live/", include(live_urlpatterns)),
     path("api/", include("rooms.urls")),
 ]
 

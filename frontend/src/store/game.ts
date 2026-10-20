@@ -1,14 +1,18 @@
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 import { api } from '../lib/api'
-import type { RoomDetail, Team } from '../lib/types'
+import type { GameMode, RoomDetail, Team } from '../lib/types'
 
 interface GameState {
   sessionId: number | null
   room: RoomDetail | null
   teams: Team[]
   finished: boolean
-  start: (sessionId: number, room: RoomDetail, teams: Team[]) => void
+  /** offline — один экран; online — команды играют со своих устройств по коду */
+  mode: GameMode
+  code: string | null
+  start: (sessionId: number, room: RoomDetail, teams: Team[], mode?: GameMode, code?: string | null) => void
+  setTeams: (teams: Team[]) => void
   addScore: (teamId: number, delta: number) => void
   finish: () => Promise<void>
   reset: () => void
@@ -22,9 +26,15 @@ export const useGame = create<GameState>()(
       room: null,
       teams: [],
       finished: false,
+      mode: 'offline',
+      code: null,
 
-      start(sessionId, room, teams) {
-        set({ sessionId, room, teams, finished: false })
+      start(sessionId, room, teams, mode = 'offline', code = null) {
+        set({ sessionId, room, teams, finished: false, mode, code })
+      },
+
+      setTeams(teams) {
+        set({ teams })
       },
 
       addScore(teamId, delta) {
@@ -41,7 +51,7 @@ export const useGame = create<GameState>()(
       },
 
       reset() {
-        set({ sessionId: null, room: null, teams: [], finished: false })
+        set({ sessionId: null, room: null, teams: [], finished: false, mode: 'offline', code: null })
       },
     }),
     { name: 'ao_game', storage: createJSONStorage(() => sessionStorage) },

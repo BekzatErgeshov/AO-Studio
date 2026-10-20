@@ -1,12 +1,14 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { ArrowRight, Check, ChevronRight, Eye } from 'lucide-react'
+import { ArrowRight, Check, ChevronRight, Eye, Sparkles, Users } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import CircularTimer from '../../components/game/CircularTimer'
 import GameShell from '../../components/game/GameShell'
 import Scoreboard from '../../components/game/Scoreboard'
 import { useCountdown, useHotkeys, usePersistentState } from '../../hooks/useGameHooks'
+import { useLiveAnswers, usePublishState } from '../../hooks/useLive'
 import { sounds } from '../../lib/sounds'
+import type { LiveState } from '../../lib/types'
 import { useGame } from '../../store/game'
 
 type Phase = 'question' | 'review'
@@ -64,6 +66,54 @@ export default function Classic() {
 
   useHotkeys({ space: next, p: () => setRunning((r) => !r) })
 
+  // ---------- Онлайн: что видят команды и их ответы ----------
+  const liveState: LiveState | null = !cat
+    ? null
+    : phase === 'question' && q
+      ? {
+          view: 'question',
+          category: cat.name,
+          number: qIdx + 1,
+          total: cat.questions.length,
+          question: { id: q.id, text: q.text, photo: q.photo, points: q.points },
+          accepting: true,
+        }
+      : {
+          view: 'review',
+          category: cat.name,
+          accepting: false,
+          items: cat.questions.map((cq) => ({
+            id: cq.id,
+            text: cq.text,
+            answer: cq.answer,
+            points: cq.points,
+            correct: marks[cq.id] ?? [],
+          })),
+        }
+  usePublishState(liveState, phase === 'question' ? { left, running } : null)
+  const { answers, online } = useLiveAnswers(cat ? cat.questions.map((x) => x.id) : [])
+  const answeredNow = q ? Object.keys(answers[q.id] ?? {}).length : 0
+
+  // Отметить все ответы, совпавшие с правильным (ведущий может поправить вручную)
+  const markMatches = () => {
+    if (!cat) return
+    const next = { ...marks }
+    let added = 0
+    for (const cq of cat.questions) {
+      for (const t of teams) {
+        const a = answers[cq.id]?.[t.id]
+        const cur = next[cq.id] ?? []
+        if (a?.matches && !cur.includes(t.id)) {
+          next[cq.id] = [...cur, t.id]
+          addScore(t.id, cq.points)
+          added++
+        }
+      }
+    }
+    setMarks(next)
+    if (added) sounds.correct()
+  }
+
   if (!room || room.format !== 'classic') return <Navigate to="/rooms" replace />
   if (!cat) return <Navigate to="/game/results" replace />
 
@@ -120,7 +170,12 @@ export default function Classic() {
                   <p className="max-w-4xl whitespace-pre-line text-2xl font-bold leading-snug sm:text-4xl">{q.text}</p>
                 </div>
 
-                <div className="host-only mt-8 flex justify-end">
+                <div className="host-only mt-8 flex items-center justify-end gap-4">
+                  {online && (
+                    <span className="flex items-center gap-1.5 text-sm text-muted">
+                      <Users size={16} /> Ответили: <b className="text-fg">{answeredNow}</b> из {teams.length}
+                    </span>
+                  )}
                   <button onClick={next} className="btn btn-primary px-6 py-3">
                     {isLastQ ? (
                       <>
@@ -143,9 +198,16 @@ export default function Classic() {
                 className="glass flex flex-1 flex-col rounded-3xl p-5 sm:p-8"
               >
                 <h2 className="text-2xl font-extrabold sm:text-3xl">✅ Правильные ответы</h2>
-                <p className="mt-1 text-muted">
-                  Категория «{cat.name}». <span className="host-only">Отметьте команды, ответившие верно.</span>
-                </p>
+                <div className="mt-1 flex flex-wrap items-center justify-between gap-3">
+                  <p className="text-muted">
+                    Категория «{cat.name}». <span className="host-only">Отметьте команды, ответившие верно.</span>
+                  </p>
+                  {online && (
+                    <button onClick={markMatches} className="host-only btn btn-ghost px-3 py-2 text-sm" title="Отметить ответы, совпавшие с правильным">
+                      <Sparkles size={16} /> Отметить совпавшие
+                    </button>
+                  )}
+                </div>
 
                 <div className="scrollbar-thin mt-6 flex-1 space-y-3 overflow-y-auto">
                   {cat.questions.map((cq, i) => (
@@ -167,6 +229,7 @@ export default function Classic() {
                       <div className="mt-3 flex flex-wrap gap-2 pl-10">
                         {teams.map((t) => {
                           const on = (marks[cq.id] ?? []).includes(t.id)
+                          const a = answers[cq.id]?.[t.id]
                           return (
                             <motion.button
                               key={t.id}
@@ -176,9 +239,15 @@ export default function Classic() {
                                 on ? 'text-white' : 'border-line text-muted hover:text-fg'
                               }`}
                               style={on ? { background: t.color, borderColor: t.color } : undefined}
+                              title={a ? `Ответ: ${a.text}` : undefined}
                             >
                               {on ? <Check size={14} strokeWidth={3} /> : <span className="h-2.5 w-2.5 rounded-full" style={{ background: t.color }} />}
                               {t.name}
+                              {online && (
+                                <span className={`max-w-[160px] truncate rounded-md px-1.5 text-xs ${on ? 'bg-white/20' : a?.matches ? 'bg-green/15 text-green' : 'bg-fg/5'}`}>
+                                  {a ? a.text : '—'}
+                                </span>
+                              )}
                             </motion.button>
                           )
                         })}
