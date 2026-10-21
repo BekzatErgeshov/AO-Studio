@@ -44,6 +44,11 @@ class GameStartView(APIView):
             code=generate_code() if online else None,
             state={"view": "lobby"} if online else {},
             anticheat=online and data["anticheat"],
+            board=online and data["board"],
+            expected_teams=data["expected_teams"] if online else 0,
+            team_size=data["team_size"] if online else 0,
+            autostart=online and data["autostart"] and data["expected_teams"] > 0,
+            timer_duration=data.get("timer_duration") or None,
         )
         teams = data["teams"]
         if data["mode"] == GameSession.MODE_SOLO:

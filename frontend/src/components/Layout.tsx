@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { Gamepad2, Home, LogIn, Moon, PlusCircle, Sun, User as UserIcon } from 'lucide-react'
+import { BookOpen, Gamepad2, Home, LogIn, Monitor, Moon, PlusCircle, Sun, User as UserIcon } from 'lucide-react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../store/auth'
 import { useUI } from '../store/ui'
@@ -26,8 +26,26 @@ const navCls = ({ isActive }: { isActive: boolean }) =>
     isActive ? 'bg-green/15 text-green' : 'text-muted hover:bg-fg/5 hover:text-fg'
   }`
 
+/**
+ * Плавно прокручивает главную к разделу «Что такое Акыл Ордо?».
+ *
+ * Вызывается и с самой главной, и с других страниц сразу после перехода — тогда раздела
+ * в DOM ещё нет, поэтому ждём его появления. Прокрутку повторяем: переход на страницу
+ * может сбросить её в начало уже после нашего вызова.
+ */
 export function scrollToAbout() {
-  document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' })
+  let tries = 0
+  const tick = () => {
+    const el = document.getElementById('about')
+    if (!el) {
+      if (tries++ < 30) setTimeout(tick, 50)
+      return
+    }
+    el.scrollIntoView({ behavior: 'smooth' })
+    // Прокрутка не сдвинулась (страница отрисовалась позже) — пробуем ещё раз
+    if (tries++ < 30 && el.getBoundingClientRect().top > window.innerHeight / 2) setTimeout(tick, 120)
+  }
+  tick()
 }
 
 export default function Layout() {
@@ -36,13 +54,10 @@ export default function Layout() {
   const user = useAuth((s) => s.user)
   const openAuth = useUI((s) => s.openAuth)
 
-  // «AO Studio» в меню → на главную и плавный скролл к описанию
+  // «AO Studio» и «Об игре АО» → на главную и плавный скролл к описанию
   const onLogo = () => {
-    if (location.pathname === '/') scrollToAbout()
-    else {
-      navigate('/')
-      setTimeout(scrollToAbout, 450)
-    }
+    if (location.pathname !== '/') navigate('/')
+    scrollToAbout()
   }
 
   const goCreate = () => (user ? navigate('/create') : openAuth('register', () => navigate('/create')))
@@ -69,6 +84,12 @@ export default function Layout() {
           <NavLink to="/rooms" className={navCls}>
             <Gamepad2 size={20} /> AO Rooms
           </NavLink>
+          <NavLink to="/board" className={navCls}>
+            <Monitor size={20} /> Доска
+          </NavLink>
+          <button onClick={onLogo} className={navCls({ isActive: false })}>
+            <BookOpen size={20} /> Об игре АО
+          </button>
           <button onClick={goCreate} className={navCls({ isActive: location.pathname === '/create' })}>
             <PlusCircle size={20} /> Создать АО
           </button>
@@ -115,6 +136,7 @@ export default function Layout() {
         {[
           { to: '/', icon: Home, label: 'Главная', end: true },
           { to: '/rooms', icon: Gamepad2, label: 'Rooms' },
+          { to: '/board', icon: Monitor, label: 'Доска' },
         ].map(({ to, icon: Icon, label, end }) => (
           <NavLink
             key={to}

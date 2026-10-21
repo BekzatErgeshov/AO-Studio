@@ -2,9 +2,11 @@ import { Loader2 } from 'lucide-react'
 import { useEffect, type ReactNode } from 'react'
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import AuthModal from './components/AuthModal'
+import BoardStartModal from './components/BoardStartModal'
 import Layout from './components/Layout'
 import StartGameModal from './components/StartGameModal'
 import { ADMIN_URL, setUnauthorizedHandler } from './lib/api'
+import Board from './pages/Board'
 import CreateRoom from './pages/CreateRoom'
 import Blind from './pages/game/Blind'
 import Classic from './pages/game/Classic'
@@ -84,6 +86,7 @@ export default function App() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<LoginRoute />} />
           <Route path="/rooms" element={<Rooms />} />
+          <Route path="/board" element={<Board />} />
           <Route path="/profile" element={<RequireAuth><Profile /></RequireAuth>} />
           <Route path="/create" element={<RequireAuth><CreateRoom /></RequireAuth>} />
           <Route path="/rooms/:id/edit" element={<RequireAuth><CreateRoom /></RequireAuth>} />
@@ -102,6 +105,7 @@ export default function App() {
       </Routes>
       <AuthModal />
       <StartGameModal />
+      <BoardStartModal />
     </>
   )
 }

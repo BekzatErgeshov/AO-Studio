@@ -155,3 +155,81 @@ class AnticheatTests(APITestCase):
         self.assertEqual(len(res.data["violations"]), 1)
         self.assertEqual(res.data["violations"][0]["kind"], "hidden")
         self.assertEqual(res.data["teams"][0]["warnings"], 1)
+
+
+class BoardLaunchTests(APITestCase):
+    """Запуск с доски: ожидаемый состав, лимит мест и автостарт по сбору всех команд."""
+
+    def setUp(self):
+        self.host = User.objects.create_user(username="host", password="pwd12345")
+        self.room = AORoom.objects.create(title="Тест", format="classic", author=self.host)
+        Question.objects.create(room=self.room, text="2+2?", answer="4", points=1)
+
+    def start_board(self, **extra):
+        self.client.force_authenticate(self.host)
+        payload = {
+            "room_id": self.room.id,
+            "mode": "online",
+            "board": True,
+            "expected_teams": 2,
+            "team_size": 4,
+            "autostart": True,
+            "timer_duration": 90,
+            "teams": [],
+        }
+        payload.update(extra)
+        res = self.client.post("/api/game/start/", payload, format="json")
+        self.assertEqual(res.status_code, 201, res.data)
+        self.client.force_authenticate(None)
+        return res.data
+
+    def join(self, code, name):
+        return self.client.post(f"/api/live/{code}/join/", {"name": name}, format="json")
+
+    def test_board_settings_saved_and_returned(self):
+        data = self.start_board()
+        self.assertTrue(data["board"])
+        self.assertTrue(data["autostart"])
+        self.assertEqual(data["expected_teams"], 2)
+        self.assertEqual(data["team_size"], 4)
+        self.assertEqual(data["timer_duration"], 90)
+        self.assertEqual(data["status"], "lobby")
+
+        # Команда видит ожидаемый состав ещё до входа
+        res = self.client.get(f"/api/live/{data['code']}/")
+        self.assertEqual(res.data["expected_teams"], 2)
+        self.assertEqual(res.data["team_size"], 4)
+
+    def test_autostart_when_all_teams_joined(self):
+        data = self.start_board()
+        code = data["code"]
+
+        self.assertEqual(self.join(code, "Первая").status_code, 201)
+        self.assertEqual(GameSession.objects.get(pk=data["id"]).status, GameSession.STATUS_LOBBY)
+
+        self.assertEqual(self.join(code, "Вторая").status_code, 201)
+        session = GameSession.objects.get(pk=data["id"])
+        self.assertEqual(session.status, GameSession.STATUS_ACTIVE, "собрались все — игра начинается сама")
+        self.assertEqual(session.state, {"view": "waiting"})
+
+    def test_join_refused_when_all_places_taken(self):
+        data = self.start_board(autostart=False)
+        code = data["code"]
+        self.join(code, "Первая")
+        self.join(code, "Вторая")
+
+        res = self.join(code, "Третья")
+        self.assertEqual(res.status_code, 400)
+        self.assertIn("мест", res.data["detail"])
+        self.assertEqual(Team.objects.filter(session_id=data["id"]).count(), 2)
+
+    def test_without_autostart_host_starts_manually(self):
+        data = self.start_board(autostart=False)
+        self.join(data["code"], "Первая")
+        self.join(data["code"], "Вторая")
+        self.assertEqual(GameSession.objects.get(pk=data["id"]).status, GameSession.STATUS_LOBBY)
+
+        self.client.force_authenticate(self.host)
+        res = self.client.patch(f"/api/game/{data['id']}/begin/")
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(GameSession.objects.get(pk=data["id"]).status, GameSession.STATUS_ACTIVE)

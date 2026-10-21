@@ -48,6 +48,15 @@ class GameSession(models.Model):
     pick = models.JSONField(null=True, blank=True)
     # Античит (онлайн): устройства команд держат игру в полном экране, уход с экрана наказывается
     anticheat = models.BooleanField("античит", default=True)
+    # Запуск с умной доски: ведущий заранее задаёт состав и время, команды собираются по QR
+    board = models.BooleanField("запуск с доски", default=False)
+    # Сколько команд ждём (0 — без ограничения) и сколько игроков в команде (0 — не задано)
+    expected_teams = models.PositiveSmallIntegerField("ожидается команд", default=0)
+    team_size = models.PositiveSmallIntegerField("игроков в команде", default=0)
+    # Начать игру самим, как только соберутся все ожидаемые команды
+    autostart = models.BooleanField("автостарт", default=False)
+    # Время на вопрос; пусто — как задано в комнате
+    timer_duration = models.PositiveIntegerField("время на вопрос", null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

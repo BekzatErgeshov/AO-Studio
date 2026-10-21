@@ -12,8 +12,8 @@ class TeamInline(admin.TabularInline):
 
 @admin.register(GameSession)
 class GameSessionAdmin(admin.ModelAdmin):
-    list_display = ["id", "room", "host", "mode", "code", "status", "anticheat", "teams_list", "created_at"]
-    list_filter = ["mode", "status", "anticheat", "room__format", "created_at"]
+    list_display = ["id", "room", "host", "mode", "code", "status", "anticheat", "board", "teams_list", "created_at"]
+    list_filter = ["mode", "status", "anticheat", "board", "room__format", "created_at"]
     list_editable = ["status"]
     search_fields = ["room__title", "host__username"]
     autocomplete_fields = ["room", "host"]

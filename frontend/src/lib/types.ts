@@ -97,6 +97,16 @@ export interface GameSession {
   mode: GameMode
   code: string | null
   anticheat: boolean
+  /** Запуск с умной доски: состав и время заданы заранее */
+  board: boolean
+  /** Сколько команд ждём (0 — без ограничения) */
+  expected_teams: number
+  /** Игроков в команде (0 — не задано) */
+  team_size: number
+  /** Начать игру самим, как только соберутся все команды */
+  autostart: boolean
+  /** Время на вопрос; null — как в комнате */
+  timer_duration: number | null
   created_at: string
   teams: Team[]
 }
@@ -149,6 +159,10 @@ export interface LivePayload {
   anticheat: boolean
   /** Сколько нарушений прощается до дисквалификации */
   warnings_allowed: number
+  /** Сколько команд ждёт ведущий (0 — без ограничения) */
+  expected_teams: number
+  /** Игроков в команде (0 — не задано) */
+  team_size: number
 }
 
 export interface LiveAnswer {

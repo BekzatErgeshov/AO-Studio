@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { Check, Copy, Loader2, LogOut, Rocket, ShieldCheck, Users, X } from 'lucide-react'
+import { Check, Copy, Loader2, LogOut, Rocket, ShieldCheck, Sparkles, Users, X } from 'lucide-react'
 import QRCode from 'qrcode'
 import { useEffect, useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
@@ -18,6 +18,7 @@ export default function Lobby() {
   const [copied, setCopied] = useState(false)
   const [error, setError] = useState('')
   const [starting, setStarting] = useState(false)
+  const [session, setSession] = useState<GameSession | null>(null)
 
   const joinUrl = code ? `${window.location.origin}/join/${code}` : ''
 
@@ -28,14 +29,23 @@ export default function Lobby() {
       .catch(() => setQr(''))
   }, [joinUrl])
 
-  // Опрос: кто уже подключился
+  // Опрос: кто уже подключился. Если собрались все команды, сервер стартует игру сам —
+  // ловим это здесь и уводим ведущего на игровой экран
   useEffect(() => {
     if (!sessionId) return
     let stop = false
     const load = () =>
       api
         .get<GameSession>(`/game/${sessionId}/`)
-        .then(({ data }) => !stop && setTeams(data.teams))
+        .then(({ data }) => {
+          if (stop) return
+          setTeams(data.teams)
+          setSession(data)
+          if (data.status === 'active') {
+            stop = true
+            navigate(`/game/${room?.format ?? 'classic'}`, { replace: true })
+          }
+        })
         .catch(() => {})
     load()
     const t = setInterval(load, 1500)
@@ -43,9 +53,12 @@ export default function Lobby() {
       stop = true
       clearInterval(t)
     }
-  }, [sessionId, setTeams])
+  }, [sessionId, setTeams, navigate, room?.format])
 
   if (!room || !sessionId || mode !== 'online' || !code) return <Navigate to="/rooms" replace />
+
+  const expected = session?.expected_teams ?? 0
+  const teamSize = session?.team_size ?? 0
 
   const kick = async (teamId: number) => {
     setTeams(teams.filter((t) => t.id !== teamId))
@@ -131,9 +144,34 @@ export default function Lobby() {
                 <Users size={22} className="text-green" /> Команды
               </h2>
               <span className="rounded-full bg-green/15 px-3 py-1 text-sm font-semibold text-green">
-                {teams.length} {plural(teams.length, 'команда', 'команды', 'команд')}
+                {expected ? `${teams.length} из ${expected}` : `${teams.length} ${plural(teams.length, 'команда', 'команды', 'команд')}`}
               </span>
             </div>
+
+            {expected > 0 && (
+              <div className="mb-4">
+                <div className="h-2 overflow-hidden rounded-full bg-fg/10">
+                  <motion.div
+                    className="h-full rounded-full bg-green"
+                    animate={{ width: `${Math.min(100, (teams.length / expected) * 100)}%` }}
+                    transition={{ duration: 0.4 }}
+                  />
+                </div>
+                <div className="mt-2 flex items-center gap-1.5 text-xs text-muted">
+                  {session?.autostart ? (
+                    <>
+                      <Sparkles size={14} className="shrink-0 text-green" />
+                      {teams.length >= expected
+                        ? 'Все собрались — начинаем…'
+                        : `Игра начнётся сама, когда подключатся все ${expected}`}
+                    </>
+                  ) : (
+                    <>Ждём {expected} {plural(expected, 'команду', 'команды', 'команд')}</>
+                  )}
+                  {teamSize > 0 && <span className="ml-auto shrink-0">по {teamSize} {plural(teamSize, 'игроку', 'игрока', 'игроков')}</span>}
+                </div>
+              </div>
+            )}
 
             <div className="scrollbar-thin min-h-[200px] flex-1 space-y-2 overflow-y-auto">
               {teams.length === 0 ? (

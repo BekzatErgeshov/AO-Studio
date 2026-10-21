@@ -30,6 +30,12 @@ interface UIState {
   startRoom: RoomListItem | null
   openStart: (room?: RoomListItem) => void
   closeStart: () => void
+
+  /** Запуск с умной доски: своя модалка с составом и временем */
+  boardModal: boolean
+  boardRoom: RoomListItem | null
+  openBoard: (room?: RoomListItem) => void
+  closeBoard: () => void
 }
 
 const theme = initialTheme()
@@ -64,5 +70,14 @@ export const useUI = create<UIState>((set, get) => ({
   },
   closeStart() {
     set({ startModal: false, startRoom: null })
+  },
+
+  boardModal: false,
+  boardRoom: null,
+  openBoard(room) {
+    set({ boardModal: true, boardRoom: room ?? null })
+  },
+  closeBoard() {
+    set({ boardModal: false, boardRoom: null })
   },
 }))

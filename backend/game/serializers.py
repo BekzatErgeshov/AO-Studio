@@ -14,7 +14,11 @@ class GameSessionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = GameSession
-        fields = ["id", "room", "host", "status", "mode", "code", "anticheat", "created_at", "teams"]
+        fields = [
+            "id", "room", "host", "status", "mode", "code", "anticheat",
+            "board", "expected_teams", "team_size", "autostart", "timer_duration",
+            "created_at", "teams",
+        ]
 
 
 class TeamInputSerializer(serializers.Serializer):
@@ -28,6 +32,12 @@ class GameStartSerializer(serializers.Serializer):
     teams = TeamInputSerializer(many=True, required=False, default=list)
     # Античит имеет смысл только в онлайне (устройства команд)
     anticheat = serializers.BooleanField(default=True)
+    # Настройки запуска с доски
+    board = serializers.BooleanField(default=False)
+    expected_teams = serializers.IntegerField(default=0, min_value=0, max_value=40)
+    team_size = serializers.IntegerField(default=0, min_value=0, max_value=20)
+    autostart = serializers.BooleanField(default=False)
+    timer_duration = serializers.IntegerField(required=False, allow_null=True, min_value=5, max_value=3600)
 
     def validate(self, attrs):
         # Офлайн — команды вводит ведущий; онлайн — команды подключаются сами по коду

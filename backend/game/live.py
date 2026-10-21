@@ -87,6 +87,9 @@ def public_payload(session: GameSession, team: Team | None = None):
         ],
         "anticheat": session.anticheat and session.mode == GameSession.MODE_ONLINE,
         "warnings_allowed": WARNINGS_ALLOWED,
+        # Сбор команд: сколько ждём и сколько игроков в команде (0 — не задано)
+        "expected_teams": session.expected_teams,
+        "team_size": session.team_size,
         "me": None,
         "my_answer": None,
     }
@@ -145,13 +148,23 @@ class LiveJoinView(LiveBase):
             return Response({"detail": "Введите название команды (минимум 2 символа)."}, status=status.HTTP_400_BAD_REQUEST)
         with transaction.atomic():
             teams = list(session.teams.select_for_update())
-            if len(teams) >= MAX_TEAMS:
-                return Response({"detail": "В игре уже максимум команд."}, status=status.HTTP_400_BAD_REQUEST)
+            limit = min(session.expected_teams or MAX_TEAMS, MAX_TEAMS)
+            if len(teams) >= limit:
+                return Response(
+                    {"detail": "Все места заняты — ведущий ждёт именно столько команд."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
             if any(t.name.lower() == name.lower() for t in teams):
                 return Response({"detail": "Команда с таким названием уже есть."}, status=status.HTTP_400_BAD_REQUEST)
             used = {t.color for t in teams}
             color = next((c for c in TEAM_COLORS if c not in used), TEAM_COLORS[len(teams) % len(TEAM_COLORS)])
             team = Team.objects.create(session=session, name=name, color=color, token=Team.new_token())
+            # Собрались все ожидаемые команды — начинаем сами, ведущему ничего нажимать не нужно
+            if session.autostart and session.expected_teams and len(teams) + 1 >= session.expected_teams:
+                session.status = GameSession.STATUS_ACTIVE
+                session.state = {"view": "waiting"}
+                session.state_version += 1
+                session.save(update_fields=["status", "state", "state_version"])
         return Response({"token": team.token, **public_payload(session, team)}, status=status.HTTP_201_CREATED)
 
 

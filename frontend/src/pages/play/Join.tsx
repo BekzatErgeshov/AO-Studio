@@ -6,6 +6,7 @@ import Logo from '../../components/Logo'
 import { getTeamToken, teamTokenKey } from '../../hooks/useLive'
 import { api, errorMessage } from '../../lib/api'
 import type { LivePayload } from '../../lib/types'
+import { plural } from '../../lib/utils'
 
 /** Вход команды в онлайн-игру: код комнаты + название команды. Аккаунт не нужен. */
 export default function Join() {
@@ -15,7 +16,8 @@ export default function Join() {
   const [name, setName] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const [room, setRoom] = useState<LivePayload['room'] | null>(null)
+  const [game, setGame] = useState<LivePayload | null>(null)
+  const room = game?.room ?? null
 
   const validCode = /^[A-Z0-9]{6}$/.test(code)
 
@@ -24,14 +26,14 @@ export default function Join() {
     if (validCode && getTeamToken(code)) navigate(`/play/${code}`, { replace: true })
   }, [code, validCode, navigate])
 
-  // Подсказываем, к какой игре подключаемся
+  // Подсказываем, к какой игре подключаемся и какой состав ждёт ведущий
   useEffect(() => {
-    setRoom(null)
+    setGame(null)
     if (!validCode) return
     api
       .get<LivePayload>(`/live/${code}/`)
-      .then(({ data }) => setRoom(data.room))
-      .catch(() => setRoom(null))
+      .then(({ data }) => setGame(data))
+      .catch(() => setGame(null))
   }, [code, validCode])
 
   const submit = async (e: FormEvent) => {
@@ -82,13 +84,18 @@ export default function Join() {
           />
         </label>
         {room && (
-          <div className="mt-2 text-center text-sm text-green">
-            🎯 {room.title}
+          <div className="mt-2 text-center text-sm text-green">🎯 {room.title}</div>
+        )}
+        {game && (game.expected_teams > 0 || game.team_size > 0) && (
+          <div className="mt-1 text-center text-xs text-muted">
+            {game.expected_teams > 0 && `Команд: ${game.teams.length} из ${game.expected_teams}`}
+            {game.expected_teams > 0 && game.team_size > 0 && ' · '}
+            {game.team_size > 0 && `по ${game.team_size} ${plural(game.team_size, 'игроку', 'игрока', 'игроков')}`}
           </div>
         )}
 
         <label className="mt-4 block">
-          <span className="mb-1.5 block text-sm font-medium text-muted">Название команды</span>
+          <span className="mb-1.5 block text-sm font-medium text-muted">Название команды или ваше имя</span>
           <input
             className="input text-lg"
             value={name}
@@ -98,6 +105,9 @@ export default function Join() {
             autoFocus={!!params.code}
           />
         </label>
+        <p className="mt-1.5 text-xs text-muted">
+          Одна команда играет с одного устройства — подключается кто-то один за всю команду.
+        </p>
 
         {error && <div className="mt-4 rounded-xl border border-red-400/30 bg-red-400/10 px-4 py-2.5 text-sm text-red-400">{error}</div>}
 
