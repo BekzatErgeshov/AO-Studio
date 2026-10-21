@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { Check, Copy, Loader2, LogOut, Rocket, Users, X } from 'lucide-react'
+import { Check, Copy, Loader2, LogOut, Rocket, ShieldCheck, Users, X } from 'lucide-react'
 import QRCode from 'qrcode'
 import { useEffect, useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
@@ -12,7 +12,7 @@ import { useGame } from '../../store/game'
 
 /** Лобби онлайн-игры: ведущий показывает код/QR, команды подключаются со своих устройств */
 export default function Lobby() {
-  const { sessionId, room, code, mode, setTeams, teams } = useGame()
+  const { sessionId, room, code, mode, anticheat, setTeams, teams } = useGame()
   const navigate = useNavigate()
   const [qr, setQr] = useState('')
   const [copied, setCopied] = useState(false)
@@ -109,6 +109,19 @@ export default function Lobby() {
             <button onClick={copy} className="btn btn-ghost mt-5 px-4 py-2 text-sm">
               {copied ? <Check size={16} /> : <Copy size={16} />} {copied ? 'Скопировано' : 'Скопировать ссылку'}
             </button>
+
+            {anticheat && (
+              <div className="mt-6 w-full rounded-2xl border border-green/40 bg-green/10 p-4 text-left text-sm">
+                <div className="flex items-center gap-2 font-bold text-green">
+                  <ShieldCheck size={16} /> Защита от списывания включена
+                </div>
+                <p className="mt-1.5 text-muted">
+                  Объявите командам правила: одно устройство на команду, игра раскрывается на весь экран. Свернуть игру
+                  или открыть другую вкладку — предупреждение, второй раз — <b className="text-fg">дисквалификация</b>.
+                  Нарушения вы увидите на игровом экране и сможете простить команду.
+                </p>
+              </div>
+            )}
           </motion.section>
 
           {/* Команды */}

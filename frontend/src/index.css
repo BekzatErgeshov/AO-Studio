@@ -257,6 +257,20 @@ kbd {
   display: none !important;
 }
 
+/* Античит на устройстве команды: нельзя выделять и копировать вопрос (поле ответа — можно) */
+.no-select,
+.no-select * {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.no-select input,
+.no-select textarea {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
 /* Плавающие эмодзи на фоне */
 .float-item {
   translate: -50% -50%;

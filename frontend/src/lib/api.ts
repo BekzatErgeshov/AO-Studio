@@ -8,7 +8,10 @@ export const ADMIN_URL = `${API_URL}/admin/`
 export const ACCESS_KEY = 'ao_access'
 export const REFRESH_KEY = 'ao_refresh'
 
-export const api = axios.create({ baseURL: `${API_URL}/api` })
+/** Адрес API — нужен там, где запрос идёт не через axios (например navigator.sendBeacon) */
+export const API_BASE = `${API_URL}/api`
+
+export const api = axios.create({ baseURL: API_BASE })
 
 // Автоматически прикрепляем JWT к каждому запросу
 api.interceptors.request.use((config) => {

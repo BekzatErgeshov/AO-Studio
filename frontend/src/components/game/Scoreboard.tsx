@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { Crown, Minus, Plus } from 'lucide-react'
+import { Ban, Crown, Minus, Plus } from 'lucide-react'
 import type { Team } from '../../lib/types'
 
 interface Props {
@@ -11,7 +11,10 @@ interface Props {
 
 /** Табло команд — сортируется по очкам, с анимацией перестановок */
 export default function Scoreboard({ teams, activeId, onAdjust, compact }: Props) {
-  const sorted = [...teams].sort((a, b) => b.score - a.score)
+  // Дисквалифицированные — в конце табло и вне зачёта
+  const sorted = [...teams].sort(
+    (a, b) => Number(!!a.disqualified) - Number(!!b.disqualified) || b.score - a.score,
+  )
   const max = Math.max(1, ...teams.map((t) => t.score))
 
   return (
@@ -25,7 +28,11 @@ export default function Scoreboard({ teams, activeId, onAdjust, compact }: Props
               layout
               transition={{ type: 'spring', damping: 22, stiffness: 260 }}
               className={`relative overflow-hidden rounded-xl border p-3 transition-colors ${
-                active ? 'border-green bg-green/10 shadow-[0_0_24px_rgba(16,185,129,0.25)]' : 'border-line bg-fg/[0.03]'
+                t.disqualified
+                  ? 'border-red-400/40 bg-red-400/5 opacity-70'
+                  : active
+                    ? 'border-green bg-green/10 shadow-[0_0_24px_rgba(16,185,129,0.25)]'
+                    : 'border-line bg-fg/[0.03]'
               }`}
             >
               <motion.div
@@ -35,13 +42,22 @@ export default function Scoreboard({ teams, activeId, onAdjust, compact }: Props
                 transition={{ duration: 0.6 }}
               />
               <div className="relative flex items-center gap-3">
-                <span className="w-5 text-center text-sm font-bold text-muted">{i + 1}</span>
+                <span className="w-5 text-center text-sm font-bold text-muted">
+                  {t.disqualified ? (
+                    <span title="Дисквалифицирована">
+                      <Ban size={14} className="mx-auto text-red-400" />
+                    </span>
+                  ) : (
+                    i + 1
+                  )}
+                </span>
                 <span className="h-3.5 w-3.5 shrink-0 rounded-full" style={{ background: t.color, boxShadow: `0 0 10px ${t.color}` }} />
                 <span className={`min-w-0 flex-1 truncate font-semibold ${compact ? 'text-sm' : ''}`}>
-                  {active && <Crown size={16} className="mr-1 inline -translate-y-0.5 text-yellow-400" fill="currentColor" />}
+                  {active && !t.disqualified && <Crown size={16} className="mr-1 inline -translate-y-0.5 text-yellow-400" fill="currentColor" />}
                   {t.name}
+                  {t.disqualified && <span className="ml-1.5 text-xs font-semibold text-red-400">ДК</span>}
                 </span>
-                {onAdjust && (
+                {onAdjust && !t.disqualified && (
                   <div className="host-only flex gap-0.5">
                     <button onClick={() => onAdjust(t.id, -1)} className="rounded-md p-1 text-muted hover:bg-fg/10 hover:text-fg" aria-label="Минус балл">
                       <Minus size={14} />
@@ -55,7 +71,9 @@ export default function Scoreboard({ teams, activeId, onAdjust, compact }: Props
                   key={t.score}
                   initial={{ scale: 1.6, color: '#34D399' }}
                   animate={{ scale: 1, color: 'var(--fg)' }}
-                  className={`min-w-[2ch] text-right font-extrabold tabular-nums ${compact ? 'text-lg' : 'text-2xl'}`}
+                  className={`min-w-[2ch] text-right font-extrabold tabular-nums ${compact ? 'text-lg' : 'text-2xl'} ${
+                    t.disqualified ? 'line-through opacity-60' : ''
+                  }`}
                 >
                   {t.score}
                 </motion.span>

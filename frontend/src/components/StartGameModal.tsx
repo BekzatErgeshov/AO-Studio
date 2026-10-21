@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { ArrowLeft, Loader2, Monitor, Plus, Rocket, Search, Smartphone, Trash2, User, Users } from 'lucide-react'
+import { ArrowLeft, Loader2, Monitor, Plus, Rocket, Search, ShieldCheck, Smartphone, Trash2, User, Users } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api, errorMessage } from '../lib/api'
@@ -44,6 +44,7 @@ export default function StartGameModal() {
   const [error, setError] = useState('')
   const [starting, setStarting] = useState(false)
   const [mode, setMode] = useState<GameMode>('offline')
+  const [anticheat, setAnticheat] = useState(true)
 
   // Сброс при открытии
   useEffect(() => {
@@ -89,11 +90,12 @@ export default function StartGameModal() {
         api.post<GameSession>('/game/start/', {
           room_id: room.id,
           mode,
+          anticheat: online && anticheat,
           // Онлайн: команды подключатся сами по коду; Один: команда — сам игрок
           teams: mode === 'offline' ? named.map((t) => ({ name: t.name, color: t.color })) : [],
         }),
       ])
-      startGame(session.id, detail, session.teams, mode, session.code)
+      startGame(session.id, detail, session.teams, mode, session.code, session.anticheat)
       // Чистим прогресс предыдущей игры
       Object.keys(sessionStorage)
         .filter((k) => k.startsWith('ao_progress'))
@@ -233,11 +235,36 @@ export default function StartGameModal() {
                 и начисляет баллы. В конце — итог и работа над ошибками.
               </div>
             ) : mode === 'online' ? (
-              <div className="rounded-xl border border-dashed border-line p-4 text-sm text-muted">
-                После запуска появится <b className="text-fg">код комнаты</b> и QR-код. Команды открывают сайт на телефоне или
-                компьютере, вводят код и название команды — и сразу появляются у вас в списке. Подходит и для зала, и для
-                игры на расстоянии.
-              </div>
+              <>
+                <div className="rounded-xl border border-dashed border-line p-4 text-sm text-muted">
+                  После запуска появится <b className="text-fg">код комнаты</b> и QR-код. Команды открывают сайт на телефоне или
+                  компьютере, вводят код и название команды — и сразу появляются у вас в списке. Подходит и для зала, и для
+                  игры на расстоянии.
+                </div>
+
+                {/* Античит: контроль ухода с экрана на устройствах команд */}
+                <button
+                  type="button"
+                  onClick={() => setAnticheat((v) => !v)}
+                  className={`mt-3 flex w-full items-start gap-3 rounded-xl border p-4 text-left transition ${
+                    anticheat ? 'border-green bg-green/10' : 'border-line hover:border-green/40'
+                  }`}
+                >
+                  <ShieldCheck size={20} className={`mt-0.5 shrink-0 ${anticheat ? 'text-green' : 'text-muted'}`} />
+                  <span className="min-w-0 flex-1">
+                    <span className="flex items-center justify-between gap-2 font-semibold">
+                      Защита от списывания
+                      <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-bold ${anticheat ? 'bg-green text-white' : 'bg-fg/10 text-muted'}`}>
+                        {anticheat ? 'Вкл' : 'Выкл'}
+                      </span>
+                    </span>
+                    <span className="mt-1 block text-xs text-muted">
+                      Игра на телефоне команды раскрывается на весь экран. Свернули игру или открыли другую вкладку —
+                      предупреждение, второй раз — дисквалификация. Вы видите все нарушения и можете простить команду.
+                    </span>
+                  </span>
+                </button>
+              </>
             ) : (
             <>
             <div className="mb-3 flex items-center gap-2 text-sm text-muted">

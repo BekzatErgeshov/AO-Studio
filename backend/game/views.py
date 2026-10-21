@@ -10,7 +10,7 @@ from rest_framework.views import APIView
 
 from rooms.models import AORoom
 
-from .live import answer_matches
+from .live import WARNINGS_ALLOWED, answer_matches
 from .models import Answer, GameSession, Team, generate_code
 from .serializers import (
     GameSessionSerializer,
@@ -43,6 +43,7 @@ class GameStartView(APIView):
             status=GameSession.STATUS_LOBBY if online else GameSession.STATUS_ACTIVE,
             code=generate_code() if online else None,
             state={"view": "lobby"} if online else {},
+            anticheat=online and data["anticheat"],
         )
         teams = data["teams"]
         if data["mode"] == GameSession.MODE_SOLO:
@@ -70,6 +71,11 @@ class GameScoreView(APIView):
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
         team = get_object_or_404(Team, pk=data["team_id"], session=session)
+        if team.disqualified:
+            return Response(
+                {"detail": "Команда дисквалифицирована — её баллы заморожены."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         if "score" in data:
             team.score = data["score"]
             team.save(update_fields=["score"])
@@ -177,3 +183,59 @@ class GameAnswersView(APIView):
             ],
             "pick": session.pick,
         })
+
+
+class GameAnticheatView(APIView):
+    """Ведущий следит за античитом: предупреждения, дисквалификации и связь с устройствами команд."""
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, pk):
+        session = host_session(request, pk)
+        now = timezone.now()
+        return Response({
+            "anticheat": session.anticheat,
+            "warnings_allowed": WARNINGS_ALLOWED,
+            "teams": [
+                {
+                    "id": t.id,
+                    "name": t.name,
+                    "color": t.color,
+                    "score": t.score,
+                    "warnings": t.warnings,
+                    "disqualified": t.disqualified,
+                    "dq_reason": t.dq_reason,
+                    # Устройство молчит дольше 10 с — скорее всего, страница игры закрыта
+                    "offline": bool(t.last_seen and (now - t.last_seen).total_seconds() > 10),
+                }
+                for t in session.teams.all()
+            ],
+            "violations": [
+                {
+                    "id": v.id,
+                    "team_id": v.team_id,
+                    "team": v.team.name,
+                    "kind": v.kind,
+                    "label": v.get_kind_display(),
+                    "fatal": v.fatal,
+                    "at": v.at,
+                }
+                for v in session.violations.select_related("team")[:30]
+            ],
+        })
+
+
+class GamePardonView(APIView):
+    """Ведущий прощает команду: снимает дисквалификацию и обнуляет предупреждения."""
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, pk, team_id):
+        session = host_session(request, pk)
+        team = get_object_or_404(Team, pk=team_id, session=session)
+        team.warnings = 0
+        team.disqualified = False
+        team.dq_reason = ""
+        team.dq_at = None
+        team.save(update_fields=["warnings", "disqualified", "dq_reason", "dq_at"])
+        return Response({"ok": True, "team_id": team.id})

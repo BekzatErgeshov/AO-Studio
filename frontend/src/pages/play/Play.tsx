@@ -1,10 +1,11 @@
 import confetti from 'canvas-confetti'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Check, Crown, Loader2, LogOut, Send, Trophy, Wifi, WifiOff, X } from 'lucide-react'
+import { AlertTriangle, Ban, Check, Crown, Loader2, LockKeyhole, LogOut, Send, ShieldCheck, Trophy, Wifi, WifiOff, X } from 'lucide-react'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import CircularTimer from '../../components/game/CircularTimer'
 import Logo from '../../components/Logo'
+import { useAnticheat } from '../../hooks/useAnticheat'
 import { getTeamToken, teamTokenKey, useLiveState, useServerTimer } from '../../hooks/useLive'
 import { api, errorMessage } from '../../lib/api'
 import { sounds } from '../../lib/sounds'
@@ -26,22 +27,90 @@ function TeamChip({ team, big }: { team: Team; big?: boolean }) {
 }
 
 function Standings({ teams, meId }: { teams: Team[]; meId?: number }) {
-  const ranked = [...teams].sort((a, b) => b.score - a.score)
+  // Дисквалифицированные — вне зачёта, в конце списка и без номера места
+  const ranked = [...teams].sort(
+    (a, b) => Number(!!a.disqualified) - Number(!!b.disqualified) || b.score - a.score,
+  )
   return (
     <div className="space-y-1.5">
       {ranked.map((t, i) => (
         <motion.div
           layout
           key={t.id}
-          className={`flex items-center gap-3 rounded-xl border px-3 py-2 ${t.id === meId ? 'border-green bg-green/10' : 'border-line bg-fg/[0.03]'}`}
+          className={`flex items-center gap-3 rounded-xl border px-3 py-2 ${
+            t.disqualified
+              ? 'border-red-400/30 bg-red-400/5 opacity-60'
+              : t.id === meId
+                ? 'border-green bg-green/10'
+                : 'border-line bg-fg/[0.03]'
+          }`}
         >
-          <span className="w-5 text-center text-sm font-bold text-muted">{i + 1}</span>
+          <span className="w-5 text-center text-sm font-bold text-muted">
+            {t.disqualified ? <Ban size={14} className="mx-auto text-red-400" /> : i + 1}
+          </span>
           <span className="min-w-0 flex-1">
             <TeamChip team={t} />
+            {t.disqualified && <span className="ml-1.5 text-xs font-semibold text-red-400">вне зачёта</span>}
           </span>
-          <span className="text-lg font-extrabold tabular-nums">{t.score}</span>
+          <span className={`text-lg font-extrabold tabular-nums ${t.disqualified ? 'text-muted line-through' : ''}`}>{t.score}</span>
         </motion.div>
       ))}
+    </div>
+  )
+}
+
+/** Заглушка до входа в защищённый режим: без полного экрана вопрос не показываем */
+function ArmGate({ warnings, allowed, onArm }: { warnings: number; allowed: number; onArm: () => void }) {
+  const returning = warnings > 0
+  return (
+    <div className="glass rounded-3xl p-6 text-center">
+      <LockKeyhole className="mx-auto text-green" size={44} />
+      <h1 className="mt-3 text-2xl font-extrabold">{returning ? 'Вернитесь в игру' : 'Защищённый режим'}</h1>
+      <p className="mt-2 text-muted">
+        Игра идёт в полноэкранном режиме. Пока вы не вернётесь, вопрос и поле ответа скрыты.
+      </p>
+      <ul className="mt-5 space-y-2 text-left text-sm text-muted">
+        <li className="flex gap-2">
+          <AlertTriangle size={16} className="mt-0.5 shrink-0 text-yellow-400" />
+          Нельзя сворачивать игру, открывать другие вкладки и приложения.
+        </li>
+        <li className="flex gap-2">
+          <AlertTriangle size={16} className="mt-0.5 shrink-0 text-yellow-400" />
+          {allowed > 0
+            ? `Первый уход с экрана — предупреждение, следующий — дисквалификация.`
+            : 'Любой уход с экрана — дисквалификация.'}
+        </li>
+        <li className="flex gap-2">
+          <AlertTriangle size={16} className="mt-0.5 shrink-0 text-yellow-400" />
+          Ведущий видит каждое нарушение.
+        </li>
+      </ul>
+      {returning && (
+        <div className="mt-5 rounded-2xl border border-yellow-400/40 bg-yellow-400/10 px-4 py-3 text-sm font-semibold text-yellow-400">
+          У вас {warnings} из {allowed + 1} нарушений. Ещё одно — и команда вне зачёта.
+        </div>
+      )}
+      <button onClick={onArm} className="btn btn-primary mt-6 w-full py-3.5 text-base">
+        <ShieldCheck size={20} /> {returning ? 'Вернуться в игру' : 'Войти в игру'}
+      </button>
+    </div>
+  )
+}
+
+/** Экран дисквалифицированной команды */
+function DqScreen({ reason, teams, meId }: { reason: string; teams: Team[]; meId: number }) {
+  return (
+    <div className="glass rounded-3xl border-red-400/40 p-6 text-center">
+      <Ban className="mx-auto text-red-400" size={48} />
+      <h1 className="mt-3 text-2xl font-extrabold text-red-400">Команда дисквалифицирована</h1>
+      <p className="mt-2 text-muted">{reason || 'Вы покинули экран игры.'}</p>
+      <p className="mt-3 text-sm text-muted">
+        Ответы больше не принимаются, баллы заморожены. Если это ошибка — подойдите к ведущему: он может вернуть
+        команду в игру.
+      </p>
+      <div className="mt-6 text-left">
+        <Standings teams={teams} meId={meId} />
+      </div>
     </div>
   )
 }
@@ -208,6 +277,19 @@ export default function Play() {
   const state = data?.state ?? {}
   const finished = data?.status === 'finished' || state.view === 'results'
 
+  // Античит: игра держится в полном экране, уход с экрана = нарушение (см. useAnticheat)
+  const ac = useAnticheat({
+    code: upper,
+    enabled: !!data?.anticheat,
+    active: data?.status === 'active' && !finished,
+    server: data?.me ? { warnings: data.me.warnings ?? 0, disqualified: !!data.me.disqualified, dq_reason: data.me.dq_reason ?? '' } : null,
+  })
+
+  // Игра закончилась — отпускаем телефон
+  useEffect(() => {
+    if (finished && document.fullscreenElement) document.exitFullscreen?.().catch(() => {})
+  }, [finished])
+
   // Звук на новый вопрос, конфетти в конце
   useEffect(() => {
     const qid = state.view === 'question' ? state.question?.id ?? null : null
@@ -285,9 +367,49 @@ export default function Play() {
         <span title={error ? 'Нет связи' : 'Онлайн'} className={error ? 'text-red-400' : 'text-green'}>
           {error ? <WifiOff size={16} /> : <Wifi size={16} />}
         </span>
+        {data.anticheat && !finished && (
+          <span
+            title={
+              ac.disqualified
+                ? 'Команда дисквалифицирована'
+                : ac.warnings > 0
+                  ? `Нарушений: ${ac.warnings} из ${(data.warnings_allowed ?? 1) + 1}`
+                  : 'Защищённый режим включён'
+            }
+            className={ac.disqualified ? 'text-red-400' : ac.warnings > 0 ? 'text-yellow-400' : 'text-green'}
+          >
+            {ac.disqualified ? <Ban size={16} /> : ac.warnings > 0 ? <AlertTriangle size={16} /> : <ShieldCheck size={16} />}
+          </span>
+        )}
       </header>
 
       <main className="relative z-10 mx-auto max-w-2xl px-4 pt-5">
+        {/* Предупреждение после первого ухода с экрана */}
+        <AnimatePresence>
+          {ac.lastWarning && !ac.disqualified && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="mb-4 flex items-start gap-3 rounded-2xl border border-yellow-400/40 bg-yellow-400/10 p-4"
+            >
+              <AlertTriangle size={20} className="mt-0.5 shrink-0 text-yellow-400" />
+              <div className="min-w-0 flex-1 text-sm">
+                <div className="font-bold text-yellow-400">Предупреждение {ac.warnings} из {(data.warnings_allowed ?? 1) + 1}</div>
+                <div className="mt-0.5 text-muted">{ac.lastWarning}. Ещё одно нарушение — дисквалификация.</div>
+              </div>
+              <button onClick={ac.dismiss} className="shrink-0 rounded-lg p-1 text-muted hover:text-fg" aria-label="Скрыть">
+                <X size={16} />
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {!finished && ac.disqualified ? (
+          <DqScreen reason={ac.dqReason} teams={data.teams} meId={me.id} />
+        ) : !finished && ac.needsArm ? (
+          <ArmGate warnings={ac.warnings} allowed={data.warnings_allowed ?? 1} onArm={ac.arm} />
+        ) : (
         <AnimatePresence mode="wait">
           <motion.div
             key={`${finished ? 'results' : state.view}-${q?.id ?? ''}`}
@@ -319,6 +441,18 @@ export default function Play() {
                 <div className="text-5xl">✅</div>
                 <h1 className="mt-3 text-2xl font-extrabold">Вы в игре!</h1>
                 <p className="mt-1 text-muted">Ждём, когда ведущий начнёт. Не закрывайте эту страницу.</p>
+                {data.anticheat && (
+                  <div className="mt-4 rounded-2xl border border-yellow-400/40 bg-yellow-400/10 p-4 text-left text-sm">
+                    <div className="flex items-center gap-2 font-bold text-yellow-400">
+                      <ShieldCheck size={16} /> Игра идёт в защищённом режиме
+                    </div>
+                    <p className="mt-1.5 text-muted">
+                      После старта игра развернётся на весь экран. Нельзя сворачивать её, переключаться на другие
+                      вкладки и приложения: первый раз — предупреждение, второй — дисквалификация. Отключите
+                      уведомления и не принимайте звонки на этом устройстве.
+                    </p>
+                  </div>
+                )}
                 <div className="mt-6 text-left">
                   <div className="mb-2 text-xs font-semibold uppercase tracking-widest text-muted">Команды ({data.teams.length})</div>
                   <div className="flex flex-wrap gap-2">
@@ -413,8 +547,9 @@ export default function Play() {
             )}
           </motion.div>
         </AnimatePresence>
+        )}
 
-        {!finished && data.status !== 'lobby' && (
+        {!finished && data.status !== 'lobby' && !ac.disqualified && (
           <section className="mt-6">
             <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-muted">
               <Crown size={14} /> Табло

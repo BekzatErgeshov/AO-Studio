@@ -6,7 +6,7 @@ from .models import GameSession, Team
 class TeamSerializer(serializers.ModelSerializer):
     class Meta:
         model = Team
-        fields = ["id", "name", "color", "score"]
+        fields = ["id", "name", "color", "score", "warnings", "disqualified", "dq_reason"]
 
 
 class GameSessionSerializer(serializers.ModelSerializer):
@@ -14,7 +14,7 @@ class GameSessionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = GameSession
-        fields = ["id", "room", "host", "status", "mode", "code", "created_at", "teams"]
+        fields = ["id", "room", "host", "status", "mode", "code", "anticheat", "created_at", "teams"]
 
 
 class TeamInputSerializer(serializers.Serializer):
@@ -26,6 +26,8 @@ class GameStartSerializer(serializers.Serializer):
     room_id = serializers.IntegerField()
     mode = serializers.ChoiceField(choices=GameSession.MODE_CHOICES, default=GameSession.MODE_OFFLINE)
     teams = TeamInputSerializer(many=True, required=False, default=list)
+    # Античит имеет смысл только в онлайне (устройства команд)
+    anticheat = serializers.BooleanField(default=True)
 
     def validate(self, attrs):
         # Офлайн — команды вводит ведущий; онлайн — команды подключаются сами по коду

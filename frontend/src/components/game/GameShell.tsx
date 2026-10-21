@@ -7,6 +7,7 @@ import { useGame } from '../../store/game'
 import FormatBadge from '../FormatBadge'
 import Logo from '../Logo'
 import Modal from '../Modal'
+import AnticheatPanel from './AnticheatPanel'
 
 interface Props {
   children: ReactNode
@@ -114,6 +115,9 @@ export default function GameShell({ children, hotkeys, onFinish }: Props) {
       </AnimatePresence>
 
       <main className="relative z-10 flex flex-1 flex-col">{children}</main>
+
+      {/* Античит: нарушения команд и дисквалификации (только онлайн-игра с защитой) */}
+      <AnticheatPanel />
 
       <Modal open={exitOpen} onClose={() => setExitOpen(false)} title="Выйти из игры?" size="sm">
         <p className="text-muted">Прогресс текущей игры будет потерян.</p>

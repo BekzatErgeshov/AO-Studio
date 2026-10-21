@@ -58,6 +58,32 @@ export interface Team {
   name: string
   color: string
   score: number
+  /** Античит: команда дисквалифицирована, её баллы заморожены и она вне зачёта */
+  disqualified?: boolean
+  warnings?: number
+  dq_reason?: string
+}
+
+/** Что зафиксировал браузер устройства команды */
+export type ViolationKind = 'hidden' | 'blur' | 'fullscreen' | 'left' | 'lost'
+
+export interface Violation {
+  id: number
+  team_id: number
+  team: string
+  kind: ViolationKind
+  label: string
+  /** Нарушение, за которое дисквалифицировали */
+  fatal: boolean
+  at: string
+}
+
+/** Сводка античита для ведущего */
+export interface AnticheatStatus {
+  anticheat: boolean
+  warnings_allowed: number
+  teams: (Team & { warnings: number; disqualified: boolean; dq_reason: string; offline: boolean })[]
+  violations: Violation[]
 }
 
 /** solo — «Один»; offline/online — «Команда» на одном экране / со своих устройств */
@@ -70,6 +96,7 @@ export interface GameSession {
   status: 'lobby' | 'active' | 'finished'
   mode: GameMode
   code: string | null
+  anticheat: boolean
   created_at: string
   teams: Team[]
 }
@@ -118,6 +145,10 @@ export interface LivePayload {
   teams: Team[]
   me: Team | null
   my_answer: string | null
+  /** Античит включён ведущим: устройство команды держит игру в полном экране */
+  anticheat: boolean
+  /** Сколько нарушений прощается до дисквалификации */
+  warnings_allowed: number
 }
 
 export interface LiveAnswer {

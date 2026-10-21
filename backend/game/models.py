@@ -46,6 +46,8 @@ class GameSession(models.Model):
     timer_left = models.PositiveIntegerField(null=True, blank=True)  # остаток, если таймер на паузе
     # Выбор клетки/карточки командой со своего устройства: {"team_id", "question_id", "at"}
     pick = models.JSONField(null=True, blank=True)
+    # Античит (онлайн): устройства команд держат игру в полном экране, уход с экрана наказывается
+    anticheat = models.BooleanField("античит", default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -64,6 +66,12 @@ class Team(models.Model):
     score = models.IntegerField(default=0)
     # Секрет устройства команды (онлайн): им подписываются ответы
     token = models.CharField(max_length=64, blank=True, default="", editable=False)
+    # Античит: счётчик нарушений, дисквалификация и момент последней связи с устройством
+    warnings = models.PositiveIntegerField("предупреждения", default=0)
+    disqualified = models.BooleanField("дисквалифицирована", default=False)
+    dq_reason = models.CharField("причина дисквалификации", max_length=120, blank=True, default="")
+    dq_at = models.DateTimeField("дисквалифицирована в", null=True, blank=True)
+    last_seen = models.DateTimeField("последняя связь", null=True, blank=True)
 
     class Meta:
         verbose_name = "команда"
@@ -92,3 +100,31 @@ class Answer(models.Model):
         verbose_name_plural = "ответы команд"
         ordering = ["submitted_at"]
         constraints = [models.UniqueConstraint(fields=["team", "question"], name="one_answer_per_question")]
+
+
+class Violation(models.Model):
+    """Нарушение античита: команда ушла с экрана игры со своего устройства."""
+
+    # Что именно зафиксировал браузер команды
+    KINDS = [
+        ("hidden", "Свернул игру или переключился на другое приложение/вкладку"),
+        ("blur", "Окно игры потеряло фокус"),
+        ("fullscreen", "Вышел из полноэкранного режима"),
+        ("left", "Закрыл страницу игры"),
+        ("lost", "Устройство пропало со связи"),
+    ]
+
+    session = models.ForeignKey(GameSession, on_delete=models.CASCADE, related_name="violations")
+    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="violations")
+    kind = models.CharField(max_length=20, choices=KINDS)
+    # Нарушение после исчерпанных предупреждений — то, за которое дисквалифицировали
+    fatal = models.BooleanField(default=False)
+    at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "нарушение"
+        verbose_name_plural = "нарушения"
+        ordering = ["-at"]
+
+    def __str__(self):
+        return f"{self.team} — {self.get_kind_display()}"

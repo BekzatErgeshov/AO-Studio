@@ -1,19 +1,19 @@
 from django.contrib import admin
 from django.utils.html import format_html
 
-from .models import Answer, GameSession, Team
+from .models import Answer, GameSession, Team, Violation
 
 
 class TeamInline(admin.TabularInline):
     model = Team
     extra = 0
-    fields = ["name", "color", "score"]
+    fields = ["name", "color", "score", "warnings", "disqualified", "dq_reason"]
 
 
 @admin.register(GameSession)
 class GameSessionAdmin(admin.ModelAdmin):
-    list_display = ["id", "room", "host", "mode", "code", "status", "teams_list", "created_at"]
-    list_filter = ["mode", "status", "room__format", "created_at"]
+    list_display = ["id", "room", "host", "mode", "code", "status", "anticheat", "teams_list", "created_at"]
+    list_filter = ["mode", "status", "anticheat", "room__format", "created_at"]
     list_editable = ["status"]
     search_fields = ["room__title", "host__username"]
     autocomplete_fields = ["room", "host"]
@@ -30,7 +30,8 @@ class GameSessionAdmin(admin.ModelAdmin):
 
 @admin.register(Team)
 class TeamAdmin(admin.ModelAdmin):
-    list_display = ["name", "color_box", "score", "session"]
+    list_display = ["name", "color_box", "score", "warnings", "disqualified", "session"]
+    list_filter = ["disqualified"]
     search_fields = ["name", "session__room__title"]
     autocomplete_fields = ["session"]
 
@@ -48,3 +49,12 @@ class AnswerAdmin(admin.ModelAdmin):
     search_fields = ["text", "team__name", "question__text"]
     autocomplete_fields = ["team", "session"]
     raw_id_fields = ["question"]
+
+
+@admin.register(Violation)
+class ViolationAdmin(admin.ModelAdmin):
+    list_display = ["team", "kind", "fatal", "session", "at"]
+    list_filter = ["kind", "fatal"]
+    search_fields = ["team__name", "session__room__title"]
+    autocomplete_fields = ["team", "session"]
+    date_hierarchy = "at"

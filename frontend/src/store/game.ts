@@ -11,8 +11,12 @@ interface GameState {
   /** offline — один экран; online — команды играют со своих устройств по коду */
   mode: GameMode
   code: string | null
-  start: (sessionId: number, room: RoomDetail, teams: Team[], mode?: GameMode, code?: string | null) => void
+  /** Античит (онлайн): устройства команд держат игру в полном экране */
+  anticheat: boolean
+  start: (sessionId: number, room: RoomDetail, teams: Team[], mode?: GameMode, code?: string | null, anticheat?: boolean) => void
   setTeams: (teams: Team[]) => void
+  /** Обновить флаги античита у команд (опрос ведущего), не затирая баллы */
+  setTeamFlags: (flags: { id: number; warnings: number; disqualified: boolean; dq_reason: string }[]) => void
   addScore: (teamId: number, delta: number) => void
   finish: () => Promise<void>
   reset: () => void
@@ -28,17 +32,30 @@ export const useGame = create<GameState>()(
       finished: false,
       mode: 'offline',
       code: null,
+      anticheat: false,
 
-      start(sessionId, room, teams, mode = 'offline', code = null) {
-        set({ sessionId, room, teams, finished: false, mode, code })
+      start(sessionId, room, teams, mode = 'offline', code = null, anticheat = false) {
+        set({ sessionId, room, teams, finished: false, mode, code, anticheat })
       },
 
       setTeams(teams) {
         set({ teams })
       },
 
+      setTeamFlags(flags) {
+        const byId = new Map(flags.map((f) => [f.id, f]))
+        set({
+          teams: get().teams.map((t) => {
+            const f = byId.get(t.id)
+            return f ? { ...t, warnings: f.warnings, disqualified: f.disqualified, dq_reason: f.dq_reason } : t
+          }),
+        })
+      },
+
       addScore(teamId, delta) {
         if (!delta) return
+        // Дисквалифицированная команда вне зачёта — баллы заморожены (сервер тоже это проверяет)
+        if (get().teams.find((t) => t.id === teamId)?.disqualified) return
         set({ teams: get().teams.map((t) => (t.id === teamId ? { ...t, score: t.score + delta } : t)) })
         const id = get().sessionId
         if (id) api.patch(`/game/${id}/score/`, { team_id: teamId, delta }).catch(() => {})
@@ -51,7 +68,7 @@ export const useGame = create<GameState>()(
       },
 
       reset() {
-        set({ sessionId: null, room: null, teams: [], finished: false, mode: 'offline', code: null })
+        set({ sessionId: null, room: null, teams: [], finished: false, mode: 'offline', code: null, anticheat: false })
       },
     }),
     { name: 'ao_game', storage: createJSONStorage(() => sessionStorage) },
