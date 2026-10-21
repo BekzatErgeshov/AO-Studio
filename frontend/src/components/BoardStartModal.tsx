@@ -18,7 +18,8 @@ import Modal from './Modal'
  * соберутся по QR-коду. Кнопка «Начать игру» в лобби при этом остаётся — на всякий случай.
  */
 
-const TIMERS = [30, 45, 60, 90, 120]
+// Одинаковый набор во всех форматах и режимах
+const TIMERS = [30, 45, 60]
 
 function useDebounced<T>(value: T, ms = 300) {
   const [v, setV] = useState(value)
@@ -84,7 +85,6 @@ export default function BoardStartModal() {
   const [loadingRooms, setLoadingRooms] = useState(false)
 
   const [teams, setTeams] = useState(4)
-  const [teamSize, setTeamSize] = useState(4)
   const [timer, setTimer] = useState(60)
   const [autostart, setAutostart] = useState(true)
   const [anticheat, setAnticheat] = useState(true)
@@ -99,7 +99,7 @@ export default function BoardStartModal() {
     setStarting(false)
     if (boardRoom) {
       setRoom(boardRoom)
-      setTimer(boardRoom.timer_duration || 60)
+      setTimer(TIMERS.includes(boardRoom.timer_duration) ? boardRoom.timer_duration : 60)
       setStep(2)
     } else {
       setRoom(null)
@@ -124,7 +124,7 @@ export default function BoardStartModal() {
 
   const pick = (r: RoomListItem) => {
     setRoom(r)
-    setTimer(r.timer_duration || 60)
+    setTimer(TIMERS.includes(r.timer_duration) ? r.timer_duration : 60)
     setStep(2)
   }
 
@@ -141,7 +141,6 @@ export default function BoardStartModal() {
           board: true,
           anticheat,
           expected_teams: teams,
-          team_size: teamSize,
           autostart,
           timer_duration: timer,
           teams: [],
@@ -244,32 +243,16 @@ export default function BoardStartModal() {
               </div>
             )}
 
-            {/* Состав: сколько команд ждём и сколько игроков в каждой */}
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="rounded-xl border border-line p-4">
-                <div className="mb-3 flex items-center gap-2 text-sm font-semibold">
-                  <Users size={16} className="text-green" /> Команд в игре
-                </div>
-                <Counter value={teams} min={1} max={40} onChange={setTeams} hint={plural(teams, 'команда', 'команды', 'команд')} />
+            {/* Сколько команд ждём: каждая играет с одного устройства */}
+            <div className="rounded-xl border border-line p-4">
+              <div className="mb-3 flex items-center gap-2 text-sm font-semibold">
+                <Users size={16} className="text-green" /> Команд в игре
               </div>
-              <div className="rounded-xl border border-line p-4">
-                <div className="mb-3 flex items-center gap-2 text-sm font-semibold">
-                  <Users size={16} className="text-green" /> Игроков в команде
-                </div>
-                <Counter
-                  value={teamSize}
-                  min={1}
-                  max={20}
-                  onChange={setTeamSize}
-                  hint={plural(teamSize, 'игрок', 'игрока', 'игроков')}
-                />
-              </div>
+              <Counter value={teams} min={1} max={40} onChange={setTeams} hint={plural(teams, 'команда', 'команды', 'команд')} />
+              <p className="mt-3 text-xs text-muted">
+                Команда играет с одного устройства — подключается кто-то один за всю команду.
+              </p>
             </div>
-
-            <p className="mt-2 text-xs text-muted">
-              Всего ожидается до {teams * teamSize} участников. Играет одна команда с одного устройства — число
-              игроков показывается командам при входе.
-            </p>
 
             {/* Время на вопрос */}
             <div className="mt-4 rounded-xl border border-line p-4">
@@ -282,15 +265,6 @@ export default function BoardStartModal() {
                     {t} сек
                   </button>
                 ))}
-                <input
-                  type="number"
-                  min={5}
-                  max={3600}
-                  value={timer}
-                  onChange={(e) => setTimer(Math.max(5, Math.min(3600, Number(e.target.value) || 5)))}
-                  className="input h-9 w-24 py-1 text-center"
-                  aria-label="Своё время в секундах"
-                />
               </div>
             </div>
 

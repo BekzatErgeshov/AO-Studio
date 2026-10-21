@@ -3,7 +3,7 @@ from rest_framework.test import APITestCase
 
 from rooms.models import AORoom, Question
 
-from .models import GameSession, Team, Violation
+from .models import Answer, GameSession, Team, Violation
 
 User = get_user_model()
 
@@ -174,7 +174,7 @@ class BoardLaunchTests(APITestCase):
             "expected_teams": 2,
             "team_size": 4,
             "autostart": True,
-            "timer_duration": 90,
+            "timer_duration": 45,
             "teams": [],
         }
         payload.update(extra)
@@ -192,13 +192,45 @@ class BoardLaunchTests(APITestCase):
         self.assertTrue(data["autostart"])
         self.assertEqual(data["expected_teams"], 2)
         self.assertEqual(data["team_size"], 4)
-        self.assertEqual(data["timer_duration"], 90)
+        self.assertEqual(data["timer_duration"], 45)
         self.assertEqual(data["status"], "lobby")
 
         # Команда видит ожидаемый состав ещё до входа
         res = self.client.get(f"/api/live/{data['code']}/")
         self.assertEqual(res.data["expected_teams"], 2)
         self.assertEqual(res.data["team_size"], 4)
+
+    def test_timer_must_be_one_of_allowed(self):
+        self.client.force_authenticate(self.host)
+        res = self.client.post(
+            "/api/game/start/",
+            {"room_id": self.room.id, "mode": "online", "board": True, "timer_duration": 90, "teams": []},
+            format="json",
+        )
+        self.assertEqual(res.status_code, 400)
+        self.assertIn("timer_duration", res.data)
+
+    def test_answer_is_locked_after_first_submit(self):
+        """Ответ отправляется один раз: до конца таймера изменить его нельзя."""
+        data = self.start_board(autostart=False)
+        code = data["code"]
+        token = self.join(code, "Первая").data["token"]
+        session = GameSession.objects.get(pk=data["id"])
+        question = self.room.questions.first()
+        session.status = GameSession.STATUS_ACTIVE
+        session.state = {"view": "question", "accepting": True, "question": {"id": question.id}}
+        session.save(update_fields=["status", "state"])
+
+        send = lambda text: self.client.post(
+            f"/api/live/{code}/answer/",
+            {"question_id": question.id, "text": text},
+            format="json",
+            headers={"X-Team-Token": token},
+        )
+        self.assertEqual(send("Иссык-Куль").status_code, 200)
+        res = send("Сон-Куль")
+        self.assertEqual(res.status_code, 400)
+        self.assertEqual(Answer.objects.get(team__token=token, question=question).text, "Иссык-Куль")
 
     def test_autostart_when_all_teams_joined(self):
         data = self.start_board()

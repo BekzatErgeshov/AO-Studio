@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
 import { api } from '../lib/api'
-import { useUI } from '../store/ui'
 
 // Минимальные типы Google Identity Services
 interface GoogleId {
@@ -50,10 +49,28 @@ interface Props {
   onCredential: (credential: string) => void
 }
 
-/** Официальная кнопка «Войти через Google». Ничего не рисует, если Google не настроен. */
+/** Логотип Google — обязателен на кнопке входа по правилам Google */
+function GoogleG({ size = 18 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 48 48" aria-hidden>
+      <path fill="#4285F4" d="M45.1 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h11.8c-.5 2.7-2 5-4.4 6.600v5.5h7.1c4.2-3.8 6.6-9.5 6.6-16.1z" />
+      <path fill="#34A853" d="M24 46c6 0 11-2 14.6-5.4l-7.1-5.5c-2 1.3-4.5 2.1-7.5 2.1-5.8 0-10.6-3.9-12.4-9.1H4.3v5.7C7.9 41 15.4 46 24 46z" />
+      <path fill="#FBBC05" d="M11.6 28.1c-.5-1.3-.7-2.7-.7-4.1s.3-2.8.7-4.1v-5.7H4.3C2.8 17.1 2 20.4 2 24s.8 6.9 2.3 9.8l7.3-5.7z" />
+      <path fill="#EA4335" d="M24 10.8c3.3 0 6.2 1.1 8.5 3.3l6.3-6.3C35 4.3 30 2 24 2 15.4 2 7.9 7 4.3 14.2l7.3 5.7c1.8-5.2 6.6-9.1 12.4-9.1z" />
+    </svg>
+  )
+}
+
+/**
+ * Вход через Google.
+ *
+ * Google рисует кнопку в своём оформлении внутри iframe, и перекрасить её нельзя —
+ * на тёмной модалке она выглядит чужеродно. Поэтому показываем свою кнопку в стиле
+ * сайта, а настоящую кладём поверх прозрачной: клики достаются ей.
+ * Ничего не рисуем, если Google не настроен.
+ */
 export default function GoogleButton({ mode, onCredential }: Props) {
   const ref = useRef<HTMLDivElement>(null)
-  const theme = useUI((s) => s.theme)
   const [clientId, setClientId] = useState<string | null>(null)
   const [failed, setFailed] = useState(false)
   // Google рисует кнопку фиксированной шириной в пикселях: на первом кадре контейнер ещё
@@ -89,7 +106,6 @@ export default function GoogleButton({ mode, onCredential }: Props) {
         ref.current.innerHTML = ''
         window.google.accounts.id.renderButton(ref.current, {
           type: 'standard',
-          theme: theme === 'dark' ? 'filled_black' : 'outline',
           size: 'large',
           // Прямоугольная кнопка со скруглением как у остальных кнопок сайта
           shape: 'rectangular',
@@ -104,7 +120,7 @@ export default function GoogleButton({ mode, onCredential }: Props) {
     return () => {
       cancelled = true
     }
-  }, [clientId, mode, theme, width])
+  }, [clientId, mode, width])
 
   if (!clientId) return null
 
@@ -116,10 +132,20 @@ export default function GoogleButton({ mode, onCredential }: Props) {
       {failed ? (
         <p className="text-center text-xs text-muted">Не удалось загрузить вход через Google. Проверьте интернет.</p>
       ) : (
-        <div
-          ref={ref}
-          className="mx-auto min-h-[44px] w-full max-w-[400px] overflow-hidden rounded-xl [&>div]:mx-auto [&_iframe]:!rounded-xl"
-        />
+        <div className="relative h-11 w-full">
+          {/* Видимая кнопка в оформлении сайта */}
+          <div
+            aria-hidden
+            className="btn btn-ghost pointer-events-none absolute inset-0 w-full justify-center gap-2.5 py-0 text-sm font-semibold"
+          >
+            <GoogleG /> {mode === 'register' ? 'Зарегистрироваться через Google' : 'Войти через Google'}
+          </div>
+          {/* Настоящая кнопка Google — прозрачная, ровно поверх нашей */}
+          <div
+            ref={ref}
+            className="absolute inset-0 overflow-hidden opacity-0 [&>div]:!h-full [&>div]:!w-full [&_iframe]:!h-full [&_iframe]:!w-full"
+          />
+        </div>
       )}
     </div>
   )

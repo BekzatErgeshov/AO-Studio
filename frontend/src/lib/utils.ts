@@ -61,3 +61,14 @@ export function shuffle<T>(arr: T[]): T[] {
 export function uid(): string {
   return Math.random().toString(36).slice(2, 10)
 }
+
+/**
+ * Следующая команда ходит в случайном порядке (стратегический формат и рандом).
+ * Две команды подряд один и тот же ход не получают, если команд больше одной.
+ */
+export function nextRandomTeam(count: number, current: number): number {
+  if (count <= 1) return 0
+  let next = current
+  while (next === current) next = Math.floor(Math.random() * count)
+  return next
+}

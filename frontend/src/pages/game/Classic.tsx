@@ -12,7 +12,10 @@ import { sounds } from '../../lib/sounds'
 import type { LiveState } from '../../lib/types'
 import { useGame } from '../../store/game'
 
-type Phase = 'question' | 'review'
+type Phase = 'question' | 'reveal' | 'review'
+
+// Сколько показывать правильный ответ, прежде чем сам выйдет следующий вопрос
+const REVEAL_MS = 5000
 
 export default function Classic() {
   const { room, teams, addScore, finish, sessionId } = useGame()
@@ -44,9 +47,12 @@ export default function Classic() {
   }
 
   const next = () => {
-    if (phase === 'question') {
+    if (phase === 'question' || phase === 'reveal') {
       if (isLastQ) setPhase('review')
-      else setQIdx(qIdx + 1)
+      else {
+        setQIdx(qIdx + 1)
+        setPhase('question')
+      }
     } else if (isLastCat) {
       void end()
     } else {
@@ -70,14 +76,17 @@ export default function Classic() {
   // ---------- Онлайн: что видят команды и их ответы ----------
   const liveState: LiveState | null = !cat
     ? null
-    : phase === 'question' && q
+    : (phase === 'question' || phase === 'reveal') && q
       ? {
           view: 'question',
           category: cat.name,
           number: qIdx + 1,
           total: cat.questions.length,
+          duration,
           question: { id: q.id, text: q.text, photo: q.photo, points: q.points },
-          accepting: true,
+          // Во время показа ответа приём закрыт
+          accepting: phase === 'question',
+          reveal: phase === 'reveal' ? q.answer : null,
         }
       : {
           view: 'review',
@@ -115,10 +124,66 @@ export default function Classic() {
     if (added) sounds.correct()
   }
 
+  // Каждую пару «вопрос-команда» засчитываем один раз
+  const autoChecked = useRef<Set<string>>(new Set())
+
+  // Засчитываем совпавшие ответы на вопрос. Каждую пару «вопрос-команда» проверяем один раз,
+  // чтобы ручная правка ведущего не перезаписывалась при следующем опросе.
+  const awardQuestion = (questionId: number, points: number) => {
+    const cur = marks[questionId] ?? []
+    const add: number[] = []
+    for (const t of teams) {
+      const key = `${questionId}-${t.id}`
+      if (autoChecked.current.has(key)) continue
+      autoChecked.current.add(key)
+      const a = answers[questionId]?.[t.id]
+      if (a?.matches && !cur.includes(t.id)) {
+        add.push(t.id)
+        addScore(t.id, points)
+      }
+    }
+    if (add.length) {
+      setMarks({ ...marks, [questionId]: [...cur, ...add] })
+      sounds.correct()
+    }
+  }
+
+  // ---------- Время вышло: показываем ответ, считаем баллы и сами идём дальше ----------
+  // Ведущий ждёт только на разборе категории — между вопросами игра движется сама.
+  //
+  // Отсчёт сбрасывается на следующем кадре после смены вопроса, поэтому сразу после перехода
+  // `left` ещё равен нулю от прошлого вопроса. Ждём, пока отсчёт для этого вопроса реально
+  // начнётся, иначе игра пролетит все вопросы подряд.
+  const questionKey = `${catIdx}-${qIdx}`
+  const timerStarted = useRef<string | null>(null)
+  const timedOut = useRef<string | null>(null)
+  useEffect(() => {
+    if (phase !== 'question' || !q) return
+    if (left >= duration) timerStarted.current = questionKey
+    if (left === 0 && timerStarted.current === questionKey && timedOut.current !== questionKey) {
+      timedOut.current = questionKey
+      setPhase('reveal')
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [left, phase, questionKey, duration])
+
+  useEffect(() => {
+    if (phase !== 'reveal' || !q) return
+    // Ответы команд могли прийти последним опросом — пересчитываем на каждом обновлении
+    awardQuestion(q.id, q.points)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, q?.id, answers])
+
+  useEffect(() => {
+    if (phase !== 'reveal') return
+    const t = setTimeout(next, REVEAL_MS)
+    return () => clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, q?.id])
+
   // ---------- Автопроверка ----------
   // Онлайн: на разборе совпавшие ответы засчитываются сами. Каждую пару «вопрос-команда» проверяем один раз,
   // чтобы ручная правка ведущего не перезаписывалась при следующем опросе.
-  const autoChecked = useRef<Set<string>>(new Set())
   useEffect(() => {
     if (!online || phase !== 'review' || !cat) return
     const next = { ...marks }
@@ -180,7 +245,7 @@ export default function Classic() {
           </div>
 
           <AnimatePresence mode="wait">
-            {phase === 'question' && q ? (
+            {(phase === 'question' || phase === 'reveal') && q ? (
               <motion.div
                 key={`q-${q.id}`}
                 initial={{ opacity: 0, x: 60 }}
@@ -212,6 +277,18 @@ export default function Classic() {
                 <div className="flex flex-1 flex-col items-center justify-center gap-6 text-center">
                   {q.photo && <img src={q.photo} alt="" className="max-h-[40vh] max-w-full rounded-2xl border border-line object-contain" />}
                   <p className="max-w-4xl whitespace-pre-line text-2xl font-bold leading-snug sm:text-4xl">{q.text}</p>
+                  <AnimatePresence>
+                    {phase === 'reveal' && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="rounded-2xl border border-green/40 bg-green/10 px-6 py-4"
+                      >
+                        <div className="text-xs uppercase tracking-widest text-muted">Правильный ответ</div>
+                        <div className="mt-1 text-2xl font-extrabold text-green sm:text-3xl">{q.answer}</div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
 
                 <div className="host-only mt-8 flex items-center justify-end gap-4">
@@ -220,14 +297,21 @@ export default function Classic() {
                       <Users size={16} /> Ответили: <b className="text-fg">{answeredNow}</b> из {teams.length}
                     </span>
                   )}
+                  <span className="text-sm text-muted">
+                    {phase === 'reveal'
+                      ? isLastQ
+                        ? 'Дальше — разбор категории'
+                        : 'Следующий вопрос выйдет сам'
+                      : 'Когда время выйдет — ответ и баллы появятся сами'}
+                  </span>
                   <button onClick={next} className="btn btn-primary px-6 py-3">
                     {isLastQ ? (
                       <>
-                        <Eye size={18} /> К правильным ответам
+                        <Eye size={18} /> К разбору категории
                       </>
                     ) : (
                       <>
-                        Следующий вопрос <ArrowRight size={18} />
+                        {phase === 'reveal' ? 'Дальше' : 'Следующий вопрос'} <ArrowRight size={18} />
                       </>
                     )}
                   </button>

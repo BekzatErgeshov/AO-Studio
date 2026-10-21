@@ -11,7 +11,7 @@ import { useLiveAnswers, usePublishState } from '../../hooks/useLive'
 import { checkAnswer } from '../../lib/answers'
 import { sounds } from '../../lib/sounds'
 import type { LiveState } from '../../lib/types'
-import { shuffle } from '../../lib/utils'
+import { nextRandomTeam, shuffle } from '../../lib/utils'
 import { useGame } from '../../store/game'
 
 interface Outcome {
@@ -50,7 +50,7 @@ export default function Random() {
     navigate('/game/results')
   }
 
-  const nextTeam = () => setActiveIdx((activeIdx + 1) % teams.length)
+  const nextTeam = () => setActiveIdx(nextRandomTeam(teams.length, activeIdx))
 
   const revealQuestion = () => {
     setStage('question')
@@ -98,6 +98,7 @@ export default function Random() {
     stage === 'question' && current
       ? {
           view: 'question',
+          duration,
           question: { id: current.id, text: current.text, photo: current.photo, points: 1 },
           accepting: true,
           answer_team: active?.id ?? null,

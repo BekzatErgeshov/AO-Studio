@@ -11,6 +11,7 @@ import { useLiveAnswers, usePublishState } from '../../hooks/useLive'
 import { checkAnswer } from '../../lib/answers'
 import { sounds } from '../../lib/sounds'
 import type { LiveState, Question } from '../../lib/types'
+import { nextRandomTeam } from '../../lib/utils'
 import { useGame } from '../../store/game'
 
 interface Outcome {
@@ -76,7 +77,7 @@ export default function Strategic() {
     const next = { ...results, [current.id]: { teamId: active.id, correct } }
     setResults(next)
     setOpenId(null)
-    setActiveIdx((activeIdx + 1) % teams.length)
+    setActiveIdx(nextRandomTeam(teams.length, activeIdx))
     if (Object.keys(next).length >= total) setTimeout(() => void end(), 1200)
   }
 
@@ -91,6 +92,7 @@ export default function Strategic() {
   const liveState: LiveState = current
     ? {
         view: 'question',
+        duration,
         category: current.catName,
         question: { id: current.id, text: current.text, photo: current.photo, points: current.points },
         accepting: true,
@@ -196,7 +198,7 @@ export default function Strategic() {
                 <Crown className="text-yellow-400" fill="currentColor" size={22} />
                 Ход команды: <span style={{ color: active.color }}>{active.name}</span>
                 <button
-                  onClick={() => setActiveIdx((activeIdx + 1) % teams.length)}
+                  onClick={() => setActiveIdx(nextRandomTeam(teams.length, activeIdx))}
                   className="host-only ml-2 rounded-lg p-1.5 text-muted hover:bg-fg/10 hover:text-fg"
                   title="Передать ход следующей команде"
                 >

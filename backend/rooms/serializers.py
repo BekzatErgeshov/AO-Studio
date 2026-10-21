@@ -111,8 +111,9 @@ class RoomWriteSerializer(serializers.ModelSerializer):
         ]
 
     def validate_timer_duration(self, value):
-        if not 5 <= value <= 3600:
-            raise serializers.ValidationError("Таймер должен быть от 5 до 3600 секунд.")
+        if value not in AORoom.TIMER_CHOICES:
+            allowed = ", ".join(str(t) for t in AORoom.TIMER_CHOICES)
+            raise serializers.ValidationError(f"Время на вопрос — одно из: {allowed} секунд.")
         return value
 
     def validate(self, attrs):

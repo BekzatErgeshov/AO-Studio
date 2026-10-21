@@ -187,10 +187,14 @@ class LiveAnswerView(LiveBase):
         text = str(request.data.get("text", "")).strip()[:500]
         if not text:
             return Response({"detail": "Введите ответ."}, status=status.HTTP_400_BAD_REQUEST)
-        try:
-            Answer.objects.update_or_create(
-                team=team, question_id=qid, defaults={"session": session, "text": text}
+        # Ответ отправляется один раз: после отправки поле блокируется до конца таймера
+        if Answer.objects.filter(team=team, question_id=qid).exists():
+            return Response(
+                {"detail": "Ответ уже отправлен — изменить его нельзя."},
+                status=status.HTTP_400_BAD_REQUEST,
             )
+        try:
+            Answer.objects.create(session=session, team=team, question_id=qid, text=text)
         except IntegrityError:
             return Response({"detail": "Вопрос не найден."}, status=status.HTTP_400_BAD_REQUEST)
         return Response({"ok": True, "text": text})

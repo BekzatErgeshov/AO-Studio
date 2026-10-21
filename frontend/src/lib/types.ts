@@ -128,6 +128,8 @@ export interface LiveState {
   number?: number
   total?: number
   question?: { id: number; text?: string; photo?: string | null; points?: number }
+  /** Сколько секунд даётся на вопрос — по этому значению рисуется круг таймера */
+  duration?: number
   /** Принимаются ли сейчас ответы */
   accepting?: boolean
   /** Отвечает только эта команда (стратегический/слепой) */

@@ -17,7 +17,8 @@ interface CDraft {
 }
 
 const STEPS = ['Название и формат', 'Вопросы', 'Настройки']
-const TIMERS = [30, 60, 90]
+// Одинаковый набор во всех форматах и режимах
+const TIMERS = [30, 45, 60]
 
 function toDraft(q: Question): QDraft {
   return { key: uid(), id: q.id, text: q.text, answer: q.answer, points: q.points, photoFile: null, photoUrl: q.photo, removePhoto: false }
@@ -48,7 +49,6 @@ export default function CreateRoom() {
   const [newCat, setNewCat] = useState('')
   const [isPublic, setIsPublic] = useState(true)
   const [timer, setTimer] = useState(60)
-  const [customTimer, setCustomTimer] = useState(false)
   const [description, setDescription] = useState('')
 
   // Режим редактирования — загружаем комнату
@@ -66,8 +66,7 @@ export default function CreateRoom() {
         setCategories(data.categories.map((c) => ({ key: uid(), id: c.id, name: c.name, questions: c.questions.map(toDraft) })))
         setQuestions(data.questions.length ? data.questions.map(toDraft) : [newQuestion()])
         setIsPublic(data.is_public)
-        setTimer(data.timer_duration)
-        setCustomTimer(!TIMERS.includes(data.timer_duration))
+        setTimer(TIMERS.includes(data.timer_duration) ? data.timer_duration : 60)
         setDescription(data.description)
       })
       .catch(() => setError('Не удалось загрузить комнату'))
@@ -386,34 +385,13 @@ export default function CreateRoom() {
                     <button
                       key={t}
                       type="button"
-                      onClick={() => {
-                        setTimer(t)
-                        setCustomTimer(false)
-                      }}
-                      className={`chip px-5 py-2 text-base ${!customTimer && timer === t ? 'active' : ''}`}
+                      onClick={() => setTimer(t)}
+                      className={`chip px-5 py-2 text-base ${timer === t ? 'active' : ''}`}
                     >
                       {t}с
                     </button>
                   ))}
-                  <button type="button" onClick={() => setCustomTimer(true)} className={`chip px-5 py-2 text-base ${customTimer ? 'active' : ''}`}>
-                    Своё значение
-                  </button>
                 </div>
-                <AnimatePresence>
-                  {customTimer && (
-                    <motion.label initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="mt-3 flex items-center gap-3 overflow-hidden">
-                      <input
-                        type="number"
-                        min={5}
-                        max={3600}
-                        className="input w-32"
-                        value={timer || ''}
-                        onChange={(e) => setTimer(Number(e.target.value))}
-                      />
-                      <span className="text-muted">секунд</span>
-                    </motion.label>
-                  )}
-                </AnimatePresence>
               </div>
 
               <div className="glass rounded-2xl p-5">

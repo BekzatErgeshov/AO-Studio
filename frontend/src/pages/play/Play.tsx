@@ -109,26 +109,26 @@ function DqScreen({ reason, teams, meId }: { reason: string; teams: Team[]; meId
   )
 }
 
-/** Поле ответа команды */
+/** Поле ответа команды. После отправки ответ изменить нельзя — поле блокируется. */
 function AnswerBox({ code, questionId, current }: { code: string; questionId: number; current: string | null }) {
-  const [text, setText] = useState(current ?? '')
+  const [text, setText] = useState('')
   const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
   const [sent, setSent] = useState(current)
 
   // Новый вопрос — чистое поле
   useEffect(() => {
-    setText(current ?? '')
+    setText('')
     setSent(current)
     setError('')
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [questionId])
 
-  useEffect(() => setSent(current), [current])
+  useEffect(() => setSent((s) => s ?? current), [current])
 
   const submit = async (e: FormEvent) => {
     e.preventDefault()
-    if (!text.trim()) return
+    if (!text.trim() || sent) return
     setSending(true)
     setError('')
     try {
@@ -146,7 +146,17 @@ function AnswerBox({ code, questionId, current }: { code: string; questionId: nu
     }
   }
 
-  const changed = text.trim() !== (sent ?? '')
+  if (sent) {
+    return (
+      <div className="mt-5 rounded-2xl border border-green/40 bg-green/10 p-4">
+        <div className="flex items-center gap-1.5 text-sm font-semibold text-green">
+          <Check size={16} /> Ответ отправлен
+        </div>
+        <div className="mt-1 text-lg font-bold">{sent}</div>
+        <div className="mt-1.5 text-xs text-muted">Изменить его уже нельзя — ждём остальных.</div>
+      </div>
+    )
+  }
 
   return (
     <form onSubmit={submit} className="mt-5">
@@ -159,17 +169,11 @@ function AnswerBox({ code, questionId, current }: { code: string; questionId: nu
           onChange={(e) => setText(e.target.value)}
           autoComplete="off"
         />
-        <button type="submit" disabled={sending || !text.trim() || !changed} className="btn btn-primary px-5">
+        <button type="submit" disabled={sending || !text.trim()} className="btn btn-primary px-5">
           {sending ? <Loader2 size={20} className="animate-spin" /> : <Send size={20} />}
         </button>
       </div>
-      <AnimatePresence>
-        {sent && !changed && (
-          <motion.div initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="mt-2 flex items-center gap-1.5 text-sm text-green">
-            <Check size={16} /> Ответ отправлен. Можно изменить, пока ведущий принимает ответы.
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <div className="mt-2 text-xs text-muted">Ответ отправляется один раз — проверьте перед отправкой.</div>
       {error && <div className="mt-2 text-sm text-red-400">{error}</div>}
     </form>
   )
@@ -264,7 +268,7 @@ export default function Play() {
   const upper = code.toUpperCase()
   const navigate = useNavigate()
   const { data, error, fetchedAt } = useLiveState(upper)
-  const left = useServerTimer(data?.timer, fetchedAt)
+  const timer = useServerTimer(data?.timer, fetchedAt)
   const lastQuestion = useRef<number | null>(null)
   const confettiDone = useRef(false)
 
@@ -468,7 +472,17 @@ export default function Play() {
                       {q.points ? <b className="text-fg">{q.points} балл.</b> : null}
                     </div>
                   </div>
-                  {left !== null && <CircularTimer left={left} total={Math.max(left, data.timer?.left ?? left, 1)} size={76} showControls={false} />}
+                  {timer && (
+                    <CircularTimer
+                      left={timer.left}
+                      exact={timer.exact}
+                      // Полный круг — время на вопрос, заданное ведущим
+                      total={state.duration ?? Math.max(timer.left, 1)}
+                      size={76}
+                      showControls={false}
+                      running={data.timer?.running}
+                    />
+                  )}
                 </div>
 
                 {q.photo && <img src={q.photo} alt="" className="mt-4 max-h-[35vh] w-full rounded-2xl border border-line object-contain" />}

@@ -4,6 +4,8 @@ import { Pause, Play, RotateCcw } from 'lucide-react'
 interface Props {
   left: number
   total: number
+  /** Точный остаток в секундах (дробный): по нему рисуется круг, если передан */
+  exact?: number
   size?: number
   running?: boolean
   onToggle?: () => void
@@ -12,11 +14,11 @@ interface Props {
 }
 
 /** Круговой таймер: зелёный → жёлтый → красный */
-export default function CircularTimer({ left, total, size = 140, running, onToggle, onReset, showControls = true }: Props) {
+export default function CircularTimer({ left, total, exact, size = 140, running, onToggle, onReset, showControls = true }: Props) {
   const stroke = size * 0.08
   const r = (size - stroke) / 2
   const c = 2 * Math.PI * r
-  const frac = total > 0 ? left / total : 0
+  const frac = total > 0 ? Math.min(1, Math.max(0, (exact ?? left) / total)) : 0
   const color = frac > 0.5 ? '#10B981' : frac > 0.2 ? '#EAB308' : '#EF4444'
   const urgent = left <= 10 && left > 0
 
@@ -40,7 +42,11 @@ export default function CircularTimer({ left, total, size = 140, running, onTogg
             strokeLinecap="round"
             strokeDasharray={c}
             strokeDashoffset={c * (1 - frac)}
-            style={{ transition: 'stroke-dashoffset 1s linear, stroke 0.5s', filter: `drop-shadow(0 0 ${size * 0.06}px ${color}88)` }}
+            style={{
+              // С точным остатком круг идёт плавно сам — переход только у цвета
+              transition: exact === undefined ? 'stroke-dashoffset 1s linear, stroke 0.5s' : 'stroke 0.5s',
+              filter: `drop-shadow(0 0 ${size * 0.06}px ${color}88)`,
+            }}
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">

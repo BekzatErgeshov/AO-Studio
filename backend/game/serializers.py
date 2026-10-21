@@ -40,7 +40,15 @@ class GameStartSerializer(serializers.Serializer):
     expected_teams = serializers.IntegerField(default=0, min_value=0, max_value=40)
     team_size = serializers.IntegerField(default=0, min_value=0, max_value=20)
     autostart = serializers.BooleanField(default=False)
-    timer_duration = serializers.IntegerField(required=False, allow_null=True, min_value=5, max_value=3600)
+    timer_duration = serializers.IntegerField(required=False, allow_null=True)
+
+    def validate_timer_duration(self, value):
+        from rooms.models import AORoom
+
+        if value is not None and value not in AORoom.TIMER_CHOICES:
+            allowed = ", ".join(str(t) for t in AORoom.TIMER_CHOICES)
+            raise serializers.ValidationError(f"Время на вопрос — одно из: {allowed} секунд.")
+        return value
 
     def validate(self, attrs):
         # Одиночная — «команда» создаётся из имени игрока; доска — команды подключаются по коду

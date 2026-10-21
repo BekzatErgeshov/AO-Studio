@@ -252,11 +252,6 @@ export default function Home() {
                 <div className="font-semibold text-fg">Эргешов Бекзат</div>
                 <div className="mt-1 text-muted">Студент ОшГУ, ПМИ-2-24</div>
               </div>
-              <div className="mt-5 flex flex-wrap gap-4 text-sm">
-                <button onClick={() => navigate('/rooms')} className="text-muted hover:text-green">AO Rooms</button>
-                <button onClick={() => navigate('/board')} className="text-muted hover:text-green">Доска</button>
-                <button onClick={scrollToAbout} className="text-muted hover:text-green">Об игре</button>
-              </div>
             </div>
 
             {/* Контакты */}
@@ -267,7 +262,6 @@ export default function Home() {
                   { label: 'GitHub', value: 'BekzatErgeshov', href: 'https://github.com/BekzatErgeshov' },
                   { label: 'Instagram', value: 'bekotemirov_1', href: 'https://instagram.com/bekotemirov_1' },
                   { label: 'Telegram', value: 'bekokim', href: 'https://t.me/bekokim' },
-                  { label: 'WhatsApp', value: '0702505011', href: 'https://wa.me/996702505011' },
                 ].map((c) => (
                   <li key={c.label} className="flex items-center gap-2">
                     <span className="w-20 shrink-0 text-muted">{c.label}</span>
@@ -281,7 +275,7 @@ export default function Home() {
           </div>
 
           <div className="mt-10 flex items-center justify-center gap-1 border-t border-line pt-6 text-sm text-muted">
-            © {new Date().getFullYear()} AO Studio. Сделано с <Heart size={14} className="text-green" fill="currentColor" /> любовью
+            © {new Date().getFullYear()} AO Studio. Сделано с <Heart size={14} className="text-green" fill="currentColor" />
           </div>
         </div>
       </footer>

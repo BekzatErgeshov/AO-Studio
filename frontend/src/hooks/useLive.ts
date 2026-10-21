@@ -135,15 +135,22 @@ export function useLiveState(code: string) {
   return { data, error, fetchedAt, refresh: load }
 }
 
-/** Локальный обратный отсчёт по данным сервера (между опросами тикает сам) */
+/**
+ * Локальный обратный отсчёт по данным сервера (между опросами тикает сам).
+ *
+ * Возвращает и целые секунды для подписи, и точный остаток для круга таймера —
+ * иначе круг дёргается: опрос приходит раз в 1,5 с, а секунды идут не в такт с ним.
+ */
 export function useServerTimer(timer: LivePayload['timer'] | undefined, fetchedAt: number) {
-  const [now, setNow] = useState(Date.now())
+  const [now, setNow] = useState(() => Date.now())
   useEffect(() => {
     if (!timer?.running) return
-    const t = setInterval(() => setNow(Date.now()), 250)
+    // Десять раз в секунду: круг идёт плавно, а телефон команды не нагружается
+    const t = setInterval(() => setNow(Date.now()), 100)
     return () => clearInterval(t)
   }, [timer?.running])
+
   if (!timer) return null
-  if (!timer.running) return timer.left
-  return Math.max(0, Math.ceil(timer.left - (now - fetchedAt) / 1000))
+  const exact = timer.running ? Math.max(0, timer.left - (now - fetchedAt) / 1000) : timer.left
+  return { left: Math.ceil(exact), exact }
 }
