@@ -1,24 +1,15 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { ArrowLeft, Loader2, Monitor, Plus, Rocket, Search, ShieldCheck, Smartphone, Trash2, User, Users } from 'lucide-react'
+import { ArrowLeft, Loader2, Rocket, Search } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api, errorMessage } from '../lib/api'
-import type { GameMode, GameSession, RoomDetail, RoomListItem } from '../lib/types'
-import { plural, randomTeamColor, uid } from '../lib/utils'
+import type { GameSession, RoomDetail, RoomListItem } from '../lib/types'
+import { plural } from '../lib/utils'
+import { useAuth } from '../store/auth'
 import { useGame } from '../store/game'
 import { useUI } from '../store/ui'
 import FormatBadge from './FormatBadge'
 import Modal from './Modal'
-
-interface TeamDraft {
-  key: string
-  name: string
-  color: string
-}
-
-function newTeam(existing: TeamDraft[]): TeamDraft {
-  return { key: uid(), name: '', color: randomTeamColor(existing.map((t) => t.color)) }
-}
 
 function useDebounced<T>(value: T, ms = 300) {
   const [v, setV] = useState(value)
@@ -32,6 +23,7 @@ function useDebounced<T>(value: T, ms = 300) {
 export default function StartGameModal() {
   const { startModal, startRoom, closeStart } = useUI()
   const startGame = useGame((s) => s.start)
+  const user = useAuth((s) => s.user)
   const navigate = useNavigate()
 
   const [step, setStep] = useState<1 | 2>(1)
@@ -40,17 +32,14 @@ export default function StartGameModal() {
   const q = useDebounced(search)
   const [rooms, setRooms] = useState<RoomListItem[]>([])
   const [loadingRooms, setLoadingRooms] = useState(false)
-  const [teams, setTeams] = useState<TeamDraft[]>([])
+  const [name, setName] = useState('')
   const [error, setError] = useState('')
   const [starting, setStarting] = useState(false)
-  const [mode, setMode] = useState<GameMode>('offline')
-  const [anticheat, setAnticheat] = useState(true)
 
-  // Сброс при открытии
+  // Сброс при открытии: имя по умолчанию — логин игрока
   useEffect(() => {
     if (!startModal) return
-    const t1 = newTeam([])
-    setTeams([t1, newTeam([t1])])
+    setName(user?.username ?? '')
     setError('')
     setSearch('')
     if (startRoom) {
@@ -76,32 +65,27 @@ export default function StartGameModal() {
     }
   }, [startModal, step, q])
 
-  const updateTeam = (key: string, name: string) => setTeams((ts) => ts.map((t) => (t.key === key ? { ...t, name } : t)))
 
   const begin = async () => {
     if (!room) return
-    const named = teams.map((t, i) => ({ ...t, name: t.name.trim() || `Команда ${i + 1}` }))
     setStarting(true)
     setError('')
     try {
-      const online = mode === 'online'
       const [{ data: detail }, { data: session }] = await Promise.all([
         api.get<RoomDetail>(`/rooms/${room.id}/`),
         api.post<GameSession>('/game/start/', {
           room_id: room.id,
-          mode,
-          anticheat: online && anticheat,
-          // Онлайн: команды подключатся сами по коду; Один: команда — сам игрок
-          teams: mode === 'offline' ? named.map((t) => ({ name: t.name, color: t.color })) : [],
+          mode: 'solo',
+          teams: [{ name: name.trim() || (user?.username ?? 'Игрок'), color: '#10B981' }],
         }),
       ])
-      startGame(session.id, detail, session.teams, mode, session.code, session.anticheat)
+      startGame(session.id, detail, session.teams, 'solo', null, false)
       // Чистим прогресс предыдущей игры
       Object.keys(sessionStorage)
         .filter((k) => k.startsWith('ao_progress'))
         .forEach((k) => sessionStorage.removeItem(k))
       closeStart()
-      navigate(mode === 'solo' ? '/game/solo' : online ? '/game/lobby' : `/game/${detail.format}`)
+      navigate('/game/solo')
     } catch (err) {
       setError(errorMessage(err, 'Не удалось начать игру.'))
     } finally {
@@ -121,7 +105,7 @@ export default function StartGameModal() {
               <ArrowLeft size={18} />
             </button>
           )}
-          <span>{step === 1 ? '▶️ Выберите AO комнату' : '🎮 Как играем'}</span>
+          <span>{step === 1 ? '▶️ Выберите игру' : '🎮 Одиночная игра'}</span>
         </div>
       }
     >
@@ -178,156 +162,38 @@ export default function StartGameModal() {
             {room && (
               <div className="mb-5 flex items-center justify-between gap-3 rounded-xl border border-green/30 bg-green/10 p-4">
                 <div className="min-w-0">
-                  <div className="text-xs text-muted">Комната</div>
+                  <div className="text-xs uppercase tracking-widest text-muted">Играем</div>
                   <div className="truncate font-bold">{room.title}</div>
                 </div>
                 <FormatBadge format={room.format} compact />
               </div>
             )}
 
-            {/* Режим игры: Один / Команда */}
-            <div className="mb-3 grid grid-cols-2 gap-2">
-              {([
-                { v: 'solo', icon: User, title: 'Один', text: 'Играю сам: выбираю вопросы, ввожу ответы, сайт проверяет' },
-                { v: 'team', icon: Users, title: 'Команда', text: 'Командная игра с ведущим и табло' },
-              ] as const).map((o) => {
-                const on = o.v === 'solo' ? mode === 'solo' : mode !== 'solo'
-                return (
-                  <button
-                    key={o.v}
-                    type="button"
-                    onClick={() => setMode(o.v === 'solo' ? 'solo' : 'offline')}
-                    className={`rounded-xl border p-3 text-left transition ${on ? 'border-green bg-green/10' : 'border-line hover:border-green/40'}`}
-                  >
-                    <div className="flex items-center gap-2 font-semibold">
-                      <o.icon size={18} className={on ? 'text-green' : 'text-muted'} /> {o.title}
-                    </div>
-                    <div className="mt-1 text-xs text-muted">{o.text}</div>
-                  </button>
-                )
-              })}
-            </div>
+            <label className="block">
+              <span className="mb-1.5 block text-sm font-medium text-muted">Ваше имя</span>
+              <input
+                className="input py-3.5 text-lg"
+                placeholder="Как вас записать в итогах"
+                value={name}
+                maxLength={100}
+                onChange={(e) => setName(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && void begin()}
+                autoFocus
+              />
+            </label>
 
-            {/* Команда: где играют команды */}
-            {mode !== 'solo' && (
-              <div className="mb-5 grid grid-cols-2 gap-1 rounded-xl border border-line p-1">
-                {([
-                  { v: 'offline', icon: Monitor, title: 'На одном экране' },
-                  { v: 'online', icon: Smartphone, title: 'Со своих устройств' },
-                ] as const).map((o) => (
-                  <button
-                    key={o.v}
-                    type="button"
-                    onClick={() => setMode(o.v)}
-                    className={`flex items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-sm font-medium transition ${
-                      mode === o.v ? 'bg-green/15 text-green' : 'text-muted hover:text-fg'
-                    }`}
-                  >
-                    <o.icon size={16} /> {o.title}
-                  </button>
-                ))}
+            <div className="mt-4 rounded-xl border border-dashed border-line p-4 text-sm text-muted">
+              Вы проходите игру в одиночку: открываете любой вопрос, вводите ответ — сайт <b className="text-fg">сразу
+              проверяет</b> его и начисляет баллы. В конце — итог и работа над ошибками.
+              <div className="mt-2">
+                Собрать команды и сыграть с ведущим можно в разделе <b className="text-fg">«Доска»</b>.
               </div>
-            )}
-
-            {mode === 'solo' ? (
-              <div className="rounded-xl border border-dashed border-line p-4 text-sm text-muted">
-                Вы проходите комнату в одиночку: нажимаете на любой вопрос, вводите ответ — сайт <b className="text-fg">сразу проверяет</b> его
-                и начисляет баллы. В конце — итог и работа над ошибками.
-              </div>
-            ) : mode === 'online' ? (
-              <>
-                <div className="rounded-xl border border-dashed border-line p-4 text-sm text-muted">
-                  После запуска появится <b className="text-fg">код комнаты</b> и QR-код. Команды открывают сайт на телефоне или
-                  компьютере, вводят код и название команды — и сразу появляются у вас в списке. Подходит и для зала, и для
-                  игры на расстоянии.
-                </div>
-
-                {/* Античит: контроль ухода с экрана на устройствах команд */}
-                <button
-                  type="button"
-                  onClick={() => setAnticheat((v) => !v)}
-                  className={`mt-3 flex w-full items-start gap-3 rounded-xl border p-4 text-left transition ${
-                    anticheat ? 'border-green bg-green/10' : 'border-line hover:border-green/40'
-                  }`}
-                >
-                  <ShieldCheck size={20} className={`mt-0.5 shrink-0 ${anticheat ? 'text-green' : 'text-muted'}`} />
-                  <span className="min-w-0 flex-1">
-                    <span className="flex items-center justify-between gap-2 font-semibold">
-                      Защита от списывания
-                      <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-bold ${anticheat ? 'bg-green text-white' : 'bg-fg/10 text-muted'}`}>
-                        {anticheat ? 'Вкл' : 'Выкл'}
-                      </span>
-                    </span>
-                    <span className="mt-1 block text-xs text-muted">
-                      Игра на телефоне команды раскрывается на весь экран. Свернули игру или открыли другую вкладку —
-                      предупреждение, второй раз — дисквалификация. Вы видите все нарушения и можете простить команду.
-                    </span>
-                  </span>
-                </button>
-              </>
-            ) : (
-            <>
-            <div className="mb-3 flex items-center gap-2 text-sm text-muted">
-              <Users size={16} /> {teams.length} {plural(teams.length, 'команда', 'команды', 'команд')}
             </div>
-
-            <div className="space-y-2.5">
-              <AnimatePresence initial={false}>
-                {teams.map((t, i) => (
-                  <motion.div
-                    key={t.key}
-                    layout
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="flex items-center gap-2"
-                  >
-                    <button
-                      type="button"
-                      title="Сменить цвет"
-                      onClick={() =>
-                        setTeams((ts) => ts.map((x) => (x.key === t.key ? { ...x, color: randomTeamColor(ts.map((y) => y.color)) } : x)))
-                      }
-                      className="h-10 w-10 shrink-0 rounded-xl ring-2 ring-white/20 transition hover:scale-105"
-                      style={{ background: t.color }}
-                    />
-                    <input
-                      className="input"
-                      placeholder={`Команда ${i + 1}`}
-                      value={t.name}
-                      maxLength={100}
-                      onChange={(e) => updateTeam(t.key, e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault()
-                          setTeams((ts) => [...ts, newTeam(ts)])
-                        }
-                      }}
-                    />
-                    <button
-                      type="button"
-                      disabled={teams.length <= 1}
-                      onClick={() => setTeams((ts) => ts.filter((x) => x.key !== t.key))}
-                      className="rounded-xl p-2.5 text-muted transition hover:bg-red-400/10 hover:text-red-400 disabled:opacity-30 disabled:hover:bg-transparent"
-                      aria-label="Удалить команду"
-                    >
-                      <Trash2 size={18} />
-                    </button>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-            </div>
-
-            <button onClick={() => setTeams((ts) => [...ts, newTeam(ts)])} className="btn btn-ghost mt-3 w-full border-dashed">
-              <Plus size={18} /> Добавить команду
-            </button>
-            </>
-            )}
 
             {error && <div className="mt-4 rounded-xl border border-red-400/30 bg-red-400/10 px-4 py-2.5 text-sm text-red-400">{error}</div>}
 
-            <button onClick={begin} disabled={starting || (mode === 'offline' && !teams.length)} className="btn btn-primary mt-5 w-full py-3.5 text-base">
-              {starting ? <Loader2 size={20} className="animate-spin" /> : <Rocket size={20} />} {mode === 'online' ? 'Создать игру с кодом' : mode === 'solo' ? 'Играть' : 'Начать игру'}
+            <button onClick={begin} disabled={starting} className="btn btn-primary mt-5 w-full py-3.5 text-base">
+              {starting ? <Loader2 size={20} className="animate-spin" /> : <Rocket size={20} />} Играть
             </button>
           </motion.div>
         )}

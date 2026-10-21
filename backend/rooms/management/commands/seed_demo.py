@@ -63,7 +63,7 @@ ROOMS = [
     },
     {
         "title": "Эрудит вслепую",
-        "format": "blind",
+        "format": "random",
         "timer_duration": 30,
         "description": "Скрытые карточки с вопросами обо всём на свете.",
         "questions": [

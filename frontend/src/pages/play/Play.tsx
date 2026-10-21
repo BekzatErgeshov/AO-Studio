@@ -11,12 +11,6 @@ import { api, errorMessage } from '../../lib/api'
 import { sounds } from '../../lib/sounds'
 import type { LiveCell, LivePayload, Team } from '../../lib/types'
 
-const BONUS: Record<string, { emoji: string; title: string; text: string }> = {
-  double: { emoji: '🌟', title: 'Двойные баллы!', text: 'За правильный ответ — x2' },
-  skip: { emoji: '⏭️', title: 'Пропуск хода!', text: 'Команда пропускает ход' },
-  steal: { emoji: '🎯', title: 'Кража вопроса!', text: 'После ответа команда выбирает ещё раз' },
-}
-
 function TeamChip({ team, big }: { team: Team; big?: boolean }) {
   return (
     <span className={`inline-flex items-center gap-2 font-semibold ${big ? 'text-lg' : ''}`}>
@@ -473,11 +467,6 @@ export default function Play() {
                       {state.number && state.total ? `Вопрос ${state.number} из ${state.total} · ` : ''}
                       {q.points ? <b className="text-fg">{q.points} балл.</b> : null}
                     </div>
-                    {state.bonus && BONUS[state.bonus] && (
-                      <div className="mt-2 inline-flex rounded-full bg-green/15 px-3 py-1 text-xs font-semibold text-green">
-                        {BONUS[state.bonus].emoji} {BONUS[state.bonus].title}
-                      </div>
-                    )}
                   </div>
                   {left !== null && <CircularTimer left={left} total={Math.max(left, data.timer?.left ?? left, 1)} size={76} showControls={false} />}
                 </div>
@@ -531,14 +520,6 @@ export default function Play() {
               <Board columns={state.columns} code={upper} data={data} />
             ) : state.view === 'tiles' ? (
               <Board cells={state.tiles} code={upper} data={data} />
-            ) : state.view === 'bonus' && state.bonus && BONUS[state.bonus] ? (
-              <div className="py-10 text-center">
-                <motion.div animate={{ rotate: [0, -10, 10, 0], scale: [1, 1.2, 1] }} transition={{ duration: 0.8, repeat: 2 }} className="text-8xl">
-                  {BONUS[state.bonus].emoji}
-                </motion.div>
-                <div className="text-gradient mt-4 text-4xl font-extrabold">{BONUS[state.bonus].title}</div>
-                <p className="mt-2 text-muted">{BONUS[state.bonus].text}</p>
-              </div>
             ) : (
               <Centered inline>
                 <Loader2 className="animate-spin text-green" size={28} />

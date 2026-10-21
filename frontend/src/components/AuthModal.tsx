@@ -68,6 +68,53 @@ function Field({
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
+/** Грубая оценка надёжности пароля: длина плюс разнообразие символов */
+function passwordScore(pw: string): number {
+  if (!pw) return 0
+  let score = 0
+  if (pw.length >= 8) score++
+  if (pw.length >= 12) score++
+  if (/[a-zа-яё]/.test(pw) && /[A-ZА-ЯЁ]/.test(pw)) score++
+  if (/\d/.test(pw)) score++
+  if (/[^\w\s]/.test(pw)) score++
+  // Один символ, повторённый много раз, надёжным не считается
+  if (new Set(pw).size < 4) score = Math.min(score, 1)
+  return Math.min(score, 4)
+}
+
+const STRENGTH = [
+  { label: 'Слишком простой', color: 'bg-red-400', text: 'text-red-400' },
+  { label: 'Слабый', color: 'bg-orange-400', text: 'text-orange-400' },
+  { label: 'Средний', color: 'bg-yellow-400', text: 'text-yellow-400' },
+  { label: 'Хороший', color: 'bg-lime-400', text: 'text-lime-500' },
+  { label: 'Надёжный', color: 'bg-green', text: 'text-green' },
+]
+
+/** Полоска надёжности пароля под полем ввода */
+function PasswordStrength({ value }: { value: string }) {
+  if (!value) return null
+  const score = passwordScore(value)
+  const s = STRENGTH[score]
+  return (
+    <div className="-mt-1">
+      <div className="flex gap-1.5">
+        {[0, 1, 2, 3].map((i) => (
+          <motion.span
+            key={i}
+            initial={false}
+            animate={{ opacity: i < Math.max(score, 1) ? 1 : 0.18 }}
+            className={`h-1.5 flex-1 rounded-full ${i < Math.max(score, 1) ? s.color : 'bg-fg/20'}`}
+          />
+        ))}
+      </div>
+      <div className={`mt-1.5 flex items-center justify-between text-xs ${s.text}`}>
+        <span>{s.label}</span>
+        {value.length < 8 && <span className="text-muted">нужно минимум 8 символов</span>}
+      </div>
+    </div>
+  )
+}
+
 export default function AuthModal() {
   const { authModal, closeAuth, openAuth, afterAuth } = useUI()
   const { login, register, loginWithGoogle } = useAuth()
@@ -190,6 +237,7 @@ export default function AuthModal() {
             <Field label="Логин" name="username" value={form.username} onChange={set('username')} error={errors.username} autoComplete="username" autoFocus />
             <Field label="Email" name="email" type="email" value={form.email} onChange={set('email')} error={errors.email} autoComplete="email" />
             <Field label="Пароль" name="password" type="password" value={form.password} onChange={set('password')} error={errors.password} autoComplete="new-password" />
+            <PasswordStrength value={form.password} />
             <Field label="Подтверждение пароля" name="password_confirm" type="password" value={form.password_confirm} onChange={set('password_confirm')} error={errors.password_confirm} autoComplete="new-password" />
           </>
         )}

@@ -16,7 +16,7 @@ interface CDraft {
   questions: QDraft[]
 }
 
-const STEPS = ['Формат и название', 'Вопросы', 'Настройки']
+const STEPS = ['Название и формат', 'Вопросы', 'Настройки']
 const TIMERS = [30, 60, 90]
 
 function toDraft(q: Question): QDraft {
@@ -76,11 +76,11 @@ export default function CreateRoom() {
 
   // Смена формата: переносим вопросы между «категориями» и плоским списком
   const chooseFormat = (f: GameFormat) => {
-    if (f === 'blind' && format !== 'blind' && categories.length) {
+    if (f === 'random' && format !== 'random' && categories.length) {
       const flat = categories.flatMap((c) => c.questions)
       if (flat.length) setQuestions(flat)
     }
-    if (f !== 'blind' && format === 'blind' && !categories.length) {
+    if (f !== 'random' && format === 'random' && !categories.length) {
       const filled = questions.filter((q) => q.text.trim() || q.answer.trim())
       if (filled.length) setCategories([{ key: uid(), name: 'Общая', questions: filled }])
     }
@@ -95,7 +95,7 @@ export default function CreateRoom() {
     setNewCat('')
   }
 
-  const allQuestions = format === 'blind' ? questions : categories.flatMap((c) => c.questions)
+  const allQuestions = format === 'random' ? questions : categories.flatMap((c) => c.questions)
 
   const stepError = (s: number): string => {
     if (s === 0) {
@@ -103,7 +103,7 @@ export default function CreateRoom() {
       if (!format) return 'Выберите формат игры'
     }
     if (s === 1) {
-      if (format !== 'blind') {
+      if (format !== 'random') {
         if (!categories.length) return 'Добавьте хотя бы одну категорию'
         if (categories.some((c) => !c.name.trim())) return 'У всех категорий должно быть название'
       }
@@ -151,7 +151,7 @@ export default function CreateRoom() {
         timer_duration: timer,
         is_public: isPublic,
         description: description.trim(),
-        ...(format === 'blind'
+        ...(format === 'random'
           ? { questions: questions.map(questionPayload), categories: [] }
           : {
               categories: categories.map((c) => ({ ...(c.id ? { id: c.id } : {}), name: c.name.trim(), questions: c.questions.map(questionPayload) })),
@@ -163,7 +163,7 @@ export default function CreateRoom() {
         : await api.post<RoomDetail>('/rooms/', payload)
 
       // Загружаем фото: сервер вернул вопросы в том же порядке
-      const saved: Question[] = format === 'blind' ? data.questions : data.categories.flatMap((c) => c.questions)
+      const saved: Question[] = format === 'random' ? data.questions : data.categories.flatMap((c) => c.questions)
       const uploads = allQuestions
         .map((q, i) => ({ q, saved: saved[i] }))
         .filter(({ q, saved }) => q.photoFile && saved)
@@ -255,6 +255,31 @@ export default function CreateRoom() {
                 />
               </label>
               <div>
+                <span className="mb-3 block font-semibold">Кто увидит игру</span>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {[
+                    { v: true, icon: Globe, label: '🌐 Публичная', text: 'Видна всем в AO Rooms и в поиске' },
+                    {
+                      v: false,
+                      icon: Lock,
+                      label: '🔒 Приватная',
+                      text: 'В списке не показывается: её найдут, только набрав название целиком, или откроют по ссылке',
+                    },
+                  ].map((o) => (
+                    <button
+                      key={o.label}
+                      type="button"
+                      onClick={() => setIsPublic(o.v)}
+                      className={`glass rounded-2xl p-4 text-left transition ${isPublic === o.v ? 'border-green! bg-green/10' : 'hover:border-green/40'}`}
+                    >
+                      <div className="font-semibold">{o.label}</div>
+                      <div className="mt-1 text-xs text-muted">{o.text}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
                 <span className="mb-3 block font-semibold">Формат игры</span>
                 <div className="grid gap-4 md:grid-cols-3">
                   {(Object.keys(FORMATS) as GameFormat[]).map((f) => {
@@ -284,7 +309,7 @@ export default function CreateRoom() {
 
           {step === 1 && (
             <div className="space-y-6">
-              {format === 'blind' ? (
+              {format === 'random' ? (
                 <div className="glass rounded-2xl p-5">
                   <div className="mb-4 flex items-center justify-between">
                     <h2 className="text-lg font-bold">🎲 Вопросы для карточек</h2>
@@ -339,6 +364,7 @@ export default function CreateRoom() {
                           </button>
                         </div>
                         <QuestionList
+                          withPoints={format === 'strategic'}
                           questions={c.questions}
                           showErrors={showErrors}
                           onChange={(qs) => setCategories((cs) => cs.map((x) => (x.key === c.key ? { ...x, questions: qs } : x)))}
@@ -353,26 +379,6 @@ export default function CreateRoom() {
 
           {step === 2 && (
             <div className="space-y-5">
-              <div className="glass rounded-2xl p-5">
-                <span className="mb-3 block font-semibold">Приватность</span>
-                <div className="grid grid-cols-2 gap-3">
-                  {[
-                    { v: true, icon: Globe, label: '🌐 Публичная', text: 'Видна всем в AO Rooms' },
-                    { v: false, icon: Lock, label: '🔒 Приватная', text: 'Видна только вам' },
-                  ].map((o) => (
-                    <button
-                      key={o.label}
-                      type="button"
-                      onClick={() => setIsPublic(o.v)}
-                      className={`rounded-xl border p-4 text-left transition ${isPublic === o.v ? 'border-green bg-green/10' : 'border-line hover:border-green/40'}`}
-                    >
-                      <div className="font-semibold">{o.label}</div>
-                      <div className="mt-1 text-xs text-muted">{o.text}</div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
               <div className="glass rounded-2xl p-5">
                 <span className="mb-3 block font-semibold">⏱️ Таймер на вопрос</span>
                 <div className="flex flex-wrap gap-2">
@@ -423,7 +429,7 @@ export default function CreateRoom() {
                   <div>
                     Формат: <b className="text-fg">{format && FORMATS[format].label}</b>
                   </div>
-                  {format !== 'blind' && (
+                  {format !== 'random' && (
                     <div>
                       Категорий: <b className="text-fg">{categories.length}</b>
                     </div>

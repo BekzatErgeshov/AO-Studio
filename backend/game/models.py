@@ -22,14 +22,17 @@ class GameSession(models.Model):
     STATUS_FINISHED = "finished"
     STATUS_CHOICES = [(STATUS_LOBBY, "Ожидание команд"), (STATUS_ACTIVE, "Идёт"), (STATUS_FINISHED, "Завершена")]
 
+    # offline остаётся ради старых сессий в базе; новые игры бывают только одиночные и по QR
     MODE_OFFLINE = "offline"
     MODE_ONLINE = "online"
     MODE_SOLO = "solo"
     MODE_CHOICES = [
-        (MODE_SOLO, "Один (одиночная игра)"),
-        (MODE_OFFLINE, "Команда — на одном экране"),
-        (MODE_ONLINE, "Команда — со своих устройств"),
+        (MODE_SOLO, "Одиночная игра"),
+        (MODE_ONLINE, "Команды со своих устройств (доска)"),
+        (MODE_OFFLINE, "Команды на одном экране (устарело)"),
     ]
+    # Режимы, в которых можно запустить новую игру
+    MODE_STARTABLE = (MODE_SOLO, MODE_ONLINE)
 
     room = models.ForeignKey(AORoom, on_delete=models.CASCADE, related_name="sessions")
     host = models.ForeignKey(

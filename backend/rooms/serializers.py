@@ -63,8 +63,8 @@ class RoomListSerializer(serializers.ModelSerializer):
         return obj.likes.filter(user=request.user).exists()
 
     def get_categories(self, obj):
-        # Для слепого формата категории не показываются
-        if obj.format == AORoom.FORMAT_BLIND:
+        # В рандоме вопросы идут вперемешку, категорий нет
+        if obj.format not in AORoom.CATEGORY_FORMATS:
             return []
         return [c.name for c in obj.categories.all()]
 
@@ -77,7 +77,7 @@ class RoomDetailSerializer(RoomListSerializer):
         fields = RoomListSerializer.Meta.fields + ["questions"]
 
     def get_questions(self, obj):
-        # Вопросы без категории (слепой формат)
+        # Вопросы без категории (формат «Рандом»)
         qs = [q for q in obj.questions.all() if q.category_id is None]
         return QuestionSerializer(qs, many=True, context=self.context).data
 
@@ -88,7 +88,8 @@ class QuestionInputSerializer(serializers.Serializer):
     id = serializers.IntegerField(required=False)
     text = serializers.CharField(error_messages={"blank": "Введите текст вопроса."})
     answer = serializers.CharField(max_length=500, error_messages={"blank": "Введите ответ."})
-    points = serializers.IntegerField(min_value=1, max_value=10, default=1)
+    # Балл важен только в стратегическом формате; в остальных он всегда 1
+    points = serializers.IntegerField(min_value=1, max_value=5, default=1)
     remove_photo = serializers.BooleanField(required=False, default=False)
 
 
@@ -118,7 +119,7 @@ class RoomWriteSerializer(serializers.ModelSerializer):
         fmt = attrs.get("format", getattr(self.instance, "format", None))
         has_content = "categories" in attrs or "questions" in attrs
         if self.instance is None or has_content:
-            if fmt == AORoom.FORMAT_BLIND:
+            if fmt not in AORoom.CATEGORY_FORMATS:
                 if not attrs.get("questions"):
                     raise serializers.ValidationError({"questions": "Добавьте хотя бы один вопрос."})
             else:
@@ -151,7 +152,8 @@ class RoomWriteSerializer(serializers.ModelSerializer):
         q = existing.get(data.get("id")) or Question(room=room)
         q.text = data["text"]
         q.answer = data["answer"]
-        q.points = data["points"]
+        # Баллы назначаются только в стратегическом формате, в остальных — всегда 1
+        q.points = 1 if room.format in AORoom.ONE_POINT_FORMATS else data["points"]
         q.category = category
         q.order = order
         if data.get("remove_photo") and q.photo:
@@ -166,7 +168,7 @@ class RoomWriteSerializer(serializers.ModelSerializer):
         existing_c = {c.id: c for c in room.categories.all()}
         keep_q, keep_c = set(), set()
 
-        if room.format == AORoom.FORMAT_BLIND:
+        if room.format not in AORoom.CATEGORY_FORMATS:
             for i, qd in enumerate(questions or []):
                 keep_q.add(self._upsert_question(room, qd, None, i, existing_q))
         else:

@@ -5,13 +5,17 @@ from django.db import models
 
 class AORoom(models.Model):
     FORMAT_CLASSIC = "classic"
+    FORMAT_RANDOM = "random"
     FORMAT_STRATEGIC = "strategic"
-    FORMAT_BLIND = "blind"
     FORMAT_CHOICES = [
         (FORMAT_CLASSIC, "Классический"),
+        (FORMAT_RANDOM, "Рандом"),
         (FORMAT_STRATEGIC, "Стратегический"),
-        (FORMAT_BLIND, "Слепой"),
     ]
+    # Классика и рандом — все вопросы по одному баллу; баллы задаются только в стратегическом
+    ONE_POINT_FORMATS = (FORMAT_CLASSIC, FORMAT_RANDOM)
+    # Вопросы лежат в категориях; в рандоме они идут вперемешку
+    CATEGORY_FORMATS = (FORMAT_CLASSIC, FORMAT_STRATEGIC)
 
     title = models.CharField(max_length=200)
     format = models.CharField(max_length=20, choices=FORMAT_CHOICES)
@@ -50,8 +54,9 @@ class Category(models.Model):
 class Question(models.Model):
     text = models.TextField()
     answer = models.CharField(max_length=500)
+    # Балл задаётся только в стратегическом формате: от 1 до 5
     points = models.PositiveSmallIntegerField(
-        default=1, validators=[MinValueValidator(1), MaxValueValidator(10)]
+        default=1, validators=[MinValueValidator(1), MaxValueValidator(5)]
     )
     photo = models.ImageField(upload_to="questions/", blank=True, null=True)
     category = models.ForeignKey(

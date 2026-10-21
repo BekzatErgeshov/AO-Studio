@@ -46,7 +46,7 @@ export default function RoomCard({ room, onClick, onPlay, onLikeChange, showPriv
     }
   }
 
-  const cats = room.format === 'blind' ? [] : room.categories
+  const cats = room.format === 'random' ? [] : room.categories
 
   return (
     <motion.div
@@ -71,7 +71,7 @@ export default function RoomCard({ room, onClick, onPlay, onLikeChange, showPriv
 
         <div className="flex flex-wrap items-center gap-2 text-xs text-muted">
           <FormatBadge format={room.format} />
-          {room.format !== 'blind' && (
+          {room.format !== 'random' && (
             <span className="inline-flex items-center gap-1">
               <FolderOpen size={14} /> {cats.length} кат.
             </span>

@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { BookOpen, Gamepad2, Home, LogIn, Monitor, Moon, PlusCircle, Sun, User as UserIcon } from 'lucide-react'
+import { BookOpen, Gamepad2, Home, Info, LogIn, Monitor, Moon, PlusCircle, Sun, User as UserIcon } from 'lucide-react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../store/auth'
 import { useUI } from '../store/ui'
@@ -34,18 +34,31 @@ const navCls = ({ isActive }: { isActive: boolean }) =>
  * может сбросить её в начало уже после нашего вызова.
  */
 export function scrollToAbout() {
+  scrollToSection('about')
+}
+
+/** Прокрутка к разделу главной: «Об игре АО» — к описанию, «Инфо» — к футеру */
+export function scrollToSection(id: 'about' | 'info') {
   let tries = 0
-  const tick = () => {
-    const el = document.getElementById('about')
+  const go = () => {
+    const el = document.getElementById(id)
+    // Переход с другой страницы: раздела ещё нет в DOM — ждём, пока отрисуется
     if (!el) {
-      if (tries++ < 30) setTimeout(tick, 50)
+      if (tries++ < 40) setTimeout(go, 50)
       return
     }
     el.scrollIntoView({ behavior: 'smooth' })
-    // Прокрутка не сдвинулась (страница отрисовалась позже) — пробуем ещё раз
-    if (tries++ < 30 && el.getBoundingClientRect().top > window.innerHeight / 2) setTimeout(tick, 120)
+    setTimeout(() => {
+      // Судим по результату: раздел должен оказаться у верха экрана
+      const top = el.getBoundingClientRect().top
+      if (top >= -4 && top < window.innerHeight * 0.6) return
+      // Не доехали (браузер не анимирует прокрутку или страница дорисовалась позже):
+      // пробуем ещё раз, а на последней попытке переходим рывком
+      if (tries++ < 4) go()
+      else el.scrollIntoView()
+    }, 400)
   }
-  tick()
+  go()
 }
 
 export default function Layout() {
@@ -61,6 +74,12 @@ export default function Layout() {
   }
 
   const goCreate = () => (user ? navigate('/create') : openAuth('register', () => navigate('/create')))
+
+  // «Инфо» — на главную, к футеру с контактами
+  const goInfo = () => {
+    if (location.pathname !== '/') navigate('/')
+    scrollToSection('info')
+  }
 
   return (
     <div className="relative min-h-screen">
@@ -81,17 +100,20 @@ export default function Layout() {
           <NavLink to="/" end className={navCls}>
             <Home size={20} /> Главная
           </NavLink>
+          <button onClick={onLogo} className={navCls({ isActive: false })}>
+            <BookOpen size={20} /> Об игре АО
+          </button>
           <NavLink to="/rooms" className={navCls}>
             <Gamepad2 size={20} /> AO Rooms
           </NavLink>
           <NavLink to="/board" className={navCls}>
             <Monitor size={20} /> Доска
           </NavLink>
-          <button onClick={onLogo} className={navCls({ isActive: false })}>
-            <BookOpen size={20} /> Об игре АО
-          </button>
           <button onClick={goCreate} className={navCls({ isActive: location.pathname === '/create' })}>
             <PlusCircle size={20} /> Создать АО
+          </button>
+          <button onClick={goInfo} className={navCls({ isActive: false })}>
+            <Info size={20} /> Инфо
           </button>
         </nav>
 

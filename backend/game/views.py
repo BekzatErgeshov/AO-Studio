@@ -52,8 +52,10 @@ class GameStartView(APIView):
         )
         teams = data["teams"]
         if data["mode"] == GameSession.MODE_SOLO:
-            # Одиночная игра: единственная «команда» — сам игрок
-            teams = [{"name": request.user.username, "color": "#10B981"}]
+            # Одиночная игра: единственная «команда» — сам игрок. Имя он вводит при запуске,
+            # по умолчанию — его логин
+            name = (teams[0]["name"].strip() if teams else "") or request.user.username
+            teams = [{"name": name[:100], "color": "#10B981"}]
         Team.objects.bulk_create(
             [Team(session=session, name=t["name"], color=t["color"]) for t in teams]
         )

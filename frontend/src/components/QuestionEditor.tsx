@@ -36,9 +36,11 @@ interface CardProps {
   onChange: (q: QDraft) => void
   onDelete: () => void
   canDelete: boolean
+  /** Баллы задаются только в стратегическом формате; в классике и рандоме вопрос всегда стоит 1 балл */
+  withPoints?: boolean
 }
 
-function QuestionCard({ q, index, showErrors, onChange, onDelete, canDelete }: CardProps) {
+function QuestionCard({ q, index, showErrors, onChange, onDelete, canDelete, withPoints }: CardProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: q.key })
   const fileRef = useRef<HTMLInputElement>(null)
 
@@ -91,16 +93,20 @@ function QuestionCard({ q, index, showErrors, onChange, onDelete, canDelete }: C
               maxLength={500}
               onChange={(e) => onChange({ ...q, answer: e.target.value })}
             />
-            <label className="flex items-center gap-2">
-              <span className="text-sm text-muted">Баллы</span>
-              <select className="input w-20" value={q.points} onChange={(e) => onChange({ ...q, points: Number(e.target.value) })}>
-                {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
-                  <option key={n} value={n}>
-                    {n}
-                  </option>
-                ))}
-              </select>
-            </label>
+            {withPoints ? (
+              <label className="flex items-center gap-2">
+                <span className="text-sm text-muted">Баллы</span>
+                <select className="input w-20" value={q.points} onChange={(e) => onChange({ ...q, points: Number(e.target.value) })}>
+                  {Array.from({ length: 5 }, (_, i) => i + 1).map((n) => (
+                    <option key={n} value={n}>
+                      {n}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : (
+              <span className="flex items-center text-sm text-muted">1 балл</span>
+            )}
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
@@ -143,12 +149,14 @@ interface ListProps {
   questions: QDraft[]
   onChange: (qs: QDraft[]) => void
   showErrors: boolean
+  /** Баллы задаются только в стратегическом формате */
+  withPoints?: boolean
   /** Можно ли удалить последний вопрос в списке */
   allowEmpty?: boolean
 }
 
 /** Сортируемый (drag & drop) список вопросов */
-export default function QuestionList({ questions, onChange, showErrors, allowEmpty }: ListProps) {
+export default function QuestionList({ questions, onChange, showErrors, allowEmpty, withPoints }: ListProps) {
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
@@ -175,6 +183,7 @@ export default function QuestionList({ questions, onChange, showErrors, allowEmp
                   showErrors={showErrors}
                   canDelete={allowEmpty || questions.length > 1}
                   onChange={(nq) => onChange(questions.map((x) => (x.key === q.key ? nq : x)))}
+                  withPoints={withPoints}
                   onDelete={() => onChange(questions.filter((x) => x.key !== q.key))}
                 />
               </motion.div>
@@ -184,7 +193,7 @@ export default function QuestionList({ questions, onChange, showErrors, allowEmp
       </DndContext>
       <button
         type="button"
-        onClick={() => onChange([...questions, newQuestion(Math.min(10, (questions.at(-1)?.points ?? 0) + 1))])}
+        onClick={() => onChange([...questions, newQuestion(withPoints ? Math.min(5, (questions.at(-1)?.points ?? 0) + 1) : 1)])}
         className="btn btn-ghost w-full border-dashed"
       >
         <Plus size={18} /> Добавить вопрос

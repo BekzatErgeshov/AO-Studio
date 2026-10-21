@@ -8,7 +8,7 @@ import StartGameModal from './components/StartGameModal'
 import { ADMIN_URL, setUnauthorizedHandler } from './lib/api'
 import Board from './pages/Board'
 import CreateRoom from './pages/CreateRoom'
-import Blind from './pages/game/Blind'
+import Random from './pages/game/Random'
 import Classic from './pages/game/Classic'
 import Lobby from './pages/game/Lobby'
 import Solo from './pages/game/Solo'
@@ -93,7 +93,7 @@ export default function App() {
         </Route>
         <Route path="/game/classic" element={<RequireAuth><Classic /></RequireAuth>} />
         <Route path="/game/strategic" element={<RequireAuth><Strategic /></RequireAuth>} />
-        <Route path="/game/blind" element={<RequireAuth><Blind /></RequireAuth>} />
+        <Route path="/game/random" element={<RequireAuth><Random /></RequireAuth>} />
         <Route path="/game/results" element={<Results />} />
         <Route path="/game/lobby" element={<RequireAuth><Lobby /></RequireAuth>} />
         <Route path="/game/solo" element={<RequireAuth><Solo /></RequireAuth>} />

@@ -35,17 +35,17 @@ export default function Solo() {
   const me = teams[0]
 
   const [results, setResults] = usePersistentState<Record<number, SoloResult>>(`solo_${sessionId}_results`, {})
-  const blindOrder = useMemo(
-    () => (room?.format === 'blind' ? shuffle(room.questions.map((q) => q.id)) : []),
+  const randomOrder = useMemo(
+    () => (room?.format === 'random' ? shuffle(room.questions.map((q) => q.id)) : []),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [room?.id],
   )
-  const [order] = usePersistentState<number[]>(`solo_${sessionId}_order`, blindOrder)
+  const [order] = usePersistentState<number[]>(`solo_${sessionId}_order`, randomOrder)
 
   // Поле вопросов: колонки по категориям (классический/стратегический) или карточки (слепой)
   const { columns, tiles, all } = useMemo(() => {
     if (!room) return { columns: [], tiles: [] as Cell[], all: [] as Cell[] }
-    if (room.format === 'blind') {
+    if (room.format === 'random') {
       const byId = new Map(room.questions.map((q) => [q.id, q]))
       const tiles = order
         .map((id, i) => byId.get(id) && { q: byId.get(id)!, label: i + 1, points: 1 })
@@ -126,7 +126,7 @@ export default function Solo() {
         }`}
       >
         {res ? (res.correct ? <Check size={28} strokeWidth={3} /> : <X size={28} strokeWidth={3} />) : c.label}
-        {!res && room.format === 'blind' && <span className="absolute right-2 top-1.5 text-sm opacity-50">?</span>}
+        {!res && room.format === 'random' && <span className="absolute right-2 top-1.5 text-sm opacity-50">?</span>}
       </motion.button>
     )
   }
@@ -223,7 +223,7 @@ export default function Solo() {
               <motion.div className="h-full bg-green" animate={{ width: `${all.length ? (answered / all.length) * 100 : 0}%` }} />
             </div>
 
-            {room.format === 'blind' ? (
+            {room.format === 'random' ? (
               <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-6">{tiles.map(cellButton)}</div>
             ) : (
               <div className="scrollbar-thin -mx-1 overflow-x-auto px-1 pb-2">

@@ -37,7 +37,7 @@ const reveal = {
 const formatDetails: Record<GameFormat, { icon: typeof Layers; points: string[] }> = {
   classic: { icon: ListChecks, points: ['Вопросы по категориям', 'Все команды отвечают одновременно', 'Проверка после каждой категории'] },
   strategic: { icon: Target, points: ['Сетка «категория × стоимость»', 'Команды ходят по очереди', 'Автоматический подсчёт баллов'] },
-  blind: { icon: Sparkles, points: ['Пронумерованные скрытые карточки', 'Эффектный переворот', 'Бонусы: x2, пропуск хода, кража'] },
+  random: { icon: Sparkles, points: ['Пронумерованные скрытые карточки', 'Эффектный переворот', 'Бонусы: x2, пропуск хода, кража'] },
 }
 
 const steps = [
@@ -230,23 +230,58 @@ export default function Home() {
         </motion.section>
       </div>
 
-      {/* FOOTER */}
-      <footer className="border-t border-line px-4 py-10 sm:px-6">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-6 text-sm text-muted md:flex-row">
-          <div className="flex items-center gap-3">
-            <Logo size={32} />
+      {/* FOOTER — раздел «Инфо» в меню ведёт сюда */}
+      <footer id="info" className="scroll-mt-20 border-t border-line px-4 py-10 sm:px-6">
+        <div className="mx-auto max-w-6xl">
+          <div className="grid gap-8 md:grid-cols-3">
+            {/* О платформе */}
             <div>
-              <div className="font-bold text-fg">AO Studio</div>
-              <div className="text-xs">Платформа для интеллектуальных игр Акыл Ордо</div>
+              <div className="flex items-center gap-3">
+                <Logo size={36} />
+                <div className="text-lg font-bold text-fg">AO Studio</div>
+              </div>
+              <p className="mt-3 text-sm text-muted">
+                Платформа для интеллектуальных игр «Акыл Ордо».
+              </p>
+            </div>
+
+            {/* Автор */}
+            <div>
+              <div className="text-xs font-semibold uppercase tracking-widest text-muted">Автор</div>
+              <div className="mt-3 text-sm">
+                <div className="font-semibold text-fg">Эргешов Бекзат</div>
+                <div className="mt-1 text-muted">Студент ОшГУ, ПМИ-2-24</div>
+              </div>
+              <div className="mt-5 flex flex-wrap gap-4 text-sm">
+                <button onClick={() => navigate('/rooms')} className="text-muted hover:text-green">AO Rooms</button>
+                <button onClick={() => navigate('/board')} className="text-muted hover:text-green">Доска</button>
+                <button onClick={scrollToAbout} className="text-muted hover:text-green">Об игре</button>
+              </div>
+            </div>
+
+            {/* Контакты */}
+            <div>
+              <div className="text-xs font-semibold uppercase tracking-widest text-muted">Контакты</div>
+              <ul className="mt-3 space-y-2 text-sm">
+                {[
+                  { label: 'GitHub', value: 'BekzatErgeshov', href: 'https://github.com/BekzatErgeshov' },
+                  { label: 'Instagram', value: 'bekotemirov_1', href: 'https://instagram.com/bekotemirov_1' },
+                  { label: 'Telegram', value: 'bekokim', href: 'https://t.me/bekokim' },
+                  { label: 'WhatsApp', value: '0702505011', href: 'https://wa.me/996702505011' },
+                ].map((c) => (
+                  <li key={c.label} className="flex items-center gap-2">
+                    <span className="w-20 shrink-0 text-muted">{c.label}</span>
+                    <a href={c.href} target="_blank" rel="noreferrer noopener" className="truncate font-medium text-fg hover:text-green">
+                      {c.value}
+                    </a>
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
-          <div className="flex flex-wrap justify-center gap-5">
-            <button onClick={() => navigate('/rooms')} className="hover:text-green">AO Rooms</button>
-            <button onClick={onCreate} className="hover:text-green">Создать АО</button>
-            <button onClick={scrollToAbout} className="hover:text-green">Об игре</button>
-          </div>
-          <div className="flex items-center gap-1">
-            © {new Date().getFullYear()} AO Studio. Сделано с <Heart size={14} className="text-green" fill="currentColor" />
+
+          <div className="mt-10 flex items-center justify-center gap-1 border-t border-line pt-6 text-sm text-muted">
+            © {new Date().getFullYear()} AO Studio. Сделано с <Heart size={14} className="text-green" fill="currentColor" /> любовью
           </div>
         </div>
       </footer>

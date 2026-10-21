@@ -54,6 +54,10 @@ class RoomViewSet(viewsets.ModelViewSet):
 
         if self.action in ("list", "my"):
             show = "mine" if self.action == "my" else params.get("show", "all")
+            search = params.get("search", "").strip()
+            # Приватную комнату не видно в списке: её находят, набрав название целиком,
+            # или открывают по прямой ссылке
+            found_private = Q(is_public=False, title__iexact=search) if search else Q(pk__in=[])
             if show in ("mine", "liked") and not user.is_authenticated:
                 return AORoom.objects.none()
             if show == "mine":
@@ -61,15 +65,17 @@ class RoomViewSet(viewsets.ModelViewSet):
             elif show == "liked":
                 base = base.filter(likes__user=user).filter(Q(is_public=True) | Q(author=user))
             elif show == "available" and user.is_authenticated:
-                # Для запуска игры: публичные + свои приватные
-                base = base.filter(Q(is_public=True) | Q(author=user))
+                # Для запуска игры: публичные, свои приватные и найденные по точному названию
+                base = base.filter(Q(is_public=True) | Q(author=user) | found_private)
             else:
-                base = base.filter(is_public=True)
-        else:
+                base = base.filter(Q(is_public=True) | found_private)
+        elif self.action != "retrieve":
+            # Приватные комнаты не показываем в общих списках…
             visible = Q(is_public=True)
             if user.is_authenticated:
                 visible |= Q(author=user)
             base = base.filter(visible)
+        # …а по прямой ссылке (retrieve) комната открывается у всех, кому её дали
 
         qs = annotate_rooms(base, user)
 
@@ -77,7 +83,6 @@ class RoomViewSet(viewsets.ModelViewSet):
             qs = qs.prefetch_related("categories__questions", "questions")
 
         if self.action in ("list", "my"):
-            search = params.get("search", "").strip()
             if search:
                 qs = qs.filter(title__icontains=search)
             fmt = params.get("fmt")
@@ -95,7 +100,7 @@ class RoomViewSet(viewsets.ModelViewSet):
                 cat_q = Q()
                 for c in cats:
                     cat_q |= Q(categories__name__iexact=c)
-                qs = qs.filter(cat_q).exclude(format=AORoom.FORMAT_BLIND).distinct()
+                qs = qs.filter(cat_q).filter(format__in=AORoom.CATEGORY_FORMATS).distinct()
         return qs
 
     def perform_create(self, serializer):
@@ -113,7 +118,7 @@ class RoomViewSet(viewsets.ModelViewSet):
         """Популярные категории для фильтра-мультиселекта."""
         names = (
             Category.objects.filter(room__is_public=True)
-            .exclude(room__format=AORoom.FORMAT_BLIND)
+            .filter(room__format__in=AORoom.CATEGORY_FORMATS)
             .values("name")
             .annotate(n=Count("id"))
             .order_by("-n", "name")[:30]
@@ -157,9 +162,9 @@ class RoomViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=["post"], permission_classes=[permissions.IsAuthenticated])
     def categories(self, request, pk=None):
         room = self._own_room()
-        if room.format == AORoom.FORMAT_BLIND:
+        if room.format not in AORoom.CATEGORY_FORMATS:
             return Response(
-                {"detail": "В слепом формате нет категорий."}, status=status.HTTP_400_BAD_REQUEST
+                {"detail": "В формате «Рандом» нет категорий."}, status=status.HTTP_400_BAD_REQUEST
             )
         serializer = CategorySerializer(data=request.data)
         serializer.is_valid(raise_exception=True)

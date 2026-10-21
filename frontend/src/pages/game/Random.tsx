@@ -14,37 +14,26 @@ import type { LiveState } from '../../lib/types'
 import { shuffle } from '../../lib/utils'
 import { useGame } from '../../store/game'
 
-type Bonus = 'double' | 'skip' | 'steal'
-
-const BONUSES: Record<Bonus, { emoji: string; title: string; text: string }> = {
-  double: { emoji: '🌟', title: 'Двойные баллы!', text: 'За правильный ответ — x2 балла' },
-  skip: { emoji: '⏭️', title: 'Пропуск хода!', text: 'Команда пропускает ход, карточка остаётся закрытой' },
-  steal: { emoji: '🎯', title: 'Кража вопроса!', text: 'После ответа команда выбирает ещё раз' },
-}
-
 interface Outcome {
   teamId: number
   correct: boolean
 }
 
-function rollBonus(): Bonus | null {
-  if (Math.random() >= 0.2) return null
-  const all: Bonus[] = ['double', 'skip', 'steal']
-  return all[Math.floor(Math.random() * all.length)]
-}
-
-export default function Blind() {
+/**
+ * Формат «Рандом»: вопросы без категорий, вперемешку, каждый стоит 1 балл.
+ * Команды по очереди открывают карточки вслепую.
+ */
+export default function Random() {
   const { room, teams, addScore, finish, sessionId } = useGame()
   const navigate = useNavigate()
 
   const questions = room?.questions ?? []
   // Порядок карточек перемешивается один раз за игру
-  const [order] = usePersistentState<number[]>(`blind_${sessionId}_order`, () => shuffle(questions.map((q) => q.id)))
-  const [results, setResults] = usePersistentState<Record<number, Outcome>>(`blind_${sessionId}_results`, {})
-  const [activeIdx, setActiveIdx] = usePersistentState(`blind_${sessionId}_active`, 0)
+  const [order] = usePersistentState<number[]>(`random_${sessionId}_order`, () => shuffle(questions.map((q) => q.id)))
+  const [results, setResults] = usePersistentState<Record<number, Outcome>>(`random_${sessionId}_results`, {})
+  const [activeIdx, setActiveIdx] = usePersistentState(`random_${sessionId}_active`, 0)
   const [openId, setOpenId] = useState<number | null>(null)
-  const [bonus, setBonus] = useState<Bonus | null>(null)
-  const [stage, setStage] = useState<'bonus' | 'question' | null>(null)
+  const [stage, setStage] = useState<'question' | null>(null)
   const [flipped, setFlipped] = useState(false)
   const [showAnswer, setShowAnswer] = useState(false)
   const [running, setRunning] = useState(false)
@@ -79,42 +68,20 @@ export default function Blind() {
     setOpenId(id)
     setShowAnswer(false)
     setRunning(false)
-    const b = rollBonus()
-    setBonus(b)
-    if (b) {
-      setStage('bonus')
-      setTimeout(() => sounds.bonus(), 150)
-    } else revealQuestion()
+    revealQuestion()
   }
-
-  // После показа бонуса — продолжаем
-  useEffect(() => {
-    if (stage !== 'bonus' || !bonus) return
-    const t = setTimeout(() => {
-      if (bonus === 'skip') {
-        setOpenId(null)
-        setStage(null)
-        setBonus(null)
-        nextTeam()
-      } else revealQuestion()
-    }, 2600)
-    return () => clearTimeout(t)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stage, bonus])
 
   const judge = (correct: boolean) => {
     if (stage !== 'question' || !current || !active) return
-    const pts = bonus === 'double' ? 2 : 1
     if (correct) {
-      addScore(active.id, pts)
+      addScore(active.id, 1)
       sounds.correct()
     } else sounds.wrong()
     const next = { ...results, [current.id]: { teamId: active.id, correct } }
     setResults(next)
-    if (bonus !== 'steal') nextTeam()
+    nextTeam()
     setOpenId(null)
     setStage(null)
-    setBonus(null)
     setFlipped(false)
     if (Object.keys(next).length >= order.length) setTimeout(() => void end(), 1200)
   }
@@ -128,18 +95,15 @@ export default function Blind() {
 
   // ---------- Онлайн: что видят команды, их ответы и выбор карточки ----------
   const liveState: LiveState =
-    stage === 'bonus' && bonus
-      ? { view: 'bonus', bonus, active_team: active?.id ?? null }
-      : stage === 'question' && current
-        ? {
-            view: 'question',
-            question: { id: current.id, text: current.text, photo: current.photo, points: bonus === 'double' ? 2 : 1 },
-            accepting: true,
-            answer_team: active?.id ?? null,
-            reveal: showAnswer ? current.answer : null,
-            bonus,
-          }
-        : {
+    stage === 'question' && current
+      ? {
+          view: 'question',
+          question: { id: current.id, text: current.text, photo: current.photo, points: 1 },
+          accepting: true,
+          answer_team: active?.id ?? null,
+          reveal: showAnswer ? current.answer : null,
+        }
+      : {
             view: 'tiles',
             active_team: active?.id ?? null,
             available: order.filter((id) => !results[id]),
@@ -190,7 +154,7 @@ export default function Blind() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [teamPick])
 
-  if (!room || room.format !== 'blind') return <Navigate to="/rooms" replace />
+  if (!room || room.format !== 'random') return <Navigate to="/rooms" replace />
 
   return (
     <GameShell
@@ -292,44 +256,6 @@ export default function Blind() {
             >
               <div className="absolute inset-0 bg-black/70 backdrop-blur-md" />
 
-              {/* Бонусное событие */}
-              <AnimatePresence>
-                {stage === 'bonus' && bonus && (
-                  <motion.div
-                    key="bonus"
-                    className="relative z-10 text-center"
-                    initial={{ scale: 0, rotate: -20 }}
-                    animate={{ scale: 1, rotate: 0 }}
-                    exit={{ scale: 2, opacity: 0 }}
-                    transition={{ type: 'spring', damping: 10, stiffness: 160 }}
-                  >
-                    {Array.from({ length: 12 }).map((_, i) => (
-                      <motion.span
-                        key={i}
-                        className="absolute left-1/2 top-1/2 text-3xl"
-                        initial={{ x: 0, y: 0, opacity: 1 }}
-                        animate={{
-                          x: Math.cos((i / 12) * Math.PI * 2) * 260,
-                          y: Math.sin((i / 12) * Math.PI * 2) * 260,
-                          opacity: 0,
-                        }}
-                        transition={{ duration: 1.4, ease: 'easeOut' }}
-                      >
-                        ✨
-                      </motion.span>
-                    ))}
-                    <motion.div
-                      animate={{ rotate: [0, -10, 10, -10, 0], scale: [1, 1.2, 1] }}
-                      transition={{ duration: 0.8, repeat: 2 }}
-                      className="text-[110px] leading-none drop-shadow-[0_0_40px_rgba(16,185,129,0.8)]"
-                    >
-                      {BONUSES[bonus].emoji}
-                    </motion.div>
-                    <div className="text-gradient mt-4 text-5xl font-extrabold sm:text-6xl">{BONUSES[bonus].title}</div>
-                    <div className="mt-3 text-xl text-white/80">{BONUSES[bonus].text}</div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
 
               {/* Переворачивающаяся карточка */}
               {stage === 'question' && current && (
@@ -358,11 +284,6 @@ export default function Blind() {
                             <div className="mt-2 flex items-center gap-2 text-muted">
                               <Crown size={16} className="text-yellow-400" fill="currentColor" /> Отвечает:{' '}
                               <b style={{ color: active.color }}>{active.name}</b>
-                            </div>
-                          )}
-                          {bonus && (
-                            <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-green/15 px-3 py-1 text-sm font-semibold text-green">
-                              {BONUSES[bonus].emoji} {BONUSES[bonus].title}
                             </div>
                           )}
                         </div>
@@ -430,7 +351,7 @@ export default function Blind() {
                           <Eye size={18} /> {showAnswer ? 'Скрыть' : 'Ответ'}
                         </button>
                         <button onClick={() => judge(true)} className="btn btn-primary py-3.5 text-base">
-                          ✅ Правильно {bonus === 'double' ? '(+2)' : '(+1)'}
+                          ✅ Правильно (+1)
                         </button>
                         <button onClick={() => judge(false)} className="btn btn-danger py-3.5 text-base">
                           ❌ Неправильно

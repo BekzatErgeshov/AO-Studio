@@ -1,4 +1,4 @@
-export type GameFormat = 'classic' | 'strategic' | 'blind'
+export type GameFormat = 'classic' | 'random' | 'strategic'
 
 export interface User {
   id: number
@@ -123,7 +123,7 @@ export interface LiveCell {
 }
 
 export interface LiveState {
-  view?: 'lobby' | 'waiting' | 'question' | 'review' | 'grid' | 'tiles' | 'bonus' | 'results'
+  view?: 'lobby' | 'waiting' | 'question' | 'review' | 'grid' | 'tiles' | 'results'
   category?: string
   number?: number
   total?: number
@@ -140,7 +140,6 @@ export interface LiveState {
   tiles?: LiveCell[]
   available?: number[]
   active_team?: number | null
-  bonus?: 'double' | 'skip' | 'steal' | null
 }
 
 export interface LivePayload {

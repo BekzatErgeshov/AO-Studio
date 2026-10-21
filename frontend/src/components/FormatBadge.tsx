@@ -5,7 +5,7 @@ import { FORMATS } from '../lib/utils'
 const styles: Record<GameFormat, string> = {
   classic: 'bg-green/15 border-green/40 text-green-dark dark:text-green-light',
   strategic: 'bg-green-dark/25 border-green-dark/50 text-green-dark dark:text-green-light',
-  blind: 'bg-lime-400/15 border-lime-500/40 text-lime-700 dark:text-lime-300',
+  random: 'bg-lime-400/15 border-lime-500/40 text-lime-700 dark:text-lime-300',
 }
 
 export default function FormatBadge({ format, compact }: { format: GameFormat; compact?: boolean }) {

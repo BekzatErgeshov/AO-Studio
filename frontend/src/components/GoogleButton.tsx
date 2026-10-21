@@ -56,6 +56,9 @@ export default function GoogleButton({ mode, onCredential }: Props) {
   const theme = useUI((s) => s.theme)
   const [clientId, setClientId] = useState<string | null>(null)
   const [failed, setFailed] = useState(false)
+  // Google рисует кнопку фиксированной шириной в пикселях: на первом кадре контейнер ещё
+  // нулевой, поэтому ширину замеряем и перерисовываем кнопку, когда она меняется
+  const [width, setWidth] = useState(0)
   const cb = useRef(onCredential)
   cb.current = onCredential
 
@@ -64,7 +67,17 @@ export default function GoogleButton({ mode, onCredential }: Props) {
   }, [])
 
   useEffect(() => {
-    if (!clientId || !ref.current) return
+    const el = ref.current
+    if (!el) return
+    const measure = () => setWidth(Math.round(el.getBoundingClientRect().width))
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [clientId])
+
+  useEffect(() => {
+    if (!clientId || !ref.current || !width) return
     let cancelled = false
     loadScript()
       .then(() => {
@@ -78,17 +91,20 @@ export default function GoogleButton({ mode, onCredential }: Props) {
           type: 'standard',
           theme: theme === 'dark' ? 'filled_black' : 'outline',
           size: 'large',
-          shape: 'pill',
+          // Прямоугольная кнопка со скруглением как у остальных кнопок сайта
+          shape: 'rectangular',
           text: mode === 'register' ? 'signup_with' : 'signin_with',
+          logo_alignment: 'center',
           locale: 'ru',
-          width: Math.min(ref.current.offsetWidth || 320, 400),
+          // Google принимает ширину до 400 px
+          width: Math.min(width, 400),
         })
       })
       .catch(() => !cancelled && setFailed(true))
     return () => {
       cancelled = true
     }
-  }, [clientId, mode, theme])
+  }, [clientId, mode, theme, width])
 
   if (!clientId) return null
 
@@ -100,7 +116,10 @@ export default function GoogleButton({ mode, onCredential }: Props) {
       {failed ? (
         <p className="text-center text-xs text-muted">Не удалось загрузить вход через Google. Проверьте интернет.</p>
       ) : (
-        <div ref={ref} className="flex min-h-[44px] w-full justify-center" />
+        <div
+          ref={ref}
+          className="mx-auto min-h-[44px] w-full max-w-[400px] overflow-hidden rounded-xl [&>div]:mx-auto [&_iframe]:!rounded-xl"
+        />
       )}
     </div>
   )

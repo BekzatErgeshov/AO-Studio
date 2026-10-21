@@ -28,7 +28,10 @@ class TeamInputSerializer(serializers.Serializer):
 
 class GameStartSerializer(serializers.Serializer):
     room_id = serializers.IntegerField()
-    mode = serializers.ChoiceField(choices=GameSession.MODE_CHOICES, default=GameSession.MODE_OFFLINE)
+    # Запустить можно только одиночную игру или игру с доски (команды по QR)
+    mode = serializers.ChoiceField(
+        choices=[(m, m) for m in GameSession.MODE_STARTABLE], default=GameSession.MODE_SOLO
+    )
     teams = TeamInputSerializer(many=True, required=False, default=list)
     # Античит имеет смысл только в онлайне (устройства команд)
     anticheat = serializers.BooleanField(default=True)
@@ -40,10 +43,7 @@ class GameStartSerializer(serializers.Serializer):
     timer_duration = serializers.IntegerField(required=False, allow_null=True, min_value=5, max_value=3600)
 
     def validate(self, attrs):
-        # Офлайн — команды вводит ведущий; онлайн — команды подключаются сами по коду
-        # Один — команда создаётся автоматически из имени игрока
-        if attrs["mode"] == GameSession.MODE_OFFLINE and not attrs["teams"]:
-            raise serializers.ValidationError({"teams": "Нужна хотя бы одна команда."})
+        # Одиночная — «команда» создаётся из имени игрока; доска — команды подключаются по коду
         return attrs
 
 
