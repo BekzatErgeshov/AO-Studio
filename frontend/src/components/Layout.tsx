@@ -4,6 +4,7 @@ import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../store/auth'
 import { useUI } from '../store/ui'
 import Avatar from './Avatar'
+import FloatingEmojis from './FloatingEmojis'
 import Logo from './Logo'
 
 function ThemeToggle({ withLabel }: { withLabel?: boolean }) {
@@ -22,7 +23,7 @@ function ThemeToggle({ withLabel }: { withLabel?: boolean }) {
 
 const navCls = ({ isActive }: { isActive: boolean }) =>
   `group relative flex items-center gap-3 rounded-xl px-3 py-2.5 font-medium transition ${
-    isActive ? 'bg-primary/15 text-primary' : 'text-muted hover:bg-fg/5 hover:text-fg'
+    isActive ? 'bg-green/15 text-green' : 'text-muted hover:bg-fg/5 hover:text-fg'
   }`
 
 /**
@@ -83,6 +84,7 @@ export default function Layout() {
   return (
     <div className="relative min-h-screen">
       <div className="bg-aurora" />
+      <FloatingEmojis />
 
       {/* Sidebar — десктоп */}
       <aside className="glass fixed inset-y-0 left-0 z-30 hidden w-64 flex-col rounded-none border-y-0 border-l-0 p-4 md:flex">
@@ -163,7 +165,7 @@ export default function Layout() {
             to={to}
             end={end}
             className={({ isActive }) =>
-              `flex flex-1 flex-col items-center gap-1 py-2.5 text-[11px] font-medium transition ${isActive ? 'text-primary' : 'text-muted'}`
+              `flex flex-1 flex-col items-center gap-1 py-2.5 text-[11px] font-medium transition ${isActive ? 'text-green' : 'text-muted'}`
             }
           >
             <Icon size={22} />
@@ -172,7 +174,7 @@ export default function Layout() {
         ))}
         <button
           onClick={goCreate}
-          className={`flex flex-1 flex-col items-center gap-1 py-2.5 text-[11px] font-medium ${location.pathname === '/create' ? 'text-primary' : 'text-muted'}`}
+          className={`flex flex-1 flex-col items-center gap-1 py-2.5 text-[11px] font-medium ${location.pathname === '/create' ? 'text-green' : 'text-muted'}`}
         >
           <PlusCircle size={22} />
           Создать
@@ -181,7 +183,7 @@ export default function Layout() {
           <NavLink
             to="/profile"
             className={({ isActive }) =>
-              `flex flex-1 flex-col items-center gap-1 py-2.5 text-[11px] font-medium ${isActive ? 'text-primary' : 'text-muted'}`
+              `flex flex-1 flex-col items-center gap-1 py-2.5 text-[11px] font-medium ${isActive ? 'text-green' : 'text-muted'}`
             }
           >
             <Avatar name={user.username} src={user.avatar} size={22} />

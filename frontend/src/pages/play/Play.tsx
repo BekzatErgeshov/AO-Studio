@@ -35,7 +35,7 @@ function Standings({ teams, meId }: { teams: Team[]; meId?: number }) {
             t.disqualified
               ? 'border-red-400/30 bg-red-400/5 opacity-60'
               : t.id === meId
-                ? 'border-primary bg-primary/10'
+                ? 'border-green bg-green/10'
                 : 'border-line bg-fg/[0.03]'
           }`}
         >
@@ -58,7 +58,7 @@ function ArmGate({ warnings, allowed, onArm }: { warnings: number; allowed: numb
   const returning = warnings > 0
   return (
     <div className="glass rounded-3xl p-6 text-center">
-      <LockKeyhole className="mx-auto text-primary" size={44} />
+      <LockKeyhole className="mx-auto text-green" size={44} />
       <h1 className="mt-3 text-2xl font-extrabold">{returning ? 'Вернитесь в игру' : 'Защищённый режим'}</h1>
       <p className="mt-2 text-muted">
         Включите его до старта: игра раскроется на весь экран, и вы не потеряете время на вопросах.
@@ -148,8 +148,8 @@ function AnswerBox({ code, questionId, current }: { code: string; questionId: nu
 
   if (sent) {
     return (
-      <div className="mt-5 rounded-2xl border border-primary/40 bg-primary/10 p-4">
-        <div className="flex items-center gap-1.5 text-sm font-semibold text-primary">
+      <div className="mt-5 rounded-2xl border border-green/40 bg-green/10 p-4">
+        <div className="flex items-center gap-1.5 text-sm font-semibold text-green">
           <Check size={16} /> Ответ отправлен
         </div>
         <div className="mt-1 text-lg font-bold">{sent}</div>
@@ -208,9 +208,9 @@ function Board({ cells, columns, code, data }: { cells?: LiveCell[]; columns?: {
           c.used
             ? 'border-line bg-fg/5 text-fg/20'
             : picked === c.id
-              ? 'border-primary bg-primary text-white'
+              ? 'border-green bg-green text-white'
               : can
-                ? 'border-primary/60 bg-primary/15 text-primary active:scale-95'
+                ? 'border-green/60 bg-green/15 text-green active:scale-95'
                 : 'border-line bg-fg/[0.04] text-fg/70'
         }`}
       >
@@ -218,7 +218,7 @@ function Board({ cells, columns, code, data }: { cells?: LiveCell[]; columns?: {
         {c.used && team && (
           <span className="absolute bottom-1 right-1.5 flex items-center gap-0.5">
             <span className="h-2 w-2 rounded-full" style={{ background: team.color }} />
-            {c.correct ? <Check size={11} className="text-primary" /> : <X size={11} className="text-red-400" />}
+            {c.correct ? <Check size={11} className="text-green" /> : <X size={11} className="text-red-400" />}
           </span>
         )}
       </button>
@@ -227,7 +227,7 @@ function Board({ cells, columns, code, data }: { cells?: LiveCell[]; columns?: {
 
   return (
     <div>
-      <div className={`mb-4 rounded-2xl border p-3 text-center font-bold ${myTurn ? 'border-primary bg-primary/15 text-primary' : 'border-line'}`}>
+      <div className={`mb-4 rounded-2xl border p-3 text-center font-bold ${myTurn ? 'border-green bg-green/15 text-green' : 'border-line'}`}>
         {myTurn ? (
           <motion.span animate={{ scale: [1, 1.05, 1] }} transition={{ repeat: Infinity, duration: 1.5 }} className="inline-block">
             👑 Ваш ход! Выберите {columns ? 'вопрос' : 'карточку'}
@@ -248,7 +248,7 @@ function Board({ cells, columns, code, data }: { cells?: LiveCell[]; columns?: {
           <div className="grid min-w-max gap-2" style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(76px, 1fr))` }}>
             {columns.map((col) => (
               <div key={col.name} className="flex flex-col gap-2">
-                <div className="flex min-h-[44px] items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary-dark p-1.5 text-center text-xs font-bold uppercase text-white">
+                <div className="flex min-h-[44px] items-center justify-center rounded-xl bg-gradient-to-br from-green to-green-dark p-1.5 text-center text-xs font-bold uppercase text-white">
                   {col.name}
                 </div>
                 {col.cells.map((c) => cell(c, c.points ?? ''))}
@@ -301,7 +301,7 @@ export default function Play() {
     if (finished && !confettiDone.current) {
       confettiDone.current = true
       sounds.fanfare()
-      confetti({ particleCount: 140, spread: 90, origin: { y: 0.4 }, colors: ['#7C3AED', '#A78BFA', '#F43F5E', '#ffffff'] })
+      confetti({ particleCount: 140, spread: 90, origin: { y: 0.4 }, colors: ['#10B981', '#34D399', '#FBBF24', '#ffffff'] })
     }
   }, [finished])
 
@@ -321,7 +321,7 @@ export default function Play() {
   if (!data) {
     return (
       <Centered>
-        <Loader2 className="animate-spin text-primary" size={32} />
+        <Loader2 className="animate-spin text-green" size={32} />
         <p className="mt-3 text-muted">Подключаемся к игре…</p>
       </Centered>
     )
@@ -364,7 +364,7 @@ export default function Play() {
           <div className="text-xl font-extrabold leading-none tabular-nums">{myTeam.score}</div>
           <div className="text-[10px] text-muted">{place} место</div>
         </div>
-        <span title={error ? 'Нет связи' : 'Онлайн'} className={error ? 'text-red-400' : 'text-primary'}>
+        <span title={error ? 'Нет связи' : 'Онлайн'} className={error ? 'text-red-400' : 'text-green'}>
           {error ? <WifiOff size={16} /> : <Wifi size={16} />}
         </span>
         {data.anticheat && !finished && (
@@ -376,7 +376,7 @@ export default function Play() {
                   ? `Нарушений: ${ac.warnings} из ${(data.warnings_allowed ?? 1) + 1}`
                   : 'Защищённый режим включён'
             }
-            className={ac.disqualified ? 'text-red-400' : ac.warnings > 0 ? 'text-yellow-400' : 'text-primary'}
+            className={ac.disqualified ? 'text-red-400' : ac.warnings > 0 ? 'text-yellow-400' : 'text-green'}
           >
             {ac.disqualified ? <Ban size={16} /> : ac.warnings > 0 ? <AlertTriangle size={16} /> : <ShieldCheck size={16} />}
           </span>
@@ -478,7 +478,7 @@ export default function Play() {
                   <div className="mb-2 text-xs font-semibold uppercase tracking-widest text-muted">Команды ({data.teams.length})</div>
                   <div className="flex flex-wrap gap-2">
                     {data.teams.map((t) => (
-                      <span key={t.id} className={`rounded-full border px-3 py-1.5 text-sm ${t.id === me.id ? 'border-primary bg-primary/10' : 'border-line'}`}>
+                      <span key={t.id} className={`rounded-full border px-3 py-1.5 text-sm ${t.id === me.id ? 'border-green bg-green/10' : 'border-line'}`}>
                         <TeamChip team={t} />
                       </span>
                     ))}
@@ -489,7 +489,7 @@ export default function Play() {
               <div className="glass rounded-3xl p-5 sm:p-6">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    {state.category && <div className="text-xs font-semibold uppercase tracking-widest text-primary">📂 {state.category}</div>}
+                    {state.category && <div className="text-xs font-semibold uppercase tracking-widest text-green">📂 {state.category}</div>}
                     <div className="mt-1 text-sm text-muted">
                       {state.number && state.total ? `Вопрос ${state.number} из ${state.total} · ` : ''}
                       {q.points ? <b className="text-fg">{q.points} балл.</b> : null}
@@ -509,12 +509,12 @@ export default function Play() {
                 </div>
 
                 {q.photo && <img src={q.photo} alt="" className="mt-4 max-h-[35vh] w-full rounded-2xl border border-line object-contain" />}
-                <p className="font-display mt-4 whitespace-pre-line text-xl font-extrabold leading-snug sm:text-2xl">{q.text}</p>
+                <p className="mt-4 whitespace-pre-line text-xl font-bold leading-snug sm:text-2xl">{q.text}</p>
 
                 {state.reveal ? (
-                  <div className="mt-5 rounded-2xl border border-primary/40 bg-primary/10 p-4 text-center">
+                  <div className="mt-5 rounded-2xl border border-green/40 bg-green/10 p-4 text-center">
                     <div className="text-xs uppercase tracking-widest text-muted">Правильный ответ</div>
-                    <div className="mt-1 text-xl font-extrabold text-primary">{state.reveal}</div>
+                    <div className="mt-1 text-xl font-extrabold text-green">{state.reveal}</div>
                     {data.my_answer && <div className="mt-2 text-sm text-muted">Ваш ответ: {data.my_answer}</div>}
                   </div>
                 ) : canAnswer ? (
@@ -542,9 +542,9 @@ export default function Play() {
                           <span className="mt-0.5 text-xs font-bold text-muted">{i + 1}.</span>
                           <div className="min-w-0 flex-1">
                             <p className="text-sm text-muted">{it.text}</p>
-                            <p className="font-bold text-primary">→ {it.answer}</p>
+                            <p className="font-bold text-green">→ {it.answer}</p>
                           </div>
-                          <span className={`shrink-0 rounded-lg px-2 py-1 text-xs font-bold ${ok ? 'bg-primary text-white' : 'bg-fg/5 text-muted'}`}>
+                          <span className={`shrink-0 rounded-lg px-2 py-1 text-xs font-bold ${ok ? 'bg-green text-white' : 'bg-fg/5 text-muted'}`}>
                             {ok ? `+${it.points}` : '—'}
                           </span>
                         </div>
@@ -559,7 +559,7 @@ export default function Play() {
               <Board cells={state.tiles} code={upper} data={data} />
             ) : (
               <Centered inline>
-                <Loader2 className="animate-spin text-primary" size={28} />
+                <Loader2 className="animate-spin text-green" size={28} />
                 <p className="mt-3 text-muted">Ведущий готовит следующий вопрос…</p>
               </Centered>
             )}

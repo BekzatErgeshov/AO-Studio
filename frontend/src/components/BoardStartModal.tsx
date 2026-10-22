@@ -174,7 +174,7 @@ export default function BoardStartModal() {
       size="lg"
       title={
         <span className="flex items-center gap-2">
-          <Monitor size={20} className="text-primary" /> Запуск с доски
+          <Monitor size={20} className="text-green" /> Запуск с доски
         </span>
       }
     >
@@ -207,7 +207,7 @@ export default function BoardStartModal() {
                     key={r.id}
                     type="button"
                     onClick={() => pick(r)}
-                    className="flex w-full items-center gap-3 rounded-xl border border-line p-3 text-left transition hover:border-primary/50 hover:bg-primary/5"
+                    className="flex w-full items-center gap-3 rounded-xl border border-line p-3 text-left transition hover:border-green/50 hover:bg-green/5"
                   >
                     <div className="min-w-0 flex-1">
                       <div className="truncate font-bold">{r.title}</div>
@@ -246,7 +246,7 @@ export default function BoardStartModal() {
             {/* Сколько команд ждём: каждая играет с одного устройства */}
             <div className="rounded-xl border border-line p-4">
               <div className="mb-3 flex items-center gap-2 text-sm font-semibold">
-                <Users size={16} className="text-primary" /> Команд в игре
+                <Users size={16} className="text-green" /> Команд в игре
               </div>
               <Counter value={teams} min={1} max={40} onChange={setTeams} hint={plural(teams, 'команда', 'команды', 'команд')} />
               <p className="mt-3 text-xs text-muted">
@@ -257,7 +257,7 @@ export default function BoardStartModal() {
             {/* Время на вопрос */}
             <div className="mt-4 rounded-xl border border-line p-4">
               <div className="mb-3 flex items-center gap-2 text-sm font-semibold">
-                <Clock size={16} className="text-primary" /> Время на вопрос
+                <Clock size={16} className="text-green" /> Время на вопрос
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 {TIMERS.map((t) => (
@@ -273,15 +273,15 @@ export default function BoardStartModal() {
               type="button"
               onClick={() => setAutostart((v) => !v)}
               className={`mt-3 flex w-full items-start gap-3 rounded-xl border p-4 text-left transition ${
-                autostart ? 'border-primary bg-primary/10' : 'border-line hover:border-primary/40'
+                autostart ? 'border-green bg-green/10' : 'border-line hover:border-green/40'
               }`}
             >
-              <Sparkles size={20} className={`mt-0.5 shrink-0 ${autostart ? 'text-primary' : 'text-muted'}`} />
+              <Sparkles size={20} className={`mt-0.5 shrink-0 ${autostart ? 'text-green' : 'text-muted'}`} />
               <span className="min-w-0 flex-1">
                 <span className="flex items-center justify-between gap-2 font-semibold">
                   Начать автоматически
                   <span
-                    className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-bold ${autostart ? 'bg-primary text-white' : 'bg-fg/10 text-muted'}`}
+                    className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-bold ${autostart ? 'bg-green text-white' : 'bg-fg/10 text-muted'}`}
                   >
                     {autostart ? 'Вкл' : 'Выкл'}
                   </span>
@@ -298,15 +298,15 @@ export default function BoardStartModal() {
               type="button"
               onClick={() => setAnticheat((v) => !v)}
               className={`mt-3 flex w-full items-start gap-3 rounded-xl border p-4 text-left transition ${
-                anticheat ? 'border-primary bg-primary/10' : 'border-line hover:border-primary/40'
+                anticheat ? 'border-green bg-green/10' : 'border-line hover:border-green/40'
               }`}
             >
-              <ShieldCheck size={20} className={`mt-0.5 shrink-0 ${anticheat ? 'text-primary' : 'text-muted'}`} />
+              <ShieldCheck size={20} className={`mt-0.5 shrink-0 ${anticheat ? 'text-green' : 'text-muted'}`} />
               <span className="min-w-0 flex-1">
                 <span className="flex items-center justify-between gap-2 font-semibold">
                   Защита от списывания
                   <span
-                    className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-bold ${anticheat ? 'bg-primary text-white' : 'bg-fg/10 text-muted'}`}
+                    className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-bold ${anticheat ? 'bg-green text-white' : 'bg-fg/10 text-muted'}`}
                   >
                     {anticheat ? 'Вкл' : 'Выкл'}
                   </span>

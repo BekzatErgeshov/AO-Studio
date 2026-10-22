@@ -112,10 +112,10 @@ export default function Rooms() {
               </button>
             )}
           </div>
-          <button onClick={() => setFiltersOpen((o) => !o)} className={`btn btn-ghost relative px-3.5 md:hidden ${filtersOpen ? 'border-primary text-primary' : ''}`} aria-label="Фильтры">
+          <button onClick={() => setFiltersOpen((o) => !o)} className={`btn btn-ghost relative px-3.5 md:hidden ${filtersOpen ? 'border-green text-green' : ''}`} aria-label="Фильтры">
             <SlidersHorizontal size={18} />
             {activeFilters > 0 && (
-              <span className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-white">
+              <span className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-green text-[10px] font-bold text-white">
                 {activeFilters}
               </span>
             )}
@@ -170,7 +170,7 @@ export default function Rooms() {
             </div>
           )}
           {activeFilters > 0 && (
-            <button onClick={reset} className="text-sm text-primary hover:underline">
+            <button onClick={reset} className="text-sm text-green hover:underline">
               Сбросить фильтры ({activeFilters})
             </button>
           )}

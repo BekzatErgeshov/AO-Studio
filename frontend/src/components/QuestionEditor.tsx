@@ -61,7 +61,7 @@ function QuestionCard({ q, index, showErrors, onChange, onDelete, canDelete, wit
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
       className={`rounded-2xl border bg-fg/[0.02] p-4 transition-shadow ${
-        isDragging ? 'relative z-20 border-primary shadow-[0_12px_40px_rgba(16,185,129,0.25)]' : 'border-line'
+        isDragging ? 'relative z-20 border-green shadow-[0_12px_40px_rgba(16,185,129,0.25)]' : 'border-line'
       }`}
     >
       <div className="flex gap-3">
@@ -75,7 +75,7 @@ function QuestionCard({ q, index, showErrors, onChange, onDelete, canDelete, wit
           >
             <GripVertical size={18} />
           </button>
-          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/15 text-xs font-bold text-primary">{index + 1}</span>
+          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-green/15 text-xs font-bold text-green">{index + 1}</span>
         </div>
 
         <div className="min-w-0 flex-1 space-y-3">

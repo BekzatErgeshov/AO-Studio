@@ -3,60 +3,47 @@
 @custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
 
 :root {
-  /* «Арена»: фиолетовый как основной, розовый — акцент действия */
-  --primary: #7c3aed;
-  --primary-dark: #5b21b6;
-  --primary-light: #a78bfa;
-  --primary-glow: rgba(124, 58, 237, 0.22);
-  --accent: #f43f5e;
+  --green: #10b981;
+  --green-dark: #059669;
+  --green-light: #34d399;
+  --green-glow: rgba(16, 185, 129, 0.2);
 
   /* Тёмная тема по умолчанию */
-  --bg: #0b0b16;
-  --surface: #17142c;
-  --fg: #e9eaf4;
-  --muted: #9aa0b8;
-  /* Панели «Арены» непрозрачные: вместо стекла — плотный цвет и жёсткая рамка */
-  --glass: #17142c;
-  --glass-strong: #1c1836;
-  --line: #2e2a52;
-  --shadow: none;
-  --input: #120f22;
+  --bg: #0a0f1e;
+  --surface: #111827;
+  --fg: #f1f5f9;
+  --muted: #94a3b8;
+  --glass: rgba(255, 255, 255, 0.05);
+  --glass-strong: rgba(255, 255, 255, 0.08);
+  --line: rgba(255, 255, 255, 0.1);
+  --shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  --input: rgba(255, 255, 255, 0.04);
   color-scheme: dark;
 }
 
 [data-theme='light'] {
   --bg: #ffffff;
-  --surface: #f6f4fb;
-  --fg: #15122a;
-  --muted: #55506e;
-  --glass: #f6f4fb;
-  --glass-strong: #ffffff;
-  --line: #ded8f0;
-  --shadow: none;
-  --input: #ffffff;
+  --surface: #f8fafc;
+  --fg: #0f172a;
+  --muted: #64748b;
+  --glass: rgba(255, 255, 255, 0.7);
+  --glass-strong: rgba(255, 255, 255, 0.9);
+  --line: rgba(15, 23, 42, 0.1);
+  --shadow: 0 8px 32px rgba(15, 23, 42, 0.08);
+  --input: rgba(15, 23, 42, 0.03);
   color-scheme: light;
 }
 
 @theme inline {
-  --font-sans: 'Rubik', system-ui, sans-serif;
-  --font-display: 'Unbounded', system-ui, sans-serif;
-  --color-primary: var(--primary);
-  --color-primary-dark: var(--primary-dark);
-  --color-primary-light: var(--primary-light);
-  --color-accent: var(--accent);
+  --font-sans: 'Roboto Slab', Georgia, serif;
+  --color-green: var(--green);
+  --color-green-dark: var(--green-dark);
+  --color-green-light: var(--green-light);
   --color-bg: var(--bg);
   --color-surface: var(--surface);
   --color-fg: var(--fg);
   --color-muted: var(--muted);
   --color-line: var(--line);
-
-  /* Жёсткая геометрия «Арены»: скругления почти нулевые по всему сайту.
-     rounded-full не отсюда — кружки команд и аватары остаются круглыми. */
-  --radius-md: 2px;
-  --radius-lg: 2px;
-  --radius-xl: 3px;
-  --radius-2xl: 4px;
-  --radius-3xl: 6px;
 }
 
 html,
@@ -65,47 +52,45 @@ body,
   min-height: 100%;
 }
 
-h1,
-h2,
-h3,
-.font-display {
-  font-family: 'Unbounded', system-ui, sans-serif;
-  letter-spacing: -0.01em;
-}
-
 body {
   margin: 0;
   background: var(--bg);
   color: var(--fg);
-  font-family: 'Rubik', system-ui, sans-serif;
+  font-family: 'Roboto Slab', Georgia, serif;
   -webkit-font-smoothing: antialiased;
   transition: background 0.3s ease, color 0.3s ease;
 }
 
-/* Фон «Арены»: разметка площадки — сетка вместо мягкого свечения */
+/* Мягкое зелёное свечение на фоне */
 .bg-aurora {
   position: fixed;
   inset: 0;
   pointer-events: none;
   z-index: 0;
-  background-image:
-    linear-gradient(var(--line) 1px, transparent 1px),
-    linear-gradient(90deg, var(--line) 1px, transparent 1px);
-  background-size: 64px 64px;
-  opacity: 0.5;
-  mask-image: radial-gradient(120% 90% at 50% 0%, #000 20%, transparent 75%);
-  -webkit-mask-image: radial-gradient(120% 90% at 50% 0%, #000 20%, transparent 75%);
+  background:
+    radial-gradient(600px 400px at 15% 10%, rgba(16, 185, 129, 0.12), transparent 70%),
+    radial-gradient(500px 400px at 85% 80%, rgba(5, 150, 105, 0.1), transparent 70%);
 }
 
 @layer components {
 .glass {
   background: var(--glass);
-  border: 2px solid var(--line);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
 }
 
 .glass-strong {
   background: var(--glass-strong);
-  border: 2px solid var(--line);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+}
+
+[data-theme='dark'] .glass-strong {
+  background: rgba(17, 24, 39, 0.85);
 }
 
 .btn {
@@ -113,12 +98,11 @@ body {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  border-radius: 2px;
-  padding: 0.72rem 1.3rem;
+  border-radius: 0.875rem;
+  padding: 0.7rem 1.25rem;
   font-weight: 600;
-  font-size: 0.92rem;
-  letter-spacing: 0.02em;
-  transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
   cursor: pointer;
   user-select: none;
   white-space: nowrap;
@@ -128,49 +112,46 @@ body {
   cursor: not-allowed;
 }
 .btn-primary {
-  background: var(--primary);
+  background: linear-gradient(135deg, var(--green), var(--green-dark));
   color: #fff;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  box-shadow: 0 6px 24px var(--green-glow);
 }
 .btn-primary:not(:disabled):hover {
-  background: var(--primary-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 10px 32px rgba(16, 185, 129, 0.35);
 }
 .btn-outline {
-  border: 2px solid var(--primary);
-  color: var(--primary-light);
+  border: 1.5px solid var(--green);
+  color: var(--green);
   background: transparent;
 }
-[data-theme='light'] .btn-outline {
-  color: var(--primary);
-}
 .btn-outline:not(:disabled):hover {
-  background: var(--primary-glow);
+  background: var(--green-glow);
 }
 .btn-ghost {
   color: var(--fg);
-  background: transparent;
-  border: 2px solid var(--line);
+  background: var(--glass);
+  border: 1px solid var(--line);
 }
 .btn-ghost:not(:disabled):hover {
-  border-color: var(--primary);
+  border-color: var(--green);
+  color: var(--green);
 }
 .btn-danger {
-  color: var(--accent);
-  border: 2px solid var(--accent);
+  color: #f87171;
+  border: 1.5px solid rgba(248, 113, 113, 0.4);
   background: transparent;
 }
 .btn-danger:not(:disabled):hover {
-  background: rgba(244, 63, 94, 0.12);
+  background: rgba(248, 113, 113, 0.1);
 }
 
 .input {
   width: 100%;
-  border-radius: 2px;
-  padding: 0.72rem 0.95rem;
+  border-radius: 0.75rem;
+  padding: 0.7rem 0.95rem;
   background: var(--input);
-  border: 2px solid var(--line);
+  border: 1px solid var(--line);
   color: var(--fg);
   outline: none;
   font-family: inherit;
@@ -180,11 +161,11 @@ body {
   color: var(--muted);
 }
 .input:focus {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px var(--primary-glow);
+  border-color: var(--green);
+  box-shadow: 0 0 0 3px var(--green-glow);
 }
 .input.invalid {
-  border-color: var(--accent);
+  border-color: #f87171;
 }
 
 select.input option {
@@ -197,11 +178,10 @@ select.input option {
   align-items: center;
   gap: 0.35rem;
   padding: 0.4rem 0.85rem;
-  border-radius: 2px;
-  font-size: 0.82rem;
-  font-weight: 500;
-  border: 2px solid var(--line);
-  background: transparent;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  border: 1px solid var(--line);
+  background: var(--glass);
   color: var(--muted);
   cursor: pointer;
   transition: all 0.2s;
@@ -211,17 +191,19 @@ select.input option {
   color: var(--fg);
 }
 .chip.active {
-  background: var(--primary);
-  border-color: var(--primary);
-  color: #fff;
+  background: var(--green-glow);
+  border-color: var(--green);
+  color: var(--green-light);
+}
+[data-theme='light'] .chip.active {
+  color: var(--green-dark);
 }
 
-/* В «Арене» заголовки сплошного цвета: градиентный текст заменён на акцент */
 .text-gradient {
-  color: var(--primary-light);
-}
-[data-theme='light'] .text-gradient {
-  color: var(--primary);
+  background: linear-gradient(135deg, var(--green-light), var(--green), var(--green-dark));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 .scrollbar-thin::-webkit-scrollbar {
@@ -230,7 +212,7 @@ select.input option {
 }
 .scrollbar-thin::-webkit-scrollbar-thumb {
   background: var(--line);
-  border-radius: 0;
+  border-radius: 99px;
 }
 .no-scrollbar::-webkit-scrollbar {
   display: none;
@@ -256,9 +238,9 @@ kbd {
   font-family: ui-monospace, monospace;
   font-size: 0.75em;
   padding: 0.1rem 0.4rem;
-  border-radius: 2px;
-  border: 2px solid var(--line);
-  background: var(--surface);
+  border-radius: 0.35rem;
+  border: 1px solid var(--line);
+  background: var(--glass);
 }
 
 @media (prefers-reduced-motion: reduce) {

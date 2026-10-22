@@ -24,7 +24,7 @@ export default function Lobby() {
 
   useEffect(() => {
     if (!joinUrl) return
-    QRCode.toDataURL(joinUrl, { width: 360, margin: 1, color: { dark: '#0b0b16', light: '#ffffff' } })
+    QRCode.toDataURL(joinUrl, { width: 360, margin: 1, color: { dark: '#0a0f1e', light: '#ffffff' } })
       .then(setQr)
       .catch(() => setQr(''))
   }, [joinUrl])
@@ -108,7 +108,7 @@ export default function Lobby() {
           {/* Код и QR */}
           <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass flex flex-col items-center rounded-3xl p-6 text-center sm:p-10">
             <div className="text-sm font-semibold uppercase tracking-widest text-muted">Откройте на телефоне или компьютере</div>
-            <div className="mt-2 break-all text-lg font-bold text-primary sm:text-2xl">{window.location.host}/join</div>
+            <div className="mt-2 break-all text-lg font-bold text-green sm:text-2xl">{window.location.host}/join</div>
             <div className="mt-6 text-sm font-semibold uppercase tracking-widest text-muted">и введите код</div>
             <div className="mt-2 select-all font-mono text-6xl font-extrabold tracking-[0.2em] sm:text-8xl">{code}</div>
 
@@ -124,8 +124,8 @@ export default function Lobby() {
             </button>
 
             {anticheat && (
-              <div className="mt-6 w-full rounded-2xl border border-primary/40 bg-primary/10 p-4 text-left text-sm">
-                <div className="flex items-center gap-2 font-bold text-primary">
+              <div className="mt-6 w-full rounded-2xl border border-green/40 bg-green/10 p-4 text-left text-sm">
+                <div className="flex items-center gap-2 font-bold text-green">
                   <ShieldCheck size={16} /> Защита от списывания включена
                 </div>
                 <p className="mt-1.5 text-muted">
@@ -141,9 +141,9 @@ export default function Lobby() {
           <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="glass flex flex-col rounded-3xl p-6">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="flex items-center gap-2 text-xl font-bold">
-                <Users size={22} className="text-primary" /> Команды
+                <Users size={22} className="text-green" /> Команды
               </h2>
-              <span className="rounded-full bg-primary/15 px-3 py-1 text-sm font-semibold text-primary">
+              <span className="rounded-full bg-green/15 px-3 py-1 text-sm font-semibold text-green">
                 {expected ? `${teams.length} из ${expected}` : `${teams.length} ${plural(teams.length, 'команда', 'команды', 'команд')}`}
               </span>
             </div>
@@ -152,7 +152,7 @@ export default function Lobby() {
               <div className="mb-4">
                 <div className="h-2 overflow-hidden rounded-full bg-fg/10">
                   <motion.div
-                    className="h-full rounded-full bg-primary"
+                    className="h-full rounded-full bg-green"
                     animate={{ width: `${Math.min(100, (teams.length / expected) * 100)}%` }}
                     transition={{ duration: 0.4 }}
                   />
@@ -160,7 +160,7 @@ export default function Lobby() {
                 <div className="mt-2 flex items-center gap-1.5 text-xs text-muted">
                   {session?.autostart ? (
                     <>
-                      <Sparkles size={14} className="shrink-0 text-primary" />
+                      <Sparkles size={14} className="shrink-0 text-green" />
                       {teams.length >= expected
                         ? 'Все собрались — начинаем…'
                         : `Игра начнётся сама, когда подключатся все ${expected}`}

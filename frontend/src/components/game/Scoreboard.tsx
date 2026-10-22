@@ -31,7 +31,7 @@ export default function Scoreboard({ teams, activeId, onAdjust, compact }: Props
                 t.disqualified
                   ? 'border-red-400/40 bg-red-400/5 opacity-70'
                   : active
-                    ? 'border-primary bg-primary/10 shadow-[0_0_24px_rgba(16,185,129,0.25)]'
+                    ? 'border-green bg-green/10 shadow-[0_0_24px_rgba(16,185,129,0.25)]'
                     : 'border-line bg-fg/[0.03]'
               }`}
             >
@@ -69,9 +69,9 @@ export default function Scoreboard({ teams, activeId, onAdjust, compact }: Props
                 )}
                 <motion.span
                   key={t.score}
-                  initial={{ scale: 1.6, color: '#A78BFA' }}
+                  initial={{ scale: 1.6, color: '#34D399' }}
                   animate={{ scale: 1, color: 'var(--fg)' }}
-                  className={`min-w-[2ch] text-right font-display font-extrabold tabular-nums ${compact ? 'text-lg' : 'text-2xl'} ${
+                  className={`min-w-[2ch] text-right font-extrabold tabular-nums ${compact ? 'text-lg' : 'text-2xl'} ${
                     t.disqualified ? 'line-through opacity-60' : ''
                   }`}
                 >

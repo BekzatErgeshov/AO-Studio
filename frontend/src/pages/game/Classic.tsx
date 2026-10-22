@@ -236,7 +236,7 @@ export default function Classic() {
               <span
                 key={c.id}
                 className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
-                  i === catIdx ? 'bg-primary text-white' : i < catIdx ? 'bg-primary/15 text-primary' : 'bg-fg/5 text-muted'
+                  i === catIdx ? 'bg-green text-white' : i < catIdx ? 'bg-green/15 text-green' : 'bg-fg/5 text-muted'
                 }`}
               >
                 {c.name}
@@ -256,7 +256,7 @@ export default function Classic() {
               >
                 <div className="mb-6 flex items-start justify-between gap-4">
                   <div>
-                    <div className="text-sm font-semibold uppercase tracking-widest text-primary">📂 {cat.name}</div>
+                    <div className="text-sm font-semibold uppercase tracking-widest text-green">📂 {cat.name}</div>
                     <div className="mt-1 text-muted">
                       Вопрос {qIdx + 1} из {cat.questions.length} · <b className="text-fg">{q.points}</b> балл.
                     </div>
@@ -276,16 +276,16 @@ export default function Classic() {
 
                 <div className="flex flex-1 flex-col items-center justify-center gap-6 text-center">
                   {q.photo && <img src={q.photo} alt="" className="max-h-[40vh] max-w-full rounded-2xl border border-line object-contain" />}
-                  <p className="font-display max-w-4xl whitespace-pre-line text-2xl font-extrabold leading-snug sm:text-4xl">{q.text}</p>
+                  <p className="max-w-4xl whitespace-pre-line text-2xl font-bold leading-snug sm:text-4xl">{q.text}</p>
                   <AnimatePresence>
                     {phase === 'reveal' && (
                       <motion.div
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="rounded-2xl border border-primary/40 bg-primary/10 px-6 py-4"
+                        className="rounded-2xl border border-green/40 bg-green/10 px-6 py-4"
                       >
                         <div className="text-xs uppercase tracking-widest text-muted">Правильный ответ</div>
-                        <div className="mt-1 text-2xl font-extrabold text-primary sm:text-3xl">{q.answer}</div>
+                        <div className="mt-1 text-2xl font-extrabold text-green sm:text-3xl">{q.answer}</div>
                       </motion.div>
                     )}
                   </AnimatePresence>
@@ -347,10 +347,10 @@ export default function Classic() {
                       className="rounded-2xl border border-line bg-fg/[0.03] p-4"
                     >
                       <div className="flex items-start gap-3">
-                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/15 text-xs font-bold text-primary">{i + 1}</span>
+                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-green/15 text-xs font-bold text-green">{i + 1}</span>
                         <div className="min-w-0 flex-1">
                           <p className="text-muted">{cq.text}</p>
-                          <p className="mt-1 text-lg font-bold text-primary">→ {cq.answer}</p>
+                          <p className="mt-1 text-lg font-bold text-green">→ {cq.answer}</p>
                         </div>
                         <span className="shrink-0 rounded-lg bg-fg/5 px-2 py-1 text-xs font-bold">{cq.points} б.</span>
                       </div>
@@ -372,7 +372,7 @@ export default function Classic() {
                               {on ? <Check size={14} strokeWidth={3} /> : <span className="h-2.5 w-2.5 rounded-full" style={{ background: t.color }} />}
                               {t.name}
                               {online && (
-                                <span className={`max-w-[160px] truncate rounded-md px-1.5 text-xs ${on ? 'bg-white/20' : a?.matches ? 'bg-primary/15 text-primary' : 'bg-fg/5'}`}>
+                                <span className={`max-w-[160px] truncate rounded-md px-1.5 text-xs ${on ? 'bg-white/20' : a?.matches ? 'bg-green/15 text-green' : 'bg-fg/5'}`}>
                                   {a ? a.text : '—'}
                                 </span>
                               )}
@@ -395,7 +395,7 @@ export default function Classic() {
                               >
                                 <input
                                   className={`input py-1.5 text-sm ${
-                                    entry?.result === true ? 'border-primary!' : entry?.result === false ? 'invalid' : ''
+                                    entry?.result === true ? 'border-green!' : entry?.result === false ? 'invalid' : ''
                                   }`}
                                   placeholder={`Ответ «${t.name}» + Enter`}
                                   value={entry?.text ?? ''}

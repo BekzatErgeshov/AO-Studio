@@ -187,7 +187,7 @@ export default function Random() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
                 className={`mb-3 rounded-2xl border p-3 text-center font-semibold ${
-                  verdict.correct ? 'border-primary/50 bg-primary/10 text-primary' : 'border-red-400/40 bg-red-400/10 text-red-400'
+                  verdict.correct ? 'border-green/50 bg-green/10 text-green' : 'border-red-400/40 bg-red-400/10 text-red-400'
                 }`}
               >
                 {verdict.correct ? '✅' : '❌'} «{verdict.team}»: {verdict.text} — {verdict.correct ? 'верно, баллы начислены' : 'неверно'}
@@ -231,7 +231,7 @@ export default function Random() {
                   className={`relative flex aspect-square items-center justify-center rounded-2xl border text-3xl font-extrabold sm:text-4xl ${
                     res
                       ? 'cursor-default border-line bg-fg/5 text-fg/20'
-                      : 'border-primary/40 bg-gradient-to-br from-primary/25 to-primary-dark/30 text-fg shadow-[0_6px_24px_rgba(16,185,129,0.15)] hover:border-primary'
+                      : 'border-green/40 bg-gradient-to-br from-green/25 to-green-dark/30 text-fg shadow-[0_6px_24px_rgba(16,185,129,0.15)] hover:border-green'
                   }`}
                 >
                   {i + 1}
@@ -239,7 +239,7 @@ export default function Random() {
                   {res && team && (
                     <span className="absolute bottom-1.5 right-2 flex items-center gap-1">
                       <span className="h-2.5 w-2.5 rounded-full" style={{ background: team.color }} />
-                      {res.correct ? <Check size={14} className="text-primary" /> : <X size={14} className="text-red-400" />}
+                      {res.correct ? <Check size={14} className="text-green" /> : <X size={14} className="text-red-400" />}
                     </span>
                   )}
                 </motion.button>
@@ -284,14 +284,14 @@ export default function Random() {
                     transition={{ duration: 0.7, ease: [0.4, 0, 0.2, 1] }}
                   >
                     {/* Рубашка */}
-                    <div className="flip-face absolute inset-0 flex items-center justify-center rounded-3xl border-2 border-primary bg-gradient-to-br from-primary to-primary-dark text-[140px] font-extrabold text-white shadow-[0_0_60px_rgba(16,185,129,0.5)]">
+                    <div className="flip-face absolute inset-0 flex items-center justify-center rounded-3xl border-2 border-green bg-gradient-to-br from-green to-green-dark text-[140px] font-extrabold text-white shadow-[0_0_60px_rgba(16,185,129,0.5)]">
                       {cardNumber}
                     </div>
                     {/* Лицо */}
                     <div className="flip-face glass-strong absolute inset-0 flex flex-col gap-5 overflow-y-auto rounded-3xl p-6 sm:p-8 [transform:rotateY(180deg)]">
                       <div className="flex items-start justify-between gap-4">
                         <div>
-                          <div className="text-sm font-semibold uppercase tracking-widest text-primary">Карточка №{cardNumber}</div>
+                          <div className="text-sm font-semibold uppercase tracking-widest text-green">Карточка №{cardNumber}</div>
                           {active && (
                             <div className="mt-2 flex items-center gap-2 text-muted">
                               <Crown size={16} className="text-yellow-400" fill="currentColor" /> Отвечает:{' '}
@@ -304,7 +304,7 @@ export default function Random() {
 
                       <div className="flex flex-1 flex-col items-center justify-center gap-5 text-center">
                         {current.photo && <img src={current.photo} alt="" className="max-h-[32vh] max-w-full rounded-2xl border border-line object-contain" />}
-                        <p className="font-display whitespace-pre-line text-2xl font-extrabold leading-snug sm:text-3xl">{current.text}</p>
+                        <p className="whitespace-pre-line text-2xl font-bold leading-snug sm:text-3xl">{current.text}</p>
                       </div>
 
                       <AnimatePresence>
@@ -313,10 +313,10 @@ export default function Random() {
                             initial={{ opacity: 0, scale: 0.9 }}
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0 }}
-                            className="rounded-2xl border border-primary/40 bg-primary/10 p-4 text-center"
+                            className="rounded-2xl border border-green/40 bg-green/10 p-4 text-center"
                           >
                             <div className="text-xs uppercase tracking-widest text-muted">Правильный ответ</div>
-                            <div className="mt-1 text-2xl font-extrabold text-primary">{current.answer}</div>
+                            <div className="mt-1 text-2xl font-extrabold text-green">{current.answer}</div>
                           </motion.div>
                         )}
                       </AnimatePresence>
@@ -349,7 +349,7 @@ export default function Random() {
                             <div className="mt-1 flex items-center gap-2 text-lg font-bold">
                               {activeAnswer.text}
                               {activeAnswer.matches && (
-                                <span className="rounded-md bg-primary/15 px-2 py-0.5 text-xs font-semibold text-primary">совпадает</span>
+                                <span className="rounded-md bg-green/15 px-2 py-0.5 text-xs font-semibold text-green">совпадает</span>
                               )}
                             </div>
                           ) : (
