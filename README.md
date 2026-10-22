@@ -97,7 +97,17 @@ Django admin с темой Jazzmin. Открывается по `/admin`, а т�
 python manage.py ensure_admin --username <логин> --password <пароль>
 ```
 
-На Railway задайте `DJANGO_ADMIN_USERNAME` и `DJANGO_ADMIN_PASSWORD` — команда выполняется при каждом деплое (см. `Procfile`).
+**На Vercel администратор сам не создаётся** — этапа релиза у Vercel нет, команду нужно выполнить один раз
+с локальной машины против боевой базы, так же как миграции:
+
+```bash
+vercel env pull .env.local
+# DATABASE_URL взять из DATABASE_URL_UNPOOLED в .env.local
+DATABASE_URL=<...> DJANGO_ADMIN_USERNAME=<логин> DJANGO_ADMIN_PASSWORD=<пароль>   python backend/manage.py ensure_admin
+```
+
+Команда создаёт администратора, а если он уже есть — обновляет пароль и права. Боевая база и локальная
+независимы: администратор, созданный локально, в админку на сайте не пустит.
 
 ## Два сценария игры
 
