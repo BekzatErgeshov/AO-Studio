@@ -63,7 +63,7 @@ export default function GameShell({ children, hotkeys, onFinish }: Props) {
           <div className="mt-0.5 flex flex-wrap items-center gap-2">
             <FormatBadge format={room.format} compact />
             {code && (
-              <span className="rounded-lg border border-green/40 bg-green/10 px-2 py-0.5 font-mono text-xs font-bold tracking-widest text-green" title="Код для входа команд">
+              <span className="rounded-lg border border-primary/40 bg-primary/10 px-2 py-0.5 font-mono text-xs font-bold tracking-widest text-primary" title="Код для входа команд">
                 📱 {code}
               </span>
             )}
@@ -108,7 +108,7 @@ export default function GameShell({ children, hotkeys, onFinish }: Props) {
               transition={{ delay: 2, duration: 0.6 }}
               className="glass-strong flex items-center gap-2 rounded-full px-4 py-2 text-sm"
             >
-              <MonitorPlay size={16} className="text-green" /> Режим проектора · горячие клавиши работают
+              <MonitorPlay size={16} className="text-primary" /> Режим проектора · горячие клавиши работают
             </motion.div>
           </motion.div>
         )}

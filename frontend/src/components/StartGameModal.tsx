@@ -76,7 +76,7 @@ export default function StartGameModal() {
         api.post<GameSession>('/game/start/', {
           room_id: room.id,
           mode: 'solo',
-          teams: [{ name: name.trim() || (user?.username ?? 'Игрок'), color: '#10B981' }],
+          teams: [{ name: name.trim() || (user?.username ?? 'Игрок'), color: '#7C3AED' }],
         }),
       ])
       startGame(session.id, detail, session.teams, 'solo', null, false)
@@ -111,7 +111,7 @@ export default function StartGameModal() {
     >
       <div className="mb-5 flex gap-2">
         {[1, 2].map((s) => (
-          <div key={s} className={`h-1.5 flex-1 rounded-full transition-colors ${step >= s ? 'bg-green' : 'bg-line'}`} />
+          <div key={s} className={`h-1.5 flex-1 rounded-full transition-colors ${step >= s ? 'bg-primary' : 'bg-line'}`} />
         ))}
       </div>
 
@@ -143,7 +143,7 @@ export default function StartGameModal() {
                       setRoom(r)
                       setStep(2)
                     }}
-                    className="flex w-full items-center justify-between gap-3 rounded-xl border border-line bg-fg/[0.02] p-4 text-left transition hover:border-green/60 hover:bg-green/5"
+                    className="flex w-full items-center justify-between gap-3 rounded-xl border border-line bg-fg/[0.02] p-4 text-left transition hover:border-primary/60 hover:bg-primary/5"
                   >
                     <div className="min-w-0">
                       <div className="truncate font-semibold">{r.title}</div>
@@ -160,7 +160,7 @@ export default function StartGameModal() {
         ) : (
           <motion.div key="s2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
             {room && (
-              <div className="mb-5 flex items-center justify-between gap-3 rounded-xl border border-green/30 bg-green/10 p-4">
+              <div className="mb-5 flex items-center justify-between gap-3 rounded-xl border border-primary/30 bg-primary/10 p-4">
                 <div className="min-w-0">
                   <div className="text-xs uppercase tracking-widest text-muted">Играем</div>
                   <div className="truncate font-bold">{room.title}</div>

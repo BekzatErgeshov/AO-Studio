@@ -13,7 +13,7 @@ function initialTheme(): Theme {
 
 function applyTheme(t: Theme) {
   document.documentElement.dataset.theme = t
-  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', t === 'dark' ? '#0a0f1e' : '#ffffff')
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', t === 'dark' ? '#0b0b16' : '#ffffff')
 }
 
 interface UIState {

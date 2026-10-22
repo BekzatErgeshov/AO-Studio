@@ -79,7 +79,7 @@ export default function Solo() {
     void finish()
     if (correctCount > 0) {
       sounds.fanfare()
-      confetti({ particleCount: 140, spread: 90, origin: { y: 0.4 }, colors: ['#10B981', '#34D399', '#FBBF24', '#ffffff'] })
+      confetti({ particleCount: 140, spread: 90, origin: { y: 0.4 }, colors: ['#7C3AED', '#A78BFA', '#F43F5E', '#ffffff'] })
     }
   }, [finished, correctCount, finish])
 
@@ -120,9 +120,9 @@ export default function Solo() {
         className={`relative flex aspect-[4/3] items-center justify-center rounded-2xl border text-2xl font-extrabold transition-colors sm:text-3xl ${
           res
             ? res.correct
-              ? 'border-green/50 bg-green/15 text-green'
+              ? 'border-primary/50 bg-primary/15 text-primary'
               : 'border-red-400/40 bg-red-400/10 text-red-400'
-            : 'glass text-fg hover:border-green hover:text-green'
+            : 'glass text-fg hover:border-primary hover:text-primary'
         }`}
       >
         {res ? (res.correct ? <Check size={28} strokeWidth={3} /> : <X size={28} strokeWidth={3} />) : c.label}
@@ -147,7 +147,7 @@ export default function Solo() {
           </div>
         </div>
         <div className="text-right">
-          <div className="text-2xl font-extrabold leading-none tabular-nums text-green">{score}</div>
+          <div className="text-2xl font-extrabold leading-none tabular-nums text-primary">{score}</div>
           <div className="text-[11px] text-muted">{plural(score, 'балл', 'балла', 'баллов')}</div>
         </div>
         {!finished && (
@@ -186,7 +186,7 @@ export default function Solo() {
                         <p className="text-muted">{c.q.text}</p>
                         <p className="mt-1">
                           <span className="text-red-400 line-through">{results[c.q.id].given || '—'}</span>{' '}
-                          <span className="font-bold text-green">→ {c.q.answer}</span>
+                          <span className="font-bold text-primary">→ {c.q.answer}</span>
                         </p>
                       </div>
                     ))}
@@ -213,14 +213,14 @@ export default function Solo() {
           <>
             <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
               <p className="flex items-center gap-2 text-muted">
-                <Target size={18} className="text-green" /> Нажмите на любой вопрос и введите ответ
+                <Target size={18} className="text-primary" /> Нажмите на любой вопрос и введите ответ
               </p>
               <span className="text-sm text-muted">
                 Отвечено <b className="text-fg">{answered}</b> из {all.length}
               </span>
             </div>
             <div className="mb-6 h-1.5 overflow-hidden rounded-full bg-fg/10">
-              <motion.div className="h-full bg-green" animate={{ width: `${all.length ? (answered / all.length) * 100 : 0}%` }} />
+              <motion.div className="h-full bg-primary" animate={{ width: `${all.length ? (answered / all.length) * 100 : 0}%` }} />
             </div>
 
             {room.format === 'random' ? (
@@ -230,7 +230,7 @@ export default function Solo() {
                 <div className="grid min-w-max gap-3" style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(120px, 1fr))` }}>
                   {columns.map((col) => (
                     <div key={col.name} className="flex flex-col gap-3">
-                      <div className="flex min-h-[56px] items-center justify-center rounded-2xl bg-gradient-to-br from-green to-green-dark p-2 text-center text-sm font-extrabold uppercase tracking-wide text-white">
+                      <div className="flex min-h-[56px] items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-primary-dark p-2 text-center text-sm font-extrabold uppercase tracking-wide text-white">
                         {col.name}
                       </div>
                       {col.cells.map(cellButton)}
@@ -293,7 +293,7 @@ function QuestionModal({
         <div className="flex flex-col gap-5">
           <div className="flex items-start justify-between gap-4">
             <div>
-              {cell.category && <div className="text-sm font-semibold uppercase tracking-widest text-green">📂 {cell.category}</div>}
+              {cell.category && <div className="text-sm font-semibold uppercase tracking-widest text-primary">📂 {cell.category}</div>}
               <div className="text-gradient mt-1 text-3xl font-extrabold">
                 {cell.points} {plural(cell.points, 'балл', 'балла', 'баллов')}
               </div>
@@ -302,7 +302,7 @@ function QuestionModal({
           </div>
 
           {cell.q.photo && <img src={cell.q.photo} alt="" className="max-h-[35vh] w-full rounded-2xl border border-line object-contain" />}
-          <p className="whitespace-pre-line text-xl font-bold leading-snug sm:text-2xl">{cell.q.text}</p>
+          <p className="font-display whitespace-pre-line text-xl font-extrabold leading-snug sm:text-2xl">{cell.q.text}</p>
 
           <AnimatePresence mode="wait">
             {result ? (
@@ -310,14 +310,14 @@ function QuestionModal({
                 key="result"
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className={`rounded-2xl border p-5 text-center ${result.correct ? 'border-green/50 bg-green/10' : 'border-red-400/40 bg-red-400/10'}`}
+                className={`rounded-2xl border p-5 text-center ${result.correct ? 'border-primary/50 bg-primary/10' : 'border-red-400/40 bg-red-400/10'}`}
               >
-                <div className={`text-2xl font-extrabold ${result.correct ? 'text-green' : 'text-red-400'}`}>
+                <div className={`text-2xl font-extrabold ${result.correct ? 'text-primary' : 'text-red-400'}`}>
                   {result.correct ? `✅ Верно! +${cell.points}` : result.given ? '❌ Неверно' : '🤷 Без ответа'}
                 </div>
                 {!result.correct && result.given && <div className="mt-2 text-muted">Ваш ответ: {result.given}</div>}
                 <div className="mt-3 text-sm uppercase tracking-widest text-muted">Правильный ответ</div>
-                <div className="mt-1 text-xl font-bold text-green">{cell.q.answer}</div>
+                <div className="mt-1 text-xl font-bold text-primary">{cell.q.answer}</div>
                 <button onClick={onClose} className="btn btn-primary mt-5 px-6" autoFocus>
                   Дальше <ArrowRight size={18} />
                 </button>

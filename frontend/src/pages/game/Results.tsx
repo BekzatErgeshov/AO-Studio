@@ -23,7 +23,7 @@ export default function Results() {
   useEffect(() => {
     if (!teams.length) return
     const t = setTimeout(() => sounds.fanfare(), 900)
-    const colors = ['#10B981', '#34D399', '#059669', '#FBBF24', '#ffffff']
+    const colors = ['#7C3AED', '#A78BFA', '#F43F5E', '#FBBF24', '#ffffff']
     const end = Date.now() + 3500
     let raf = 0
     const frame = () => {

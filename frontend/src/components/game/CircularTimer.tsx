@@ -19,7 +19,7 @@ export default function CircularTimer({ left, total, exact, size = 140, running,
   const r = (size - stroke) / 2
   const c = 2 * Math.PI * r
   const frac = total > 0 ? Math.min(1, Math.max(0, (exact ?? left) / total)) : 0
-  const color = frac > 0.5 ? '#10B981' : frac > 0.2 ? '#EAB308' : '#EF4444'
+  const color = frac > 0.5 ? '#7C3AED' : frac > 0.2 ? '#EAB308' : '#F43F5E'
   const urgent = left <= 10 && left > 0
 
   return (
@@ -50,7 +50,7 @@ export default function CircularTimer({ left, total, exact, size = 140, running,
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="font-extrabold tabular-nums" style={{ fontSize: size * 0.3, color: left === 0 ? '#EF4444' : undefined }}>
+          <span className="font-display font-extrabold tabular-nums" style={{ fontSize: size * 0.3, color: left === 0 ? '#EF4444' : undefined }}>
             {left}
           </span>
           {left === 0 && <span className="text-xs font-bold uppercase text-red-500">Время!</span>}

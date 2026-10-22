@@ -84,7 +84,7 @@ export default function Join() {
           />
         </label>
         {room && (
-          <div className="mt-2 text-center text-sm text-green">🎯 {room.title}</div>
+          <div className="mt-2 text-center text-sm text-primary">🎯 {room.title}</div>
         )}
         {game && (game.expected_teams > 0 || game.team_size > 0) && (
           <div className="mt-1 text-center text-xs text-muted">

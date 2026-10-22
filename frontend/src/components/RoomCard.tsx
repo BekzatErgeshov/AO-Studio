@@ -57,7 +57,7 @@ export default function RoomCard({ room, onClick, onPlay, onLikeChange, showPriv
       transition={{ duration: 0.3, delay: Math.min(index * 0.04, 0.4) }}
       whileHover={{ y: -4 }}
       onClick={onClick}
-      className={`glass group flex flex-col rounded-2xl transition-colors hover:border-green/50 ${onClick ? 'cursor-pointer' : ''}`}
+      className={`glass group flex flex-col rounded-2xl transition-colors hover:border-primary/50 ${onClick ? 'cursor-pointer' : ''}`}
     >
       <div className="flex flex-1 flex-col gap-3 p-5">
         <div className="flex items-start justify-between gap-2">

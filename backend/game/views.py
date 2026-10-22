@@ -55,7 +55,7 @@ class GameStartView(APIView):
             # Одиночная игра: единственная «команда» — сам игрок. Имя он вводит при запуске,
             # по умолчанию — его логин
             name = (teams[0]["name"].strip() if teams else "") or request.user.username
-            teams = [{"name": name[:100], "color": "#10B981"}]
+            teams = [{"name": name[:100], "color": "#7C3AED"}]
         Team.objects.bulk_create(
             [Team(session=session, name=t["name"], color=t["color"]) for t in teams]
         )

@@ -214,7 +214,7 @@ export default function CreateRoom() {
                 <motion.span
                   animate={{ scale: step === i ? 1.1 : 1 }}
                   className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold transition-colors ${
-                    i < step ? 'bg-green text-white' : i === step ? 'bg-gradient-to-br from-green to-green-dark text-white shadow-[0_0_20px_rgba(16,185,129,0.5)]' : 'bg-fg/10 text-muted'
+                    i < step ? 'bg-primary text-white' : i === step ? 'bg-gradient-to-br from-primary to-primary-dark text-white shadow-[0_0_20px_rgba(16,185,129,0.5)]' : 'bg-fg/10 text-muted'
                   }`}
                 >
                   {i < step ? <Check size={18} /> : i + 1}
@@ -223,7 +223,7 @@ export default function CreateRoom() {
               </button>
               {i < STEPS.length - 1 && (
                 <div className="mx-2 h-1 flex-1 overflow-hidden rounded-full bg-fg/10">
-                  <motion.div className="h-full bg-green" animate={{ width: i < step ? '100%' : '0%' }} transition={{ duration: 0.4 }} />
+                  <motion.div className="h-full bg-primary" animate={{ width: i < step ? '100%' : '0%' }} transition={{ duration: 0.4 }} />
                 </div>
               )}
             </div>
@@ -269,7 +269,7 @@ export default function CreateRoom() {
                       key={o.label}
                       type="button"
                       onClick={() => setIsPublic(o.v)}
-                      className={`glass rounded-2xl p-4 text-left transition ${isPublic === o.v ? 'border-green! bg-green/10' : 'hover:border-green/40'}`}
+                      className={`glass rounded-2xl p-4 text-left transition ${isPublic === o.v ? 'border-primary! bg-primary/10' : 'hover:border-primary/40'}`}
                     >
                       <div className="font-semibold">{o.label}</div>
                       <div className="mt-1 text-xs text-muted">{o.text}</div>
@@ -291,10 +291,10 @@ export default function CreateRoom() {
                         whileTap={{ scale: 0.98 }}
                         onClick={() => chooseFormat(f)}
                         className={`glass relative rounded-2xl p-5 text-left transition-colors ${
-                          on ? 'border-green! bg-green/10 shadow-[0_0_30px_rgba(16,185,129,0.2)]' : 'hover:border-green/40'
+                          on ? 'border-primary! bg-primary/10 shadow-[0_0_30px_rgba(16,185,129,0.2)]' : 'hover:border-primary/40'
                         } ${showErrors && !format ? 'border-red-400/60' : ''}`}
                       >
-                        {on && <CheckCircle2 className="absolute right-4 top-4 text-green" size={22} />}
+                        {on && <CheckCircle2 className="absolute right-4 top-4 text-primary" size={22} />}
                         <div className="text-4xl">{FORMATS[f].emoji}</div>
                         <div className="mt-3 text-lg font-bold">{FORMATS[f].label}</div>
                         <p className="mt-1.5 text-sm text-muted">{FORMATS[f].description}</p>
@@ -342,7 +342,7 @@ export default function CreateRoom() {
                         className="glass rounded-2xl p-5"
                       >
                         <div className="mb-4 flex items-center gap-3">
-                          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-green to-green-dark font-bold text-white">
+                          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary-dark font-bold text-white">
                             {ci + 1}
                           </span>
                           <input

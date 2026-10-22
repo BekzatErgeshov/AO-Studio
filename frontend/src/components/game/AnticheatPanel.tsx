@@ -129,7 +129,7 @@ export default function AnticheatPanel() {
             >
               <div className="mb-3 flex items-center justify-between">
                 <h3 className="flex items-center gap-2 font-bold">
-                  <ShieldCheck size={18} className="text-green" /> Защита от списывания
+                  <ShieldCheck size={18} className="text-primary" /> Защита от списывания
                 </h3>
                 <button onClick={() => setOpen(false)} className="rounded-lg p-1 text-muted hover:text-fg" aria-label="Закрыть">
                   <X size={16} />
@@ -232,7 +232,7 @@ export default function AnticheatPanel() {
         <button
           onClick={() => setOpen((v) => !v)}
           className={`glass-strong flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold transition ${
-            dq.length > 0 ? 'text-red-400' : attention > 0 ? 'text-yellow-400' : 'text-green'
+            dq.length > 0 ? 'text-red-400' : attention > 0 ? 'text-yellow-400' : 'text-primary'
           }`}
           title="Защита от списывания: нарушения команд"
         >

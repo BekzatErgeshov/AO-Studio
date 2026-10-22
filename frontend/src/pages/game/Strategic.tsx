@@ -19,6 +19,9 @@ interface Outcome {
   correct: boolean
 }
 
+// Сколько показывать правильный ответ, прежде чем ход перейдёт дальше
+const REVEAL_MS = 3500
+
 export default function Strategic() {
   const { room, teams, addScore, finish, sessionId } = useGame()
   const navigate = useNavigate()
@@ -95,7 +98,8 @@ export default function Strategic() {
         duration,
         category: current.catName,
         question: { id: current.id, text: current.text, photo: current.photo, points: current.points },
-        accepting: true,
+        // Пока показываем ответ, приём закрыт
+        accepting: !showAnswer,
         answer_team: active?.id ?? null,
         reveal: showAnswer ? current.answer : null,
       }
@@ -128,11 +132,18 @@ export default function Strategic() {
     return () => clearTimeout(t)
   }, [verdict])
 
+  // Ответ пришёл — сразу показываем правильный всем, и только потом баллы и ход дальше
+  const revealTimer = useRef<number | undefined>(undefined)
+  useEffect(() => () => window.clearTimeout(revealTimer.current), [])
+
   const autoJudge = (text: string) => {
     if (!current || !active || !text.trim()) return
     const ok = checkAnswer(text, current.answer)
     setVerdict({ team: active.name, text: text.trim(), correct: ok })
-    judge(ok)
+    setShowAnswer(true)
+    setRunning(false)
+    window.clearTimeout(revealTimer.current)
+    revealTimer.current = window.setTimeout(() => judge(ok), REVEAL_MS)
   }
 
   // Онлайн: ответ команды пришёл с её устройства — проверяем сразу
@@ -176,7 +187,7 @@ export default function Strategic() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
                 className={`mb-3 rounded-2xl border p-3 text-center font-semibold ${
-                  verdict.correct ? 'border-green/50 bg-green/10 text-green' : 'border-red-400/40 bg-red-400/10 text-red-400'
+                  verdict.correct ? 'border-primary/50 bg-primary/10 text-primary' : 'border-red-400/40 bg-red-400/10 text-red-400'
                 }`}
               >
                 {verdict.correct ? '✅' : '❌'} «{verdict.team}»: {verdict.text} — {verdict.correct ? 'верно, баллы начислены' : 'неверно'}
@@ -214,7 +225,7 @@ export default function Strategic() {
               {columns.map((c) => (
                 <div
                   key={c.id}
-                  className="flex min-h-[64px] items-center justify-center rounded-2xl bg-gradient-to-br from-green to-green-dark p-3 text-center text-sm font-extrabold uppercase tracking-wide text-white shadow-lg sm:text-base"
+                  className="flex min-h-[64px] items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-primary-dark p-3 text-center text-sm font-extrabold uppercase tracking-wide text-white shadow-lg sm:text-base"
                 >
                   {c.name}
                 </div>
@@ -236,14 +247,14 @@ export default function Strategic() {
                       onClick={() => open(q)}
                       disabled={!!res}
                       className={`relative flex aspect-[16/10] items-center justify-center rounded-2xl border text-3xl font-extrabold transition-colors sm:text-4xl ${
-                        res ? 'cursor-default border-line bg-fg/5 text-fg/20' : 'glass text-green hover:border-green hover:shadow-[0_0_24px_rgba(16,185,129,0.3)]'
+                        res ? 'cursor-default border-line bg-fg/5 text-fg/20' : 'glass text-primary hover:border-primary hover:shadow-[0_0_24px_rgba(16,185,129,0.3)]'
                       }`}
                     >
                       {q.points}
                       {res && team && (
                         <span className="absolute bottom-1.5 right-2 flex items-center gap-1 text-[10px] font-semibold">
                           <span className="h-2 w-2 rounded-full" style={{ background: team.color }} />
-                          {res.correct ? <Check size={12} className="text-green" /> : <X size={12} className="text-red-400" />}
+                          {res.correct ? <Check size={12} className="text-primary" /> : <X size={12} className="text-red-400" />}
                         </span>
                       )}
                     </motion.button>
@@ -269,7 +280,7 @@ export default function Strategic() {
           <div className="flex flex-col gap-6">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <div className="text-sm font-semibold uppercase tracking-widest text-green">📂 {current.catName}</div>
+                <div className="text-sm font-semibold uppercase tracking-widest text-primary">📂 {current.catName}</div>
                 <div className="mt-1 text-4xl font-extrabold text-gradient">{current.points} балл.</div>
                 {active && (
                   <div className="mt-2 flex items-center gap-2 text-muted">
@@ -283,7 +294,7 @@ export default function Strategic() {
 
             <div className="flex flex-col items-center gap-5 py-4 text-center">
               {current.photo && <img src={current.photo} alt="" className="max-h-[38vh] max-w-full rounded-2xl border border-line object-contain" />}
-              <p className="whitespace-pre-line text-2xl font-bold leading-snug sm:text-3xl">{current.text}</p>
+              <p className="font-display whitespace-pre-line text-2xl font-extrabold leading-snug sm:text-3xl">{current.text}</p>
             </div>
 
             <AnimatePresence>
@@ -292,10 +303,10 @@ export default function Strategic() {
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0 }}
-                  className="rounded-2xl border border-green/40 bg-green/10 p-4 text-center"
+                  className="rounded-2xl border border-primary/40 bg-primary/10 p-4 text-center"
                 >
                   <div className="text-xs uppercase tracking-widest text-muted">Правильный ответ</div>
-                  <div className="mt-1 text-2xl font-extrabold text-green">{current.answer}</div>
+                  <div className="mt-1 text-2xl font-extrabold text-primary">{current.answer}</div>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -328,7 +339,7 @@ export default function Strategic() {
                   <div className="mt-1 flex items-center gap-2 text-xl font-bold">
                     {activeAnswer.text}
                     {activeAnswer.matches && (
-                      <span className="rounded-md bg-green/15 px-2 py-0.5 text-xs font-semibold text-green">совпадает</span>
+                      <span className="rounded-md bg-primary/15 px-2 py-0.5 text-xs font-semibold text-primary">совпадает</span>
                     )}
                   </div>
                 ) : (

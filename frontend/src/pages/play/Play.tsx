@@ -35,7 +35,7 @@ function Standings({ teams, meId }: { teams: Team[]; meId?: number }) {
             t.disqualified
               ? 'border-red-400/30 bg-red-400/5 opacity-60'
               : t.id === meId
-                ? 'border-green bg-green/10'
+                ? 'border-primary bg-primary/10'
                 : 'border-line bg-fg/[0.03]'
           }`}
         >
@@ -53,15 +53,15 @@ function Standings({ teams, meId }: { teams: Team[]; meId?: number }) {
   )
 }
 
-/** Заглушка до входа в защищённый режим: без полного экрана вопрос не показываем */
+/** Экран входа в защищённый режим. Показывается только в лобби — во время игры он стоил бы команде времени. */
 function ArmGate({ warnings, allowed, onArm }: { warnings: number; allowed: number; onArm: () => void }) {
   const returning = warnings > 0
   return (
     <div className="glass rounded-3xl p-6 text-center">
-      <LockKeyhole className="mx-auto text-green" size={44} />
+      <LockKeyhole className="mx-auto text-primary" size={44} />
       <h1 className="mt-3 text-2xl font-extrabold">{returning ? 'Вернитесь в игру' : 'Защищённый режим'}</h1>
       <p className="mt-2 text-muted">
-        Игра идёт в полноэкранном режиме. Пока вы не вернётесь, вопрос и поле ответа скрыты.
+        Включите его до старта: игра раскроется на весь экран, и вы не потеряете время на вопросах.
       </p>
       <ul className="mt-5 space-y-2 text-left text-sm text-muted">
         <li className="flex gap-2">
@@ -148,8 +148,8 @@ function AnswerBox({ code, questionId, current }: { code: string; questionId: nu
 
   if (sent) {
     return (
-      <div className="mt-5 rounded-2xl border border-green/40 bg-green/10 p-4">
-        <div className="flex items-center gap-1.5 text-sm font-semibold text-green">
+      <div className="mt-5 rounded-2xl border border-primary/40 bg-primary/10 p-4">
+        <div className="flex items-center gap-1.5 text-sm font-semibold text-primary">
           <Check size={16} /> Ответ отправлен
         </div>
         <div className="mt-1 text-lg font-bold">{sent}</div>
@@ -208,9 +208,9 @@ function Board({ cells, columns, code, data }: { cells?: LiveCell[]; columns?: {
           c.used
             ? 'border-line bg-fg/5 text-fg/20'
             : picked === c.id
-              ? 'border-green bg-green text-white'
+              ? 'border-primary bg-primary text-white'
               : can
-                ? 'border-green/60 bg-green/15 text-green active:scale-95'
+                ? 'border-primary/60 bg-primary/15 text-primary active:scale-95'
                 : 'border-line bg-fg/[0.04] text-fg/70'
         }`}
       >
@@ -218,7 +218,7 @@ function Board({ cells, columns, code, data }: { cells?: LiveCell[]; columns?: {
         {c.used && team && (
           <span className="absolute bottom-1 right-1.5 flex items-center gap-0.5">
             <span className="h-2 w-2 rounded-full" style={{ background: team.color }} />
-            {c.correct ? <Check size={11} className="text-green" /> : <X size={11} className="text-red-400" />}
+            {c.correct ? <Check size={11} className="text-primary" /> : <X size={11} className="text-red-400" />}
           </span>
         )}
       </button>
@@ -227,7 +227,7 @@ function Board({ cells, columns, code, data }: { cells?: LiveCell[]; columns?: {
 
   return (
     <div>
-      <div className={`mb-4 rounded-2xl border p-3 text-center font-bold ${myTurn ? 'border-green bg-green/15 text-green' : 'border-line'}`}>
+      <div className={`mb-4 rounded-2xl border p-3 text-center font-bold ${myTurn ? 'border-primary bg-primary/15 text-primary' : 'border-line'}`}>
         {myTurn ? (
           <motion.span animate={{ scale: [1, 1.05, 1] }} transition={{ repeat: Infinity, duration: 1.5 }} className="inline-block">
             👑 Ваш ход! Выберите {columns ? 'вопрос' : 'карточку'}
@@ -248,7 +248,7 @@ function Board({ cells, columns, code, data }: { cells?: LiveCell[]; columns?: {
           <div className="grid min-w-max gap-2" style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(76px, 1fr))` }}>
             {columns.map((col) => (
               <div key={col.name} className="flex flex-col gap-2">
-                <div className="flex min-h-[44px] items-center justify-center rounded-xl bg-gradient-to-br from-green to-green-dark p-1.5 text-center text-xs font-bold uppercase text-white">
+                <div className="flex min-h-[44px] items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary-dark p-1.5 text-center text-xs font-bold uppercase text-white">
                   {col.name}
                 </div>
                 {col.cells.map((c) => cell(c, c.points ?? ''))}
@@ -274,6 +274,8 @@ export default function Play() {
 
   const state = data?.state ?? {}
   const finished = data?.status === 'finished' || state.view === 'results'
+  // В лобби времени нет — там защищённый режим включается заслонкой
+  const inLobby = data?.status === 'lobby' || state.view === 'lobby'
 
   // Античит: игра держится в полном экране, уход с экрана = нарушение (см. useAnticheat)
   const ac = useAnticheat({
@@ -299,7 +301,7 @@ export default function Play() {
     if (finished && !confettiDone.current) {
       confettiDone.current = true
       sounds.fanfare()
-      confetti({ particleCount: 140, spread: 90, origin: { y: 0.4 }, colors: ['#10B981', '#34D399', '#FBBF24', '#ffffff'] })
+      confetti({ particleCount: 140, spread: 90, origin: { y: 0.4 }, colors: ['#7C3AED', '#A78BFA', '#F43F5E', '#ffffff'] })
     }
   }, [finished])
 
@@ -319,7 +321,7 @@ export default function Play() {
   if (!data) {
     return (
       <Centered>
-        <Loader2 className="animate-spin text-green" size={32} />
+        <Loader2 className="animate-spin text-primary" size={32} />
         <p className="mt-3 text-muted">Подключаемся к игре…</p>
       </Centered>
     )
@@ -362,7 +364,7 @@ export default function Play() {
           <div className="text-xl font-extrabold leading-none tabular-nums">{myTeam.score}</div>
           <div className="text-[10px] text-muted">{place} место</div>
         </div>
-        <span title={error ? 'Нет связи' : 'Онлайн'} className={error ? 'text-red-400' : 'text-green'}>
+        <span title={error ? 'Нет связи' : 'Онлайн'} className={error ? 'text-red-400' : 'text-primary'}>
           {error ? <WifiOff size={16} /> : <Wifi size={16} />}
         </span>
         {data.anticheat && !finished && (
@@ -374,7 +376,7 @@ export default function Play() {
                   ? `Нарушений: ${ac.warnings} из ${(data.warnings_allowed ?? 1) + 1}`
                   : 'Защищённый режим включён'
             }
-            className={ac.disqualified ? 'text-red-400' : ac.warnings > 0 ? 'text-yellow-400' : 'text-green'}
+            className={ac.disqualified ? 'text-red-400' : ac.warnings > 0 ? 'text-yellow-400' : 'text-primary'}
           >
             {ac.disqualified ? <Ban size={16} /> : ac.warnings > 0 ? <AlertTriangle size={16} /> : <ShieldCheck size={16} />}
           </span>
@@ -403,9 +405,30 @@ export default function Play() {
           )}
         </AnimatePresence>
 
+        {/*
+          Напоминание о полном экране во время игры — полоской, а не заслонкой:
+          таймер вопроса общий для всех, и закрытый экран стоил бы команде времени.
+        */}
+        {!finished && !ac.disqualified && ac.needsArm && !inLobby && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-4 flex flex-wrap items-center gap-3 rounded-2xl border border-yellow-400/40 bg-yellow-400/10 p-4"
+          >
+            <ShieldCheck size={20} className="shrink-0 text-yellow-400" />
+            <div className="min-w-0 flex-1 text-sm">
+              <div className="font-bold text-yellow-400">Игра идёт не на весь экран</div>
+              <div className="mt-0.5 text-muted">Время на вопрос идёт — верните полный экран, не выходя из игры.</div>
+            </div>
+            <button onClick={ac.arm} className="btn btn-primary shrink-0 px-4 py-2 text-sm">
+              Во весь экран
+            </button>
+          </motion.div>
+        )}
+
         {!finished && ac.disqualified ? (
           <DqScreen reason={ac.dqReason} teams={data.teams} meId={me.id} />
-        ) : !finished && ac.needsArm ? (
+        ) : !finished && ac.needsArm && inLobby ? (
           <ArmGate warnings={ac.warnings} allowed={data.warnings_allowed ?? 1} onArm={ac.arm} />
         ) : (
         <AnimatePresence mode="wait">
@@ -455,7 +478,7 @@ export default function Play() {
                   <div className="mb-2 text-xs font-semibold uppercase tracking-widest text-muted">Команды ({data.teams.length})</div>
                   <div className="flex flex-wrap gap-2">
                     {data.teams.map((t) => (
-                      <span key={t.id} className={`rounded-full border px-3 py-1.5 text-sm ${t.id === me.id ? 'border-green bg-green/10' : 'border-line'}`}>
+                      <span key={t.id} className={`rounded-full border px-3 py-1.5 text-sm ${t.id === me.id ? 'border-primary bg-primary/10' : 'border-line'}`}>
                         <TeamChip team={t} />
                       </span>
                     ))}
@@ -466,7 +489,7 @@ export default function Play() {
               <div className="glass rounded-3xl p-5 sm:p-6">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    {state.category && <div className="text-xs font-semibold uppercase tracking-widest text-green">📂 {state.category}</div>}
+                    {state.category && <div className="text-xs font-semibold uppercase tracking-widest text-primary">📂 {state.category}</div>}
                     <div className="mt-1 text-sm text-muted">
                       {state.number && state.total ? `Вопрос ${state.number} из ${state.total} · ` : ''}
                       {q.points ? <b className="text-fg">{q.points} балл.</b> : null}
@@ -486,12 +509,12 @@ export default function Play() {
                 </div>
 
                 {q.photo && <img src={q.photo} alt="" className="mt-4 max-h-[35vh] w-full rounded-2xl border border-line object-contain" />}
-                <p className="mt-4 whitespace-pre-line text-xl font-bold leading-snug sm:text-2xl">{q.text}</p>
+                <p className="font-display mt-4 whitespace-pre-line text-xl font-extrabold leading-snug sm:text-2xl">{q.text}</p>
 
                 {state.reveal ? (
-                  <div className="mt-5 rounded-2xl border border-green/40 bg-green/10 p-4 text-center">
+                  <div className="mt-5 rounded-2xl border border-primary/40 bg-primary/10 p-4 text-center">
                     <div className="text-xs uppercase tracking-widest text-muted">Правильный ответ</div>
-                    <div className="mt-1 text-xl font-extrabold text-green">{state.reveal}</div>
+                    <div className="mt-1 text-xl font-extrabold text-primary">{state.reveal}</div>
                     {data.my_answer && <div className="mt-2 text-sm text-muted">Ваш ответ: {data.my_answer}</div>}
                   </div>
                 ) : canAnswer ? (
@@ -519,9 +542,9 @@ export default function Play() {
                           <span className="mt-0.5 text-xs font-bold text-muted">{i + 1}.</span>
                           <div className="min-w-0 flex-1">
                             <p className="text-sm text-muted">{it.text}</p>
-                            <p className="font-bold text-green">→ {it.answer}</p>
+                            <p className="font-bold text-primary">→ {it.answer}</p>
                           </div>
-                          <span className={`shrink-0 rounded-lg px-2 py-1 text-xs font-bold ${ok ? 'bg-green text-white' : 'bg-fg/5 text-muted'}`}>
+                          <span className={`shrink-0 rounded-lg px-2 py-1 text-xs font-bold ${ok ? 'bg-primary text-white' : 'bg-fg/5 text-muted'}`}>
                             {ok ? `+${it.points}` : '—'}
                           </span>
                         </div>
@@ -536,7 +559,7 @@ export default function Play() {
               <Board cells={state.tiles} code={upper} data={data} />
             ) : (
               <Centered inline>
-                <Loader2 className="animate-spin text-green" size={28} />
+                <Loader2 className="animate-spin text-primary" size={28} />
                 <p className="mt-3 text-muted">Ведущий готовит следующий вопрос…</p>
               </Centered>
             )}

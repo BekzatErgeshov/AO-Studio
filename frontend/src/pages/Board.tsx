@@ -55,7 +55,7 @@ export default function Board() {
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="min-w-0">
               <h1 className="flex items-center gap-3 text-3xl font-extrabold sm:text-4xl">
-                <Monitor className="shrink-0 text-green" size={34} /> Доска
+                <Monitor className="shrink-0 text-primary" size={34} /> Доска
               </h1>
               <p className="mt-2 max-w-xl text-muted">
                 Проведите игру на экране или проекторе: выберите игру, задайте состав и время — на доске появятся
@@ -74,7 +74,7 @@ export default function Board() {
               { icon: ShieldCheck, title: 'Защита', text: 'Уход с экрана телефона — предупреждение и дисквалификация' },
             ].map((f) => (
               <div key={f.title} className="rounded-2xl border border-line bg-fg/[0.03] p-4">
-                <f.icon size={20} className="text-green" />
+                <f.icon size={20} className="text-primary" />
                 <div className="mt-2 font-bold">{f.title}</div>
                 <div className="mt-0.5 text-xs text-muted">{f.text}</div>
               </div>

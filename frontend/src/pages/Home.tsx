@@ -110,14 +110,14 @@ export default function Home() {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.45 }}
           onClick={() => navigate('/join')}
-          className="mt-5 text-sm text-muted transition hover:text-green"
+          className="mt-5 text-sm text-muted transition hover:text-primary"
         >
-          Есть код от ведущего? <span className="font-semibold text-green underline-offset-4 hover:underline">Войти в игру →</span>
+          Есть код от ведущего? <span className="font-semibold text-primary underline-offset-4 hover:underline">Войти в игру →</span>
         </motion.button>
 
         <motion.button
           onClick={scrollToAbout}
-          className="absolute bottom-8 text-muted hover:text-green"
+          className="absolute bottom-8 text-muted hover:text-primary"
           animate={{ y: [0, 8, 0] }}
           transition={{ repeat: Infinity, duration: 2 }}
           aria-label="Подробнее"
@@ -131,7 +131,7 @@ export default function Home() {
         <motion.section id="about" {...reveal} className="scroll-mt-20 pt-10">
           <div className="glass grid gap-8 rounded-3xl p-8 md:grid-cols-[1fr_1.4fr] md:p-12">
             <div>
-              <span className="text-sm font-semibold uppercase tracking-widest text-green">О игре</span>
+              <span className="text-sm font-semibold uppercase tracking-widest text-primary">О игре</span>
               <h2 className="mt-3 text-3xl font-extrabold sm:text-4xl">Что такое Акыл Ордо?</h2>
             </div>
             <div className="space-y-4 text-muted sm:text-lg">
@@ -150,7 +150,7 @@ export default function Home() {
         {/* ФОРМАТЫ */}
         <section>
           <motion.div {...reveal} className="mb-10 text-center">
-            <span className="text-sm font-semibold uppercase tracking-widest text-green">Форматы</span>
+            <span className="text-sm font-semibold uppercase tracking-widest text-primary">Форматы</span>
             <h2 className="mt-3 text-3xl font-extrabold sm:text-4xl">3 формата игры</h2>
           </motion.div>
           <div className="grid gap-5 md:grid-cols-3">
@@ -162,11 +162,11 @@ export default function Home() {
                   {...reveal}
                   transition={{ duration: 0.5, delay: i * 0.12 }}
                   whileHover={{ y: -6 }}
-                  className="glass group rounded-3xl p-7 transition-colors hover:border-green/50"
+                  className="glass group rounded-3xl p-7 transition-colors hover:border-primary/50"
                 >
                   <div className="mb-5 flex items-center justify-between">
                     <span className="text-4xl">{FORMATS[f].emoji}</span>
-                    <div className="rounded-2xl bg-green/15 p-3 text-green transition group-hover:bg-green group-hover:text-white">
+                    <div className="rounded-2xl bg-primary/15 p-3 text-primary transition group-hover:bg-primary group-hover:text-white">
                       <Icon size={22} />
                     </div>
                   </div>
@@ -175,7 +175,7 @@ export default function Home() {
                   <ul className="mt-5 space-y-2 text-sm">
                     {formatDetails[f].points.map((p) => (
                       <li key={p} className="flex items-center gap-2">
-                        <span className="h-1.5 w-1.5 rounded-full bg-green" /> {p}
+                        <span className="h-1.5 w-1.5 rounded-full bg-primary" /> {p}
                       </li>
                     ))}
                   </ul>
@@ -188,14 +188,14 @@ export default function Home() {
         {/* КАК ИГРАТЬ */}
         <section>
           <motion.div {...reveal} className="mb-10 text-center">
-            <span className="text-sm font-semibold uppercase tracking-widest text-green">Инструкция</span>
+            <span className="text-sm font-semibold uppercase tracking-widest text-primary">Инструкция</span>
             <h2 className="mt-3 text-3xl font-extrabold sm:text-4xl">Как создать и играть</h2>
           </motion.div>
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {steps.map((s, i) => (
               <motion.div key={s.title} {...reveal} transition={{ duration: 0.5, delay: i * 0.1 }} className="glass relative rounded-3xl p-6">
-                <div className="absolute right-5 top-4 text-5xl font-extrabold text-green/15">{i + 1}</div>
-                <div className="mb-4 inline-flex rounded-2xl bg-gradient-to-br from-green to-green-dark p-3 text-white">
+                <div className="absolute right-5 top-4 text-5xl font-extrabold text-primary/15">{i + 1}</div>
+                <div className="mb-4 inline-flex rounded-2xl bg-gradient-to-br from-primary to-primary-dark p-3 text-white">
                   <s.icon size={22} />
                 </div>
                 <h3 className="font-bold">{s.title}</h3>
@@ -219,7 +219,7 @@ export default function Home() {
               { icon: Star, value: stats?.rating ?? 0, label: 'Рейтинг приложения', suffix: '%' },
             ].map((s) => (
               <div key={s.label}>
-                <s.icon className="mx-auto mb-3 text-green" size={28} />
+                <s.icon className="mx-auto mb-3 text-primary" size={28} />
                 <div className="text-gradient text-5xl font-extrabold">
                   {stats ? <CountUp to={s.value} suffix={s.suffix} /> : '—'}
                 </div>
@@ -265,7 +265,7 @@ export default function Home() {
                 ].map((c) => (
                   <li key={c.label} className="flex items-center gap-2">
                     <span className="w-20 shrink-0 text-muted">{c.label}</span>
-                    <a href={c.href} target="_blank" rel="noreferrer noopener" className="truncate font-medium text-fg hover:text-green">
+                    <a href={c.href} target="_blank" rel="noreferrer noopener" className="truncate font-medium text-fg hover:text-primary">
                       {c.value}
                     </a>
                   </li>
@@ -275,7 +275,7 @@ export default function Home() {
           </div>
 
           <div className="mt-10 flex items-center justify-center gap-1 border-t border-line pt-6 text-sm text-muted">
-            © {new Date().getFullYear()} AO Studio. Сделано с <Heart size={14} className="text-green" fill="currentColor" />
+            © {new Date().getFullYear()} AO Studio. Сделано с <Heart size={14} className="text-primary" fill="currentColor" />
           </div>
         </div>
       </footer>

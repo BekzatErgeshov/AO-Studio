@@ -79,7 +79,7 @@ export default function FloatingEmojis() {
       {dots.map((d, i) => (
         <span
           key={`d${i}`}
-          className="float-item absolute rounded-full bg-green"
+          className="float-item absolute rounded-full bg-primary"
           style={
             {
               left: `${d.left}%`,

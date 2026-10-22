@@ -87,7 +87,7 @@ const STRENGTH = [
   { label: 'Слабый', color: 'bg-orange-400', text: 'text-orange-400' },
   { label: 'Средний', color: 'bg-yellow-400', text: 'text-yellow-400' },
   { label: 'Хороший', color: 'bg-lime-400', text: 'text-lime-500' },
-  { label: 'Надёжный', color: 'bg-green', text: 'text-green' },
+  { label: 'Надёжный', color: 'bg-primary', text: 'text-primary' },
 ]
 
 /** Полоска надёжности пароля под полем ввода */
@@ -219,7 +219,7 @@ export default function AuthModal() {
             className={`relative rounded-lg py-2 text-sm font-semibold transition ${mode === m ? 'text-white' : 'text-muted'}`}
           >
             {mode === m && (
-              <motion.span layoutId="auth-tab" className="absolute inset-0 rounded-lg bg-gradient-to-br from-green to-green-dark" />
+              <motion.span layoutId="auth-tab" className="absolute inset-0 rounded-lg bg-gradient-to-br from-primary to-primary-dark" />
             )}
             <span className="relative">{m === 'register' ? 'Регистрация' : 'Вход'}</span>
           </button>

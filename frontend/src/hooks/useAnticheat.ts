@@ -199,8 +199,9 @@ export function useAnticheat({ code, enabled, active, server }: Options): Antich
     return () => window.removeEventListener('beforeunload', warn)
   }, [on])
 
-  // Вышли из полного экрана (или ещё не входили) — показываем заглушку вместо вопроса
-  const needsArm = enabled && active && !disqualified && !armed
+  // Полный экран ещё не включён или из него вышли. Нарушения при этом считаются только
+  // в идущей игре, а предложить включить режим нужно и в лобби — до начала игры.
+  const needsArm = enabled && !disqualified && !armed
 
   return { armed, needsArm, warnings, disqualified, dqReason, lastWarning, arm, dismiss }
 }

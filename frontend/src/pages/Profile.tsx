@@ -73,7 +73,7 @@ function EditProfileModal({ open, onClose, user }: { open: boolean; onClose: () 
           </button>
           <input ref={inputRef} type="file" accept="image/*" hidden onChange={(e) => pick(e.target.files?.[0])} />
           <div className="flex gap-3 text-sm">
-            <button type="button" onClick={() => inputRef.current?.click()} className="text-green hover:underline">
+            <button type="button" onClick={() => inputRef.current?.click()} className="text-primary hover:underline">
               Загрузить фото
             </button>
             {preview && (
@@ -187,7 +187,7 @@ export default function Profile() {
     <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 md:py-10">
       {/* Шапка профиля в стиле GitHub */}
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass relative overflow-hidden rounded-3xl">
-        <div className="h-28 bg-gradient-to-r from-green-dark/60 via-green/40 to-green-light/30 sm:h-36" />
+        <div className="h-28 bg-gradient-to-r from-primary-dark/60 via-primary/40 to-primary-light/30 sm:h-36" />
         <div className="flex flex-col gap-5 px-6 pb-6 sm:flex-row sm:items-end sm:px-8">
           <div className="-mt-14 sm:-mt-16">
             <div className="rounded-full bg-bg p-1.5">
@@ -211,14 +211,14 @@ export default function Profile() {
         </div>
         <div className="grid grid-cols-2 border-t border-line">
           <div className="flex items-center justify-center gap-3 border-r border-line py-5">
-            <Gamepad2 className="text-green" />
+            <Gamepad2 className="text-primary" />
             <div>
               <div className="text-2xl font-extrabold">{user.rooms_count}</div>
               <div className="text-xs text-muted">создано AO комнат</div>
             </div>
           </div>
           <div className="flex items-center justify-center gap-3 py-5">
-            <Trophy className="text-green" />
+            <Trophy className="text-primary" />
             <div>
               <div className="text-2xl font-extrabold">{user.games_played}</div>
               <div className="text-xs text-muted">сыграно игр</div>
@@ -230,7 +230,7 @@ export default function Profile() {
       {/* Сетка комнат */}
       <div className="mb-5 mt-10 flex items-center justify-between gap-3">
         <h2 className="text-xl font-bold">
-          Мои AO комнаты {rooms && <span className="ml-1 rounded-full bg-green/15 px-2.5 py-0.5 text-sm text-green">{rooms.length}</span>}
+          Мои AO комнаты {rooms && <span className="ml-1 rounded-full bg-primary/15 px-2.5 py-0.5 text-sm text-primary">{rooms.length}</span>}
         </h2>
         <button onClick={() => navigate('/create')} className="btn btn-primary">
           <Plus size={18} /> <span className="hidden sm:inline">Создать АО</span>
