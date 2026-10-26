@@ -67,7 +67,10 @@ export default function Connect() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-6 sm:px-6 md:py-10">
       <div className="mb-6">
-        <h1 className="text-3xl font-extrabold sm:text-4xl">🙋 Присоединиться</h1>
+        <h1 className="flex items-center gap-3 text-3xl font-extrabold sm:text-4xl">
+          <QrCode className="size-8 shrink-0 text-green sm:size-9" aria-hidden />
+          Присоединиться
+        </h1>
         <p className="mt-1 text-muted">
           Ведущий запустил игру на доске — войдите по QR-коду или шестизначному коду с экрана
         </p>
