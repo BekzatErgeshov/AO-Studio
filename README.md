@@ -229,7 +229,11 @@ Auth: `POST /api/auth/register/`, `login/`, `logout/`, `token/refresh/`; `GET /a
 Переменные окружения проекта: `DJANGO_SECRET_KEY`, `DJANGO_DEBUG=0`, `DJANGO_ALLOWED_HOSTS=.vercel.app`,
 `DATABASE_URL`, `BLOB_READ_WRITE_TOKEN`, при необходимости `GOOGLE_CLIENT_ID`.
 
-Деплой:
+Деплой идёт сам: репозиторий подключён к проекту Vercel (`vercel git connect`), и каждый пуш
+в `main` собирается и уезжает в продакшн. Боевые адреса — `ao-studio-main.vercel.app` и
+`ao-studio-jade.vercel.app`.
+
+Выложить вручную, не дожидаясь пуша:
 
 ```bash
 vercel deploy --prod
