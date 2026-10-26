@@ -7,6 +7,7 @@ import Layout from './components/Layout'
 import StartGameModal from './components/StartGameModal'
 import { ADMIN_URL, setUnauthorizedHandler } from './lib/api'
 import Board from './pages/Board'
+import Connect from './pages/Connect'
 import CreateRoom from './pages/CreateRoom'
 import Random from './pages/game/Random'
 import Classic from './pages/game/Classic'
@@ -87,6 +88,7 @@ export default function App() {
           <Route path="/login" element={<LoginRoute />} />
           <Route path="/rooms" element={<Rooms />} />
           <Route path="/board" element={<Board />} />
+          <Route path="/connect" element={<Connect />} />
           <Route path="/profile" element={<RequireAuth><Profile /></RequireAuth>} />
           <Route path="/create" element={<RequireAuth><CreateRoom /></RequireAuth>} />
           <Route path="/rooms/:id/edit" element={<RequireAuth><CreateRoom /></RequireAuth>} />

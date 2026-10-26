@@ -257,7 +257,7 @@ export default function CreateRoom() {
                 <span className="mb-3 block font-semibold">Кто увидит игру</span>
                 <div className="grid gap-3 sm:grid-cols-2">
                   {[
-                    { v: true, icon: Globe, label: '🌐 Публичная', text: 'Видна всем в AO Rooms и в поиске' },
+                    { v: true, icon: Globe, label: '🌐 Публичная', text: 'Видна всем в AO комнатах и в поиске' },
                     {
                       v: false,
                       icon: Lock,

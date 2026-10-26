@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { BookOpen, Gamepad2, Home, Info, LogIn, Monitor, Moon, PlusCircle, Sun, User as UserIcon } from 'lucide-react'
+import { BookOpen, Gamepad2, Home, Info, LogIn, Monitor, Moon, PlusCircle, QrCode, Sun, User as UserIcon } from 'lucide-react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../store/auth'
 import { useUI } from '../store/ui'
@@ -104,10 +104,13 @@ export default function Layout() {
             <BookOpen size={20} /> Об игре АО
           </button>
           <NavLink to="/rooms" className={navCls}>
-            <Gamepad2 size={20} /> AO Rooms
+            <Gamepad2 size={20} /> AO комнаты
           </NavLink>
           <NavLink to="/board" className={navCls}>
             <Monitor size={20} /> Доска
+          </NavLink>
+          <NavLink to="/connect" className={navCls}>
+            <QrCode size={20} /> Присоединиться
           </NavLink>
           <button onClick={goCreate} className={navCls({ isActive: location.pathname === '/create' })}>
             <PlusCircle size={20} /> Создать АО
@@ -157,8 +160,9 @@ export default function Layout() {
       <nav className="glass fixed inset-x-0 bottom-0 z-30 flex items-stretch justify-around rounded-none border-x-0 border-b-0 pb-[env(safe-area-inset-bottom)] md:hidden">
         {[
           { to: '/', icon: Home, label: 'Главная', end: true },
-          { to: '/rooms', icon: Gamepad2, label: 'Rooms' },
+          { to: '/rooms', icon: Gamepad2, label: 'Комнаты' },
           { to: '/board', icon: Monitor, label: 'Доска' },
+          { to: '/connect', icon: QrCode, label: 'Код' },
         ].map(({ to, icon: Icon, label, end }) => (
           <NavLink
             key={to}

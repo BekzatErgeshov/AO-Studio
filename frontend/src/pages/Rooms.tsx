@@ -96,7 +96,7 @@ export default function Rooms() {
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 md:py-10">
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold sm:text-4xl">🎮 AO Rooms</h1>
+          <h1 className="text-3xl font-extrabold sm:text-4xl">🎮 AO комнаты</h1>
           <p className="mt-1 text-muted">Готовые игры от сообщества — выбирайте и играйте</p>
         </div>
       </div>
