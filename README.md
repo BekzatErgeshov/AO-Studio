@@ -164,6 +164,35 @@ DATABASE_URL=<...> DJANGO_ADMIN_USERNAME=<логин> DJANGO_ADMIN_PASSWORD=<п�
 | `P` | Пауза таймера |
 | `F` | Режим проектора (полный экран, кнопки ведущего скрыты) |
 
+## Тесты
+
+Бэкенд — встроенный раннер Django:
+
+```bash
+cd backend
+python manage.py test
+```
+
+Раннер создаёт отдельную тестовую базу, поэтому с `DATABASE_URL` на локальный PostgreSQL он
+требует у роли права `CREATEDB` (`ALTER ROLE ao_studio CREATEDB;`). Проще прогнать на SQLite:
+
+```bash
+DATABASE_URL=sqlite:///db.sqlite3 python manage.py test
+```
+
+Фронтенд — Vitest (окружение jsdom):
+
+```bash
+cd frontend
+npm test          # один прогон
+npm run test:watch
+```
+
+Тесты лежат рядом с кодом (`*.test.ts`). Покрыто то, от чего зависит счёт в игре:
+`lib/answers.ts` — автопроверка ответа (она должна совпадать с `answer_matches` в
+`backend/game/live.py`), и `hooks/useAnticheat.ts` — предупреждение, дисквалификация,
+прощение ведущим и маячок при закрытии страницы.
+
 ## API
 
 Auth: `POST /api/auth/register/`, `login/`, `logout/`, `token/refresh/`; `GET /api/auth/me/`, `PATCH me/update/`, `DELETE me/delete/` (тело `{username}`).
