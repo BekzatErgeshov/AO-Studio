@@ -105,7 +105,7 @@ export default function StartGameModal() {
               <ArrowLeft size={18} />
             </button>
           )}
-          <span>{step === 1 ? '▶️ Выберите игру' : '🎮 Одиночная игра'}</span>
+          <span>{step === 1 ? 'Выберите игру' : 'Одиночная игра'}</span>
         </div>
       }
     >

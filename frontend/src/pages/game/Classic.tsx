@@ -256,7 +256,7 @@ export default function Classic() {
               >
                 <div className="mb-6 flex items-start justify-between gap-4">
                   <div>
-                    <div className="text-sm font-semibold uppercase tracking-widest text-green">📂 {cat.name}</div>
+                    <div className="text-sm font-semibold uppercase tracking-widest text-green">{cat.name}</div>
                     <div className="mt-1 text-muted">
                       Вопрос {qIdx + 1} из {cat.questions.length} · <b className="text-fg">{q.points}</b> балл.
                     </div>
@@ -325,7 +325,7 @@ export default function Classic() {
                 exit={{ opacity: 0, y: -30 }}
                 className="glass flex flex-1 flex-col rounded-3xl p-5 sm:p-8"
               >
-                <h2 className="text-2xl font-extrabold sm:text-3xl">✅ Правильные ответы</h2>
+                <h2 className="text-2xl font-extrabold sm:text-3xl">Правильные ответы</h2>
                 <div className="mt-1 flex flex-wrap items-center justify-between gap-3">
                   <p className="text-muted">
                     Категория «{cat.name}». <span className="host-only">Отметьте команды, ответившие верно.</span>
@@ -413,7 +413,7 @@ export default function Classic() {
 
                 <div className="host-only mt-6 flex justify-end">
                   <button onClick={next} className="btn btn-primary px-6 py-3">
-                    {isLastCat ? '🏆 Завершить игру' : (
+                    {isLastCat ? 'Завершить игру' : (
                       <>
                         Следующая категория <ChevronRight size={18} />
                       </>
@@ -427,7 +427,7 @@ export default function Classic() {
 
         {/* Правая часть — табло */}
         <aside className="glass h-fit rounded-3xl p-4 lg:sticky lg:top-4">
-          <h3 className="mb-3 px-1 text-sm font-semibold uppercase tracking-widest text-muted">🏆 Табло</h3>
+          <h3 className="mb-3 px-1 text-sm font-semibold uppercase tracking-widest text-muted">Табло</h3>
           <Scoreboard teams={teams} onAdjust={addScore} />
         </aside>
       </div>

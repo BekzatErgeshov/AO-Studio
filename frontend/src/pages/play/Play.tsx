@@ -489,7 +489,7 @@ export default function Play() {
               <div className="glass rounded-3xl p-5 sm:p-6">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    {state.category && <div className="text-xs font-semibold uppercase tracking-widest text-green">📂 {state.category}</div>}
+                    {state.category && <div className="text-xs font-semibold uppercase tracking-widest text-green">{state.category}</div>}
                     <div className="mt-1 text-sm text-muted">
                       {state.number && state.total ? `Вопрос ${state.number} из ${state.total} · ` : ''}
                       {q.points ? <b className="text-fg">{q.points} балл.</b> : null}
@@ -531,7 +531,7 @@ export default function Play() {
               </div>
             ) : state.view === 'review' && state.items ? (
               <div className="glass rounded-3xl p-5">
-                <h2 className="text-xl font-extrabold">✅ Правильные ответы</h2>
+                <h2 className="text-xl font-extrabold">Правильные ответы</h2>
                 {state.category && <p className="text-sm text-muted">Категория «{state.category}»</p>}
                 <div className="mt-4 space-y-2.5">
                   {state.items.map((it, i) => {

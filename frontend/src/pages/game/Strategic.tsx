@@ -269,7 +269,7 @@ export default function Strategic() {
         </section>
 
         <aside className="glass h-fit rounded-3xl p-4 xl:sticky xl:top-4">
-          <h3 className="mb-3 px-1 text-sm font-semibold uppercase tracking-widest text-muted">🏆 Табло</h3>
+          <h3 className="mb-3 px-1 text-sm font-semibold uppercase tracking-widest text-muted">Табло</h3>
           <Scoreboard teams={teams} activeId={active?.id} onAdjust={addScore} />
         </aside>
       </div>
@@ -280,7 +280,7 @@ export default function Strategic() {
           <div className="flex flex-col gap-6">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <div className="text-sm font-semibold uppercase tracking-widest text-green">📂 {current.catName}</div>
+                <div className="text-sm font-semibold uppercase tracking-widest text-green">{current.catName}</div>
                 <div className="mt-1 text-4xl font-extrabold text-gradient">{current.points} балл.</div>
                 {active && (
                   <div className="mt-2 flex items-center gap-2 text-muted">

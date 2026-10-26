@@ -62,7 +62,7 @@ function EditProfileModal({ open, onClose, user }: { open: boolean; onClose: () 
   }
 
   return (
-    <Modal open={open} onClose={onClose} title="✏️ Редактировать профиль" size="sm">
+    <Modal open={open} onClose={onClose} title="Редактировать профиль" size="sm">
       <form onSubmit={save} className="space-y-5">
         <div className="flex flex-col items-center gap-3">
           <button type="button" onClick={() => inputRef.current?.click()} className="group relative">
@@ -134,7 +134,7 @@ function DeleteAccountModal({ open, onClose, user }: { open: boolean; onClose: (
   }
 
   return (
-    <Modal open={open} onClose={onClose} title="🗑️ Удалить аккаунт" size="sm">
+    <Modal open={open} onClose={onClose} title="Удалить аккаунт" size="sm">
       <div className="space-y-4">
         <div className="rounded-xl border border-red-400/30 bg-red-400/10 p-4 text-sm text-red-300">
           Это действие <b>нельзя отменить</b>. Будут удалены ваш аккаунт, все AO комнаты, вопросы и история игр.
@@ -247,7 +247,7 @@ export default function Profile() {
           <h3 className="mt-4 text-lg font-bold">У вас пока нет AO комнат</h3>
           <p className="mt-1 text-muted">Создайте первую игру — это займёт пару минут</p>
           <button onClick={() => navigate('/create')} className="btn btn-primary mt-6">
-            🎯 Создать АО
+            Создать АО
           </button>
         </div>
       ) : (

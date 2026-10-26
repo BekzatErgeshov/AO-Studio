@@ -98,7 +98,7 @@ export default function Home() {
           className="glass mt-10 flex w-full max-w-md flex-col gap-3 rounded-3xl p-3 sm:flex-row"
         >
           <button onClick={onCreate} className="btn btn-primary flex-1 py-4 text-base">
-            🎯 Создать АО
+            Создать АО
           </button>
           <button onClick={onStart} className="btn btn-outline flex-1 py-4 text-base">
             <Play size={18} fill="currentColor" /> Начать АО

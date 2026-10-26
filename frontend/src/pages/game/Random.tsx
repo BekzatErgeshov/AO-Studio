@@ -252,7 +252,7 @@ export default function Random() {
         </section>
 
         <aside className="glass h-fit rounded-3xl p-4 xl:sticky xl:top-4">
-          <h3 className="mb-3 px-1 text-sm font-semibold uppercase tracking-widest text-muted">🏆 Табло</h3>
+          <h3 className="mb-3 px-1 text-sm font-semibold uppercase tracking-widest text-muted">Табло</h3>
           <Scoreboard teams={teams} activeId={active?.id} onAdjust={addScore} />
         </aside>
       </div>

@@ -103,7 +103,7 @@ export default function Connect() {
             {valid && !checking && notFound && <span className="text-red-400">Игра с таким кодом не найдена</span>}
             {valid && game && (
               <span className="text-green">
-                🎯 {game.room.title}
+                {game.room.title}
                 {game.status === 'finished' && <span className="text-muted"> · игра завершена</span>}
               </span>
             )}

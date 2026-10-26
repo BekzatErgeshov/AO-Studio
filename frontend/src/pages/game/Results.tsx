@@ -63,7 +63,7 @@ export default function Results() {
       <div className="relative z-10 mx-auto max-w-4xl">
         <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center text-center">
           <Logo size={48} />
-          <h1 className="mt-4 text-4xl font-extrabold sm:text-5xl">🏆 Итоги игры</h1>
+          <h1 className="mt-4 text-4xl font-extrabold sm:text-5xl">Итоги игры</h1>
           <p className="mt-2 text-muted">{room.title}</p>
         </motion.div>
 
@@ -129,7 +129,7 @@ export default function Results() {
 
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 2 }} className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
           <button onClick={() => leave('new')} className="btn btn-primary px-8 py-3.5">
-            <RotateCcw size={18} /> 🔄 Новая игра
+            <RotateCcw size={18} /> Новая игра
           </button>
           <button onClick={() => leave('home')} className="btn btn-ghost px-8 py-3.5">
             <Home size={18} /> На главную

@@ -124,7 +124,7 @@ function QuestionCard({ q, index, showErrors, onChange, onDelete, canDelete, wit
               </div>
             ) : (
               <button type="button" onClick={() => fileRef.current?.click()} className="btn btn-ghost px-3 py-2 text-sm">
-                <ImagePlus size={16} /> 📷 Добавить фото
+                <ImagePlus size={16} /> Добавить фото
               </button>
             )}
             <input ref={fileRef} type="file" accept="image/*" hidden onChange={(e) => pickPhoto(e.target.files?.[0])} />

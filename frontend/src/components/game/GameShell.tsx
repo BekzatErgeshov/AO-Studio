@@ -64,7 +64,7 @@ export default function GameShell({ children, hotkeys, onFinish }: Props) {
             <FormatBadge format={room.format} compact />
             {code && (
               <span className="rounded-lg border border-green/40 bg-green/10 px-2 py-0.5 font-mono text-xs font-bold tracking-widest text-green" title="Код для входа команд">
-                📱 {code}
+                {code}
               </span>
             )}
           </div>
@@ -144,7 +144,7 @@ export default function GameShell({ children, hotkeys, onFinish }: Props) {
             }}
             className="btn btn-primary flex-1"
           >
-            🏆 К итогам
+            К итогам
           </button>
         </div>
       </Modal>

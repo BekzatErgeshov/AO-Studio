@@ -61,7 +61,7 @@ export default function RoomCard({ room, onClick, onPlay, onLikeChange, showPriv
     >
       <div className="flex flex-1 flex-col gap-3 p-5">
         <div className="flex items-start justify-between gap-2">
-          <h3 className="line-clamp-2 text-lg font-bold leading-snug">🎯 {room.title}</h3>
+          <h3 className="line-clamp-2 text-lg font-bold leading-snug">{room.title}</h3>
           {showPrivacy && (
             <span className="shrink-0 text-muted" title={room.is_public ? 'Публичная' : 'Приватная'}>
               {room.is_public ? <Globe size={16} /> : <Lock size={16} />}

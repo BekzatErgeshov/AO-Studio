@@ -197,7 +197,7 @@ export default function CreateRoom() {
   return (
     <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6 md:py-10">
       <div className="mb-6 flex items-center justify-between gap-4">
-        <h1 className="text-3xl font-extrabold">{editId ? '✏️ Редактировать АО' : '🎯 Создать АО'}</h1>
+        <h1 className="text-3xl font-extrabold">{editId ? 'Редактировать АО' : 'Создать АО'}</h1>
         {editId && (
           <button onClick={() => setDeleteOpen(true)} className="btn btn-danger px-3 py-2 text-sm">
             <Trash2 size={16} /> <span className="hidden sm:inline">Удалить</span>
@@ -257,11 +257,11 @@ export default function CreateRoom() {
                 <span className="mb-3 block font-semibold">Кто увидит игру</span>
                 <div className="grid gap-3 sm:grid-cols-2">
                   {[
-                    { v: true, icon: Globe, label: '🌐 Публичная', text: 'Видна всем в AO комнатах и в поиске' },
+                    { v: true, icon: Globe, label: 'Публичная', text: 'Видна всем в AO комнатах и в поиске' },
                     {
                       v: false,
                       icon: Lock,
-                      label: '🔒 Приватная',
+                      label: 'Приватная',
                       text: 'В списке не показывается: её найдут, только набрав название целиком, или откроют по ссылке',
                     },
                   ].map((o) => (
@@ -311,7 +311,7 @@ export default function CreateRoom() {
               {format === 'random' ? (
                 <div className="glass rounded-2xl p-5">
                   <div className="mb-4 flex items-center justify-between">
-                    <h2 className="text-lg font-bold">🎲 Вопросы для карточек</h2>
+                    <h2 className="text-lg font-bold">Вопросы для карточек</h2>
                     <span className="text-sm text-muted">{questions.length} шт.</span>
                   </div>
                   <QuestionList questions={questions} onChange={setQuestions} showErrors={showErrors} />
@@ -327,7 +327,7 @@ export default function CreateRoom() {
 
                   {categories.length === 0 && (
                     <div className={`rounded-2xl border border-dashed py-12 text-center text-muted ${showErrors ? 'border-red-400/60' : 'border-line'}`}>
-                      📂 Добавьте первую категорию
+                      Добавьте первую категорию
                     </div>
                   )}
 
@@ -448,7 +448,8 @@ export default function CreateRoom() {
           </button>
         ) : (
           <button onClick={submit} disabled={saving} className="btn btn-primary px-6">
-            {saving ? <Loader2 size={18} className="animate-spin" /> : '✅'} {editId ? 'Сохранить изменения' : 'Создать АО'}
+            {saving && <Loader2 size={18} className="animate-spin" />}
+            {editId ? 'Сохранить изменения' : 'Создать АО'}
           </button>
         )}
       </div>

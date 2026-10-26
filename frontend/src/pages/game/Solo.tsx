@@ -293,7 +293,7 @@ function QuestionModal({
         <div className="flex flex-col gap-5">
           <div className="flex items-start justify-between gap-4">
             <div>
-              {cell.category && <div className="text-sm font-semibold uppercase tracking-widest text-green">📂 {cell.category}</div>}
+              {cell.category && <div className="text-sm font-semibold uppercase tracking-widest text-green">{cell.category}</div>}
               <div className="text-gradient mt-1 text-3xl font-extrabold">
                 {cell.points} {plural(cell.points, 'балл', 'балла', 'баллов')}
               </div>
