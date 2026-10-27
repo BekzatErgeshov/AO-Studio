@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.db.models import Count
 from django.utils.html import format_html
 
-from .models import AORoom, Category, Like, Question
+from .models import AORoom, Category, Question
 
 
 def photo_html(photo, size=60):
@@ -44,17 +44,17 @@ class QuestionInline(admin.StackedInline):
 
 @admin.register(AORoom)
 class AORoomAdmin(admin.ModelAdmin):
-    list_display = ["title", "format", "author", "is_public", "questions_total", "likes_count", "timer_duration", "created_at"]
+    list_display = ["title", "format", "author", "is_public", "questions_total", "saves_count", "timer_duration", "created_at"]
     list_filter = ["format", "is_public", "created_at"]
     list_editable = ["is_public"]
     search_fields = ["title", "description", "author__username"]
     autocomplete_fields = ["author"]
-    readonly_fields = ["likes_count", "created_at"]
+    readonly_fields = ["saves_count", "saved_from", "created_at"]
     inlines = [CategoryInline, QuestionInline]
     list_per_page = 50
     fieldsets = (
         ("Комната", {"fields": ("title", "format", "author", "description")}),
-        ("Настройки", {"fields": ("is_public", "timer_duration", "likes_count", "created_at")}),
+        ("Настройки", {"fields": ("is_public", "timer_duration", "saves_count", "saved_from", "created_at")}),
     )
 
     def get_queryset(self, request):
@@ -93,11 +93,3 @@ class QuestionAdmin(admin.ModelAdmin):
     @admin.display(description="Превью")
     def photo_preview(self, obj):
         return photo_html(obj.photo, 200)
-
-
-@admin.register(Like)
-class LikeAdmin(admin.ModelAdmin):
-    list_display = ["user", "room", "created_at"]
-    search_fields = ["user__username", "room__title"]
-    autocomplete_fields = ["user", "room"]
-

@@ -5,7 +5,7 @@ from django.contrib.auth import get_user_model
 from django.utils import timezone
 
 from game.models import GameSession
-from rooms.models import AORoom, Like, Question
+from rooms.models import AORoom, Question
 
 register = template.Library()
 
@@ -24,7 +24,7 @@ def ao_stats():
              "sub": f"публичных: {AORoom.objects.filter(is_public=True).count()}",
              "icon": "fas fa-gamepad", "url": "admin:rooms_aoroom_changelist"},
             {"label": "Вопросов", "value": Question.objects.count(),
-             "sub": f"лайков: {Like.objects.count()}",
+             "sub": f"сохранений: {AORoom.objects.filter(saved_from__isnull=False).count()}",
              "icon": "fas fa-question-circle", "url": "admin:rooms_question_changelist"},
             {"label": "Игр сыграно", "value": GameSession.objects.count(),
              "sub": f"завершено: {GameSession.objects.filter(status='finished').count()}",

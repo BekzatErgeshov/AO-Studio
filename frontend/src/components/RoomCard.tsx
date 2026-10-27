@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion'
-import { FolderOpen, Heart, HelpCircle, Lock, Play, Globe } from 'lucide-react'
+import { Bookmark, BookmarkCheck, FolderOpen, Globe, HelpCircle, Lock, Play } from 'lucide-react'
 import { useState, type MouseEvent } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { api } from '../lib/api'
 import type { RoomListItem } from '../lib/types'
 import { useAuth } from '../store/auth'
@@ -12,37 +13,49 @@ interface Props {
   room: RoomListItem
   onClick?: () => void
   onPlay?: () => void
-  onLikeChange?: (room: RoomListItem) => void
+  onSaveChange?: (room: RoomListItem) => void
   showPrivacy?: boolean
   showAuthor?: boolean
   index?: number
 }
 
-export default function RoomCard({ room, onClick, onPlay, onLikeChange, showPrivacy, showAuthor = true, index = 0 }: Props) {
+export default function RoomCard({ room, onClick, onPlay, onSaveChange, showPrivacy, showAuthor = true, index = 0 }: Props) {
   const user = useAuth((s) => s.user)
   const openAuth = useUI((s) => s.openAuth)
-  const [liked, setLiked] = useState(room.is_liked)
-  const [likes, setLikes] = useState(room.likes_count)
+  const navigate = useNavigate()
+  const [saved, setSaved] = useState(room.is_saved)
+  const [copyId, setCopyId] = useState(room.my_copy_id)
+  const [saves, setSaves] = useState(room.saves_count)
+  const [busy, setBusy] = useState(false)
   const [pop, setPop] = useState(false)
 
-  const toggleLike = async (e: MouseEvent) => {
+  // Свою комнату сохранять незачем — она и так в профиле
+  const isMine = !!user && room.author.id === user.id
+
+  /**
+   * Сохранить — значит сделать личную копию: её можно править, оригинал автора не меняется.
+   * Если копия уже есть, кнопка ведёт на её редактирование, а не создаёт вторую.
+   */
+  const onSave = async (e: MouseEvent) => {
     e.stopPropagation()
     if (!user) return openAuth('login')
-    // Оптимистичное обновление
-    setLiked(!liked)
-    setLikes((n) => n + (liked ? -1 : 1))
-    if (!liked) {
+    if (saved && copyId) return navigate(`/rooms/${copyId}/edit`)
+    if (busy) return
+    setBusy(true)
+    try {
+      const { data } = await api.post<{ is_saved: boolean; saves_count: number; copy_id: number }>(
+        `/rooms/${room.id}/save/`,
+      )
+      setSaved(data.is_saved)
+      setCopyId(data.copy_id)
+      setSaves(data.saves_count)
       setPop(true)
       setTimeout(() => setPop(false), 400)
-    }
-    try {
-      const { data } = await api.post<{ is_liked: boolean; likes_count: number }>(`/rooms/${room.id}/like/`)
-      setLiked(data.is_liked)
-      setLikes(data.likes_count)
-      onLikeChange?.({ ...room, is_liked: data.is_liked, likes_count: data.likes_count })
+      onSaveChange?.({ ...room, is_saved: data.is_saved, saves_count: data.saves_count, my_copy_id: data.copy_id })
     } catch {
-      setLiked(liked)
-      setLikes(room.likes_count)
+      /* не сохранилось — состояние кнопки не трогаем */
+    } finally {
+      setBusy(false)
     }
   }
 
@@ -78,6 +91,12 @@ export default function RoomCard({ room, onClick, onPlay, onLikeChange, showPriv
           )}
         </div>
 
+        {room.saved_from && (
+          <p className="line-clamp-1 text-xs text-muted">
+            Сохранено из игры <span className="text-fg/70">@{room.saved_from.author.username}</span>
+          </p>
+        )}
+
         {cats.length > 0 && (
           <p className="line-clamp-1 text-sm text-muted">
             <span className="text-fg/70">Категории:</span> {cats.join(', ')}
@@ -99,16 +118,20 @@ export default function RoomCard({ room, onClick, onPlay, onLikeChange, showPriv
           <span />
         )}
         <div className="flex shrink-0 items-center gap-1">
-          <button
-            onClick={toggleLike}
-            className={`flex items-center gap-1 rounded-lg px-2 py-1.5 text-sm transition hover:bg-fg/5 ${liked ? 'text-rose-500' : 'text-muted'}`}
-            aria-label={liked ? 'Убрать лайк' : 'Поставить лайк'}
-          >
-            <motion.span animate={pop ? { scale: [1, 1.5, 1] } : {}} transition={{ duration: 0.35 }} className="flex">
-              <Heart size={18} fill={liked ? 'currentColor' : 'none'} />
-            </motion.span>
-            {likes > 0 && <span>{likes}</span>}
-          </button>
+          {!isMine && (
+            <button
+              onClick={onSave}
+              disabled={busy}
+              className={`flex items-center gap-1 rounded-lg px-2 py-1.5 text-sm transition hover:bg-fg/5 ${saved ? 'text-green' : 'text-muted'}`}
+              title={saved ? 'Открыть мою копию' : 'Сохранить себе копию — её можно править'}
+              aria-label={saved ? 'Открыть мою копию' : 'Сохранить себе'}
+            >
+              <motion.span animate={pop ? { scale: [1, 1.4, 1] } : {}} transition={{ duration: 0.35 }} className="flex">
+                {saved ? <BookmarkCheck size={18} /> : <Bookmark size={18} />}
+              </motion.span>
+              {saves > 0 && <span>{saves}</span>}
+            </button>
+          )}
           {onPlay && (
             <button
               onClick={(e) => {

@@ -1,14 +1,21 @@
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 
-from .models import AORoom, Like, Question
+from .models import AORoom, Question
 
 
-@receiver([post_save, post_delete], sender=Like)
-def recount_likes(sender, instance, **kwargs):
-    """Держит AORoom.likes_count в синхроне — и из API, и из админки, и при каскадном удалении."""
-    AORoom.objects.filter(pk=instance.room_id).update(
-        likes_count=Like.objects.filter(room_id=instance.room_id).count()
+@receiver([post_save, post_delete], sender=AORoom)
+def recount_saves(sender, instance, **kwargs):
+    """Держит AORoom.saves_count в синхроне: сохранение комнаты — это её копия.
+
+    Пересчёт идёт по оригиналу, у копии saved_from заполнено. Обновляем через .update(),
+    чтобы не уйти в рекурсию: он сигналов не шлёт.
+    """
+    source_id = instance.saved_from_id
+    if not source_id:
+        return
+    AORoom.objects.filter(pk=source_id).update(
+        saves_count=AORoom.objects.filter(saved_from_id=source_id).count()
     )
 
 

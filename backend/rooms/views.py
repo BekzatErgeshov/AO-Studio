@@ -1,6 +1,8 @@
 from django.contrib.auth import get_user_model
-from django.db.models import Count, Exists, OuterRef, Q, Value
-from django.db.models.fields import BooleanField
+from django.core.files.base import ContentFile
+from django.db import transaction
+from django.db.models import Count, Exists, OuterRef, Q, Subquery, Value
+from django.db.models.fields import BooleanField, IntegerField
 from rest_framework import generics, mixins, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
@@ -8,7 +10,7 @@ from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import AORoom, Category, Like, Question
+from .models import AORoom, Category, Question
 from .serializers import (
     CategorySerializer,
     QuestionUpdateSerializer,
@@ -27,13 +29,21 @@ class IsAuthorOrReadOnly(permissions.BasePermission):
 
 
 def annotate_rooms(qs, user):
-    qs = qs.select_related("author").prefetch_related("categories").annotate(
+    qs = qs.select_related("author", "saved_from").prefetch_related("categories").annotate(
         questions_count=Count("questions", distinct=True)
     )
     if user.is_authenticated:
-        qs = qs.annotate(is_liked=Exists(Like.objects.filter(room=OuterRef("pk"), user=user)))
+        mine = AORoom.objects.filter(saved_from=OuterRef("pk"), author=user)
+        # Своя копия этой комнаты: по ней фронт ведёт на редактирование
+        qs = qs.annotate(
+            is_saved=Exists(mine),
+            my_copy_id=Subquery(mine.values("pk")[:1]),
+        )
     else:
-        qs = qs.annotate(is_liked=Value(False, output_field=BooleanField()))
+        qs = qs.annotate(
+            is_saved=Value(False, output_field=BooleanField()),
+            my_copy_id=Value(None, output_field=IntegerField()),
+        )
     return qs
 
 
@@ -58,12 +68,13 @@ class RoomViewSet(viewsets.ModelViewSet):
             # Приватную комнату не видно в списке: её находят, набрав название целиком,
             # или открывают по прямой ссылке
             found_private = Q(is_public=False, title__iexact=search) if search else Q(pk__in=[])
-            if show in ("mine", "liked") and not user.is_authenticated:
+            if show in ("mine", "saved") and not user.is_authenticated:
                 return AORoom.objects.none()
             if show == "mine":
-                base = base.filter(author=user)
-            elif show == "liked":
-                base = base.filter(likes__user=user).filter(Q(is_public=True) | Q(author=user))
+                # Свои комнаты — только созданные, сохранённые копии лежат отдельно
+                base = base.filter(author=user, saved_from__isnull=True)
+            elif show == "saved":
+                base = base.filter(author=user, saved_from__isnull=False)
             elif show == "available" and user.is_authenticated:
                 # Для запуска игры: публичные, свои приватные и найденные по точному названию
                 base = base.filter(Q(is_public=True) | Q(author=user) | found_private)
@@ -110,6 +121,14 @@ class RoomViewSet(viewsets.ModelViewSet):
     def my(self, request):
         return Response(RoomListSerializer(self.get_queryset(), many=True, context={"request": request}).data)
 
+    @action(detail=False, methods=["get"], permission_classes=[permissions.IsAuthenticated])
+    def saved(self, request):
+        """Сохранённые комнаты — личные копии чужих игр, их можно править как свои."""
+        qs = annotate_rooms(
+            AORoom.objects.filter(author=request.user, saved_from__isnull=False), request.user
+        )
+        return Response(RoomListSerializer(qs, many=True, context={"request": request}).data)
+
     @action(
         detail=False, methods=["get"], url_path="categories-list",
         permission_classes=[permissions.AllowAny],
@@ -126,18 +145,70 @@ class RoomViewSet(viewsets.ModelViewSet):
         return Response([n["name"] for n in names])
 
     @action(detail=True, methods=["post"], permission_classes=[permissions.IsAuthenticated])
-    def like(self, request, pk=None):
+    def save(self, request, pk=None):
+        """Сохранить комнату себе — то есть сделать личную копию, которую можно править.
+
+        Оригинал автора не меняется. Повторный вызов копию не плодит: возвращаем уже
+        сделанную, фронт ведёт по ней на редактирование.
+        """
         room = self.get_object()
-        like = Like.objects.filter(user=request.user, room=room).first()
-        # likes_count пересчитывается сигналами (rooms/signals.py)
-        if like:
-            like.delete()
-            liked = False
+        if room.author_id == request.user.id and room.saved_from_id is None:
+            return Response(
+                {"detail": "Это ваша комната — её не нужно сохранять."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        # Копию снимаем с оригинала: копия копии остаётся привязанной к первоисточнику
+        source = room.saved_from or room
+        existing = AORoom.objects.filter(saved_from=source, author=request.user).first()
+        if existing:
+            copy = existing
         else:
-            Like.objects.create(user=request.user, room=room)
-            liked = True
-        room.refresh_from_db(fields=["likes_count"])
-        return Response({"is_liked": liked, "likes_count": room.likes_count})
+            copy = self._copy_room(source, request.user)
+        source.refresh_from_db(fields=["saves_count"])
+        return Response(
+            {"is_saved": True, "saves_count": source.saves_count, "copy_id": copy.id},
+            status=status.HTTP_201_CREATED if not existing else status.HTTP_200_OK,
+        )
+
+    @staticmethod
+    @transaction.atomic
+    def _copy_room(source, user):
+        """Копирует комнату целиком: категории, вопросы и файлы фотографий."""
+        copy = AORoom.objects.create(
+            title=source.title,
+            format=source.format,
+            timer_duration=source.timer_duration,
+            # Копия всегда приватная: это личный экземпляр, а не вторая публикация чужой игры
+            is_public=False,
+            description=source.description,
+            author=user,
+            saved_from=source,
+        )
+        cat_map = {}
+        for cat in source.categories.all():
+            cat_map[cat.id] = Category.objects.create(room=copy, name=cat.name, order=cat.order)
+        for q in source.questions.all():
+            new_q = Question(
+                room=copy,
+                category=cat_map.get(q.category_id),
+                text=q.text,
+                answer=q.answer,
+                points=q.points,
+                order=q.order,
+            )
+            # Фото копируем файлом, а не ссылкой: иначе удаление вопроса у автора
+            # оставило бы копию с битой картинкой
+            if q.photo:
+                try:
+                    q.photo.open("rb")
+                    new_q.photo.save(q.photo.name.rsplit("/", 1)[-1], ContentFile(q.photo.read()), save=False)
+                except (OSError, ValueError):
+                    # Файл недоступен — копия просто останется без фото
+                    pass
+                finally:
+                    q.photo.close()
+            new_q.save()
+        return copy
 
     def _own_room(self):
         room = self.get_object()

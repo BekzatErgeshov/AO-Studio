@@ -168,11 +168,13 @@ export default function Profile() {
   const openStart = useUI((s) => s.openStart)
   const navigate = useNavigate()
   const [rooms, setRooms] = useState<RoomListItem[] | null>(null)
+  const [saved, setSaved] = useState<RoomListItem[] | null>(null)
   const [editOpen, setEditOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
 
   useEffect(() => {
     api.get<RoomListItem[]>('/rooms/my/').then(({ data }) => setRooms(data)).catch(() => setRooms([]))
+    api.get<RoomListItem[]>('/rooms/saved/').then(({ data }) => setSaved(data)).catch(() => setSaved([]))
     refreshMe().catch(() => {})
   }, [refreshMe])
 
@@ -266,6 +268,36 @@ export default function Profile() {
             ))}
           </AnimatePresence>
         </div>
+      )}
+
+      {/* Сохранённые — личные копии чужих игр, правятся как свои */}
+      {saved !== null && saved.length > 0 && (
+        <>
+          <div className="mb-5 mt-12 flex items-center justify-between gap-3">
+            <h2 className="text-xl font-bold">
+              Сохранённые AO комнаты
+              <span className="ml-1 rounded-full bg-green/15 px-2.5 py-0.5 text-sm text-green">{saved.length}</span>
+            </h2>
+          </div>
+          <p className="-mt-2 mb-5 text-sm text-muted">
+            Это ваши копии чужих игр — меняйте вопросы и категории как хотите, у автора ничего не изменится.
+          </p>
+          <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+            <AnimatePresence>
+              {saved.map((r, i) => (
+                <RoomCard
+                  key={r.id}
+                  room={r}
+                  index={i}
+                  showPrivacy
+                  showAuthor={false}
+                  onClick={() => navigate(`/rooms/${r.id}/edit`)}
+                  onPlay={() => openStart(r)}
+                />
+              ))}
+            </AnimatePresence>
+          </div>
+        </>
       )}
 
       <div className="mt-16 border-t border-line pt-8">

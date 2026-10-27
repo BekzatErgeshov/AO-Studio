@@ -36,17 +36,30 @@ class CategorySerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "questions"]
 
 
+class SavedFromSerializer(serializers.ModelSerializer):
+    """Откуда сохранена копия — показываем на карточке в профиле."""
+
+    author = PublicUserSerializer(read_only=True)
+
+    class Meta:
+        model = AORoom
+        fields = ["id", "title", "author"]
+
+
 class RoomListSerializer(serializers.ModelSerializer):
     author = PublicUserSerializer(read_only=True)
     categories = serializers.SerializerMethodField()
     questions_count = serializers.SerializerMethodField()
-    is_liked = serializers.SerializerMethodField()
+    is_saved = serializers.SerializerMethodField()
+    my_copy_id = serializers.SerializerMethodField()
+    saved_from = SavedFromSerializer(read_only=True)
 
     class Meta:
         model = AORoom
         fields = [
             "id", "title", "format", "timer_duration", "is_public", "description",
-            "author", "likes_count", "created_at", "categories", "questions_count", "is_liked",
+            "author", "saves_count", "created_at", "categories", "questions_count",
+            "is_saved", "my_copy_id", "saved_from",
         ]
 
     def get_questions_count(self, obj):
@@ -54,13 +67,22 @@ class RoomListSerializer(serializers.ModelSerializer):
             return obj.questions_count
         return obj.questions.count()
 
-    def get_is_liked(self, obj):
-        if hasattr(obj, "is_liked"):
-            return obj.is_liked
+    def get_is_saved(self, obj):
+        if hasattr(obj, "is_saved"):
+            return obj.is_saved
         request = self.context.get("request")
         if not request or not request.user.is_authenticated:
             return False
-        return obj.likes.filter(user=request.user).exists()
+        return obj.copies.filter(author=request.user).exists()
+
+    def get_my_copy_id(self, obj):
+        if hasattr(obj, "my_copy_id"):
+            return obj.my_copy_id
+        request = self.context.get("request")
+        if not request or not request.user.is_authenticated:
+            return None
+        copy = obj.copies.filter(author=request.user).first()
+        return copy.id if copy else None
 
     def get_categories(self, obj):
         # В рандоме вопросы идут вперемешку, категорий нет

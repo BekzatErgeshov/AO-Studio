@@ -9,7 +9,7 @@ import { FORMATS } from '../lib/utils'
 import { useAuth } from '../store/auth'
 import { useUI } from '../store/ui'
 
-type Show = 'all' | 'mine' | 'liked'
+type Show = 'all' | 'mine' | 'saved'
 type QCount = '' | '5-10' | '10-20' | '20+'
 
 function ChipGroup<T extends string>({ label, value, options, onChange }: {
@@ -129,7 +129,7 @@ export default function Rooms() {
           options={[
             { value: 'all', label: 'Все комнаты' },
             { value: 'mine', label: 'Мои комнаты' },
-            { value: 'liked', label: 'Понравившиеся' },
+            { value: 'saved', label: 'Сохранённые' },
           ]}
         />
 
@@ -186,7 +186,7 @@ export default function Rooms() {
           <div className="text-5xl">🔍</div>
           <h3 className="mt-4 text-xl font-bold">Ничего не найдено</h3>
           <p className="mt-1 text-muted">
-            {show === 'liked' ? 'Вы ещё не лайкнули ни одной комнаты' : 'Попробуйте изменить запрос или фильтры'}
+            {show === 'saved' ? 'Вы ещё не сохранили ни одной комнаты' : 'Попробуйте изменить запрос или фильтры'}
           </p>
           <button onClick={() => (user ? navigate('/create') : openAuth('register', () => navigate('/create')))} className="btn btn-primary mt-6">
             Создать свою АО
@@ -203,7 +203,7 @@ export default function Rooms() {
                 showPrivacy={show === 'mine'}
                 onPlay={() => play(r)}
                 onClick={user && r.author.id === user.id ? () => navigate(`/rooms/${r.id}/edit`) : undefined}
-                onLikeChange={(nr) => show === 'liked' && !nr.is_liked && setRooms((rs) => rs.filter((x) => x.id !== nr.id))}
+                onSaveChange={(nr) => setRooms((rs) => rs.map((x) => (x.id === nr.id ? nr : x)))}
               />
             ))}
           </AnimatePresence>

@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from rest_framework.test import APITestCase
 
-from .models import AORoom, Question
+from .models import AORoom, Category, Question
 
 User = get_user_model()
 
@@ -87,3 +87,113 @@ class PrivateRoomVisibilityTests(APITestCase):
     def test_author_sees_own_private_room_in_list(self):
         self.client.force_authenticate(self.author)
         self.assertIn("Секретный квиз", self.titles(show="mine"))
+
+
+class SaveRoomTests(APITestCase):
+    """Сохранить комнату — значит сделать личную копию, которую можно править."""
+
+    def setUp(self):
+        self.author = User.objects.create_user(username="author", email="a@test.local", password="pwd12345")
+        self.other = User.objects.create_user(username="other", email="o@test.local", password="pwd12345")
+        self.room = AORoom.objects.create(
+            title="Кыргызстан", format=AORoom.FORMAT_CLASSIC, author=self.author, is_public=True
+        )
+        self.cat = Category.objects.create(room=self.room, name="История", order=0)
+        Question.objects.create(room=self.room, category=self.cat, text="Год независимости?", answer="1991", order=0)
+        Question.objects.create(room=self.room, category=self.cat, text="Столица?", answer="Бишкек", order=1)
+
+    def save_room(self):
+        return self.client.post(f"/api/rooms/{self.room.id}/save/")
+
+    def test_save_copies_room_with_categories_and_questions(self):
+        self.client.force_authenticate(self.other)
+        res = self.save_room()
+        self.assertEqual(res.status_code, 201, res.data)
+
+        copy = AORoom.objects.get(pk=res.data["copy_id"])
+        self.assertEqual(copy.author, self.other)
+        self.assertEqual(copy.saved_from, self.room)
+        self.assertEqual(copy.title, self.room.title)
+        self.assertEqual([c.name for c in copy.categories.all()], ["История"])
+        self.assertEqual(
+            sorted(q.answer for q in copy.questions.all()), ["1991", "Бишкек"]
+        )
+        # Вопросы копии лежат в её собственной категории, а не в чужой
+        self.assertEqual({q.category.room_id for q in copy.questions.all()}, {copy.id})
+
+    def test_copy_is_private_and_original_untouched(self):
+        self.client.force_authenticate(self.other)
+        copy = AORoom.objects.get(pk=self.save_room().data["copy_id"])
+        self.assertFalse(copy.is_public)
+
+        copy.questions.update(text="Изменённый вопрос")
+        self.room.refresh_from_db()
+        self.assertEqual(self.room.questions.count(), 2)
+        self.assertNotIn("Изменённый вопрос", [q.text for q in self.room.questions.all()])
+
+    def test_saves_count_follows_copies(self):
+        self.client.force_authenticate(self.other)
+        self.assertEqual(self.save_room().data["saves_count"], 1)
+        self.room.refresh_from_db()
+        self.assertEqual(self.room.saves_count, 1)
+
+        AORoom.objects.get(saved_from=self.room, author=self.other).delete()
+        self.room.refresh_from_db()
+        self.assertEqual(self.room.saves_count, 0)
+
+    def test_second_save_returns_same_copy(self):
+        self.client.force_authenticate(self.other)
+        first = self.save_room()
+        second = self.save_room()
+        self.assertEqual(second.status_code, 200)
+        self.assertEqual(second.data["copy_id"], first.data["copy_id"])
+        self.assertEqual(AORoom.objects.filter(saved_from=self.room).count(), 1)
+
+    def test_own_room_cannot_be_saved(self):
+        self.client.force_authenticate(self.author)
+        self.assertEqual(self.save_room().status_code, 400)
+
+    def test_anonymous_cannot_save(self):
+        self.assertEqual(self.save_room().status_code, 401)
+
+    def test_private_copy_is_not_visible_to_others(self):
+        self.client.force_authenticate(self.other)
+        copy_id = self.save_room().data["copy_id"]
+        third = User.objects.create_user(username="third", email="t@test.local", password="pwd12345")
+        self.client.force_authenticate(third)
+
+        self.assertEqual(self.client.post(f"/api/rooms/{copy_id}/save/").status_code, 404)
+
+    def test_copy_of_republished_copy_points_at_original(self):
+        """Если копию выложили публично, сохранение с неё всё равно считается оригиналу."""
+        self.client.force_authenticate(self.other)
+        copy = AORoom.objects.get(pk=self.save_room().data["copy_id"])
+        copy.is_public = True
+        copy.save()
+        third = User.objects.create_user(username="third", email="t@test.local", password="pwd12345")
+        self.client.force_authenticate(third)
+
+        res = self.client.post(f"/api/rooms/{copy.id}/save/")
+        self.assertEqual(res.status_code, 201, res.data)
+        self.assertEqual(AORoom.objects.get(pk=res.data["copy_id"]).saved_from, self.room)
+
+    def test_lists_separate_own_rooms_from_saved(self):
+        self.client.force_authenticate(self.other)
+        own = AORoom.objects.create(
+            title="Своя игра", format=AORoom.FORMAT_RANDOM, author=self.other, is_public=True
+        )
+        self.save_room()
+
+        mine = self.client.get("/api/rooms/", {"show": "mine"})
+        self.assertEqual([r["title"] for r in mine.data], [own.title])
+
+        saved = self.client.get("/api/rooms/saved/")
+        self.assertEqual([r["title"] for r in saved.data], [self.room.title])
+        self.assertEqual(saved.data[0]["saved_from"]["title"], self.room.title)
+
+    def test_list_marks_saved_room_and_gives_copy_id(self):
+        self.client.force_authenticate(self.other)
+        copy_id = self.save_room().data["copy_id"]
+        res = self.client.get(f"/api/rooms/{self.room.id}/")
+        self.assertTrue(res.data["is_saved"])
+        self.assertEqual(res.data["my_copy_id"], copy_id)

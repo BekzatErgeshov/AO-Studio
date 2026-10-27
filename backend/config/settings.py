@@ -188,7 +188,6 @@ JAZZMIN_SETTINGS = {
         "rooms.AORoom": "fas fa-gamepad",
         "rooms.Category": "fas fa-folder-open",
         "rooms.Question": "fas fa-question-circle",
-        "rooms.Like": "fas fa-heart",
         "game.GameSession": "fas fa-trophy",
         "game.Team": "fas fa-flag",
     },

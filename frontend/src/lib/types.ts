@@ -41,11 +41,17 @@ export interface RoomListItem {
   is_public: boolean
   description: string
   author: PublicUser
-  likes_count: number
+  /** Сколько раз комнату сохранили себе */
+  saves_count: number
   created_at: string
   categories: string[]
   questions_count: number
-  is_liked: boolean
+  /** У меня уже есть копия этой комнаты */
+  is_saved: boolean
+  /** Id моей копии — по нему открывается редактирование */
+  my_copy_id: number | null
+  /** Заполнено у копии: откуда она сохранена */
+  saved_from: { id: number; title: string; author: PublicUser } | null
 }
 
 export interface RoomDetail extends Omit<RoomListItem, 'categories'> {

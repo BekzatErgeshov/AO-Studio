@@ -27,7 +27,13 @@ class AORoom(models.Model):
     author = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="rooms"
     )
-    likes_count = models.PositiveIntegerField(default=0)
+    # Сколько раз комнату сохранили себе: считается по копиям, см. rooms/signals.py
+    saves_count = models.PositiveIntegerField(default=0)
+    # Заполнено у копии — из какой комнаты её сохранили. Копия принадлежит сохранившему
+    # и правится им свободно; оригинал автора при этом не меняется.
+    saved_from = models.ForeignKey(
+        "self", on_delete=models.SET_NULL, null=True, blank=True, related_name="copies"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -74,14 +80,3 @@ class Question(models.Model):
 
     def __str__(self):
         return self.text[:50]
-
-
-class Like(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="likes")
-    room = models.ForeignKey(AORoom, on_delete=models.CASCADE, related_name="likes")
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        verbose_name = "лайк"
-        verbose_name_plural = "лайки"
-        constraints = [models.UniqueConstraint(fields=["user", "room"], name="unique_like")]
