@@ -75,7 +75,7 @@ class CategoryAdmin(admin.ModelAdmin):
 
 @admin.register(Question)
 class QuestionAdmin(admin.ModelAdmin):
-    list_display = ["short_text", "answer", "points", "room", "category", "photo_thumb"]
+    list_display = ["short_text", "answer", "alt_count", "points", "room", "category", "photo_thumb"]
     list_filter = ["room__format", "points"]
     search_fields = ["text", "answer", "room__title"]
     autocomplete_fields = ["room", "category"]
@@ -85,6 +85,10 @@ class QuestionAdmin(admin.ModelAdmin):
     @admin.display(description="Вопрос")
     def short_text(self, obj):
         return obj.text[:70]
+
+    @admin.display(description="Ещё ответов")
+    def alt_count(self, obj):
+        return len(obj.alt_answers or []) or "—"
 
     @admin.display(description="Фото")
     def photo_thumb(self, obj):

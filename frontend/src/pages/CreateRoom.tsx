@@ -22,11 +22,29 @@ const STEPS = ['Название и формат', 'Вопросы', 'Настр
 const TIMERS = [30, 45, 60]
 
 function toDraft(q: Question): QDraft {
-  return { key: uid(), id: q.id, text: q.text, answer: q.answer, points: q.points, photoFile: null, photoUrl: q.photo, removePhoto: false }
+  return {
+    key: uid(),
+    id: q.id,
+    text: q.text,
+    answer: q.answer,
+    altAnswers: q.alt_answers ?? [],
+    points: q.points,
+    photoFile: null,
+    photoUrl: q.photo,
+    removePhoto: false,
+  }
 }
 
 function questionPayload(q: QDraft) {
-  return { ...(q.id ? { id: q.id } : {}), text: q.text.trim(), answer: q.answer.trim(), points: q.points, remove_photo: q.removePhoto }
+  return {
+    ...(q.id ? { id: q.id } : {}),
+    text: q.text.trim(),
+    answer: q.answer.trim(),
+    // Пустые поля в отправку не уходят
+    alt_answers: q.altAnswers.map((a) => a.trim()).filter(Boolean),
+    points: q.points,
+    remove_photo: q.removePhoto,
+  }
 }
 
 export default function CreateRoom() {

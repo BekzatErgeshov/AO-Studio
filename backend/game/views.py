@@ -183,7 +183,7 @@ class GameAnswersView(APIView):
                     "question_id": a.question_id,
                     "team_id": a.team_id,
                     "text": a.text,
-                    "matches": answer_matches(a.text, a.question.answer),
+                    "matches": answer_matches(a.text, a.question.answer, a.question.alt_answers),
                     "submitted_at": a.submitted_at,
                 }
                 for a in answers

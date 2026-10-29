@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { Check, Crown, Eye, SkipForward, X } from '../../lib/icons'
+import { Check, CheckCircle2, Crown, Eye, SkipForward, X, XCircle } from '../../lib/icons'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Navigate, useNavigate } from 'react-router-dom'
@@ -140,7 +140,7 @@ export default function Random() {
 
   const autoJudge = (text: string) => {
     if (stage !== 'question' || !current || !active || !text.trim()) return
-    const ok = checkAnswer(text, current.answer)
+    const ok = checkAnswer(text, current.answer, current.alt_answers)
     setVerdict({ team: active.name, text: text.trim(), correct: ok })
     setShowAnswer(true)
     setRunning(false)
@@ -190,7 +190,10 @@ export default function Random() {
                   verdict.correct ? 'border-green/50 bg-green/10 text-green' : 'border-red-400/40 bg-red-400/10 text-red-400'
                 }`}
               >
-                {verdict.correct ? '✅' : '❌'} «{verdict.team}»: {verdict.text} — {verdict.correct ? 'верно, баллы начислены' : 'неверно'}
+                <span className="inline-flex items-center gap-2">
+                  {verdict.correct ? <CheckCircle2 size={18} /> : <XCircle size={18} />}
+                  «{verdict.team}»: {verdict.text} — {verdict.correct ? 'верно, баллы начислены' : 'неверно'}
+                </span>
               </motion.div>
             )}
           </AnimatePresence>
@@ -363,10 +366,10 @@ export default function Random() {
                           <Eye size={18} /> {showAnswer ? 'Скрыть' : 'Ответ'}
                         </button>
                         <button onClick={() => judge(true)} className="btn btn-primary py-3.5 text-base">
-                          ✅ Правильно (+1)
+                          <CheckCircle2 size={18} /> Правильно (+1)
                         </button>
                         <button onClick={() => judge(false)} className="btn btn-danger py-3.5 text-base">
-                          ❌ Неправильно
+                          <XCircle size={18} /> Неправильно
                         </button>
                       </div>
                     </div>

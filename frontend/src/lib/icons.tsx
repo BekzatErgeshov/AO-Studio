@@ -25,6 +25,7 @@ import {
   Camera01Icon,
   CameraOff01Icon,
   Cancel01Icon,
+  CancelCircleIcon,
   ChampionIcon,
   CheckListIcon,
   CheckmarkCircle02Icon,
@@ -57,6 +58,7 @@ import {
   Mail01Icon,
   Maximize01Icon,
   Minimize01Icon,
+  MinusSignCircleIcon,
   MinusSignIcon,
   Moon02Icon,
   NextIcon,
@@ -122,6 +124,8 @@ export const Plus = icon(PlusSignIcon, 'Plus')
 export const Minus = icon(MinusSignIcon, 'Minus')
 export const Check = icon(Tick02Icon, 'Check')
 export const CheckCircle2 = icon(CheckmarkCircle02Icon, 'CheckCircle2')
+export const XCircle = icon(CancelCircleIcon, 'XCircle')
+export const MinusCircle = icon(MinusSignCircleIcon, 'MinusCircle')
 export const X = icon(Cancel01Icon, 'X')
 export const Ban = icon(BlockedIcon, 'Ban')
 export const Trash2 = icon(Delete02Icon, 'Trash2')

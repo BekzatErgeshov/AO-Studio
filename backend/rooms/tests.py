@@ -197,3 +197,73 @@ class SaveRoomTests(APITestCase):
         res = self.client.get(f"/api/rooms/{self.room.id}/")
         self.assertTrue(res.data["is_saved"])
         self.assertEqual(res.data["my_copy_id"], copy_id)
+
+
+class AltAnswersTests(APITestCase):
+    """Дополнительные формулировки ответа засчитываются наравне с основным."""
+
+    def setUp(self):
+        self.author = User.objects.create_user(username="author", email="a@test.local", password="pwd12345")
+        self.client.force_authenticate(self.author)
+
+    def test_alt_answers_saved_and_returned(self):
+        body = {
+            "title": "Города", "format": AORoom.FORMAT_RANDOM, "timer_duration": 60, "is_public": True,
+            "questions": [{
+                "text": "Столица Кыргызстана?", "answer": "Бишкек", "points": 1,
+                "alt_answers": ["город Бишкек", "  г. Бишкек  ", "", "   "],
+            }],
+        }
+        res = self.client.post("/api/rooms/", body, format="json")
+        self.assertEqual(res.status_code, 201, res.data)
+        question = AORoom.objects.get(pk=res.data["id"]).questions.first()
+        # Пустые строки отброшены, лишние пробелы срезаны
+        self.assertEqual(question.alt_answers, ["город Бишкек", "г. Бишкек"])
+        self.assertEqual(res.data["questions"][0]["alt_answers"], ["город Бишкек", "г. Бишкек"])
+
+    def test_question_without_alt_answers_defaults_to_empty(self):
+        body = {
+            "title": "Без вариантов", "format": AORoom.FORMAT_RANDOM, "timer_duration": 60, "is_public": True,
+            "questions": [{"text": "2+2?", "answer": "4", "points": 1}],
+        }
+        res = self.client.post("/api/rooms/", body, format="json")
+        self.assertEqual(res.status_code, 201, res.data)
+        self.assertEqual(AORoom.objects.get(pk=res.data["id"]).questions.first().alt_answers, [])
+
+    def test_saved_copy_keeps_alt_answers(self):
+        room = AORoom.objects.create(
+            title="Города", format=AORoom.FORMAT_RANDOM, author=self.author, is_public=True
+        )
+        Question.objects.create(
+            room=room, text="Столица?", answer="Бишкек", alt_answers=["город Бишкек"], order=0
+        )
+        other = User.objects.create_user(username="other", email="o@test.local", password="pwd12345")
+        self.client.force_authenticate(other)
+
+        res = self.client.post(f"/api/rooms/{room.id}/save/")
+        self.assertEqual(res.status_code, 201, res.data)
+        copy = AORoom.objects.get(pk=res.data["copy_id"])
+        self.assertEqual(copy.questions.first().alt_answers, ["город Бишкек"])
+
+
+class AnswerMatchingTests(APITestCase):
+    """Сверка ответа: основной, дополнительные и варианты внутри одной строки."""
+
+    def test_matches_main_alt_and_inline_variants(self):
+        from game.live import answer_matches
+
+        self.assertTrue(answer_matches("бишкек", "Бишкек"))
+        self.assertTrue(answer_matches("ГОРОД БИШКЕК", "Бишкек", ["город Бишкек"]))
+        self.assertTrue(answer_matches("г Бишкек", "Бишкек", ["г. Бишкек"]))
+        # Варианты через «или» и «/» разбираются и внутри дополнительного ответа
+        self.assertTrue(answer_matches("Фрунзе", "Бишкек", ["Пишпек или Фрунзе"]))
+        self.assertTrue(answer_matches("Пишпек", "Бишкек", ["Пишпек/Фрунзе"]))
+
+    def test_rejects_wrong_and_empty(self):
+        from game.live import answer_matches
+
+        self.assertFalse(answer_matches("Ош", "Бишкек", ["город Бишкек"]))
+        self.assertFalse(answer_matches("", "Бишкек", ["город Бишкек"]))
+        self.assertFalse(answer_matches("!!!", "Бишкек", ["город Бишкек"]))
+        # Пустые и пробельные варианты не должны засчитывать что попало
+        self.assertFalse(answer_matches("Ош", "Бишкек", ["", "   "]))

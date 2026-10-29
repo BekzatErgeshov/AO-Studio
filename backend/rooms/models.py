@@ -62,6 +62,9 @@ class Category(models.Model):
 class Question(models.Model):
     text = models.TextField()
     answer = models.CharField(max_length=500)
+    # Ещё принимаемые формулировки: чтобы в игре не спорили, засчитывать ли «Бишкек» и «г. Бишкек».
+    # Основной ответ показывается ведущему и игрокам, остальные просто тоже засчитываются.
+    alt_answers = models.JSONField(default=list, blank=True)
     # Балл задаётся только в стратегическом формате: от 1 до 5
     points = models.PositiveSmallIntegerField(
         default=1, validators=[MinValueValidator(1), MaxValueValidator(5)]

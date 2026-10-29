@@ -193,6 +193,7 @@ class RoomViewSet(viewsets.ModelViewSet):
                 category=cat_map.get(q.category_id),
                 text=q.text,
                 answer=q.answer,
+                alt_answers=list(q.alt_answers or []),
                 points=q.points,
                 order=q.order,
             )

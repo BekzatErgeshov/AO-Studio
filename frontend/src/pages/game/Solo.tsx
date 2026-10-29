@@ -1,6 +1,6 @@
 import confetti from 'canvas-confetti'
 import { AnimatePresence, motion } from 'framer-motion'
-import { ArrowRight, Check, Flag, Home, HelpCircle, RotateCcw, Send, Target, X } from '../../lib/icons'
+import { ArrowRight, Check, CheckCircle2, Flag, HelpCircle, Home, MinusCircle, RotateCcw, Send, Target, X, XCircle } from '../../lib/icons'
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import CircularTimer from '../../components/game/CircularTimer'
@@ -87,7 +87,7 @@ export default function Solo() {
 
   const submit = (cell: Cell, given: string) => {
     if (results[cell.q.id]) return
-    const correct = checkAnswer(given, cell.q.answer)
+    const correct = checkAnswer(given, cell.q.answer, cell.q.alt_answers)
     setResults({ ...results, [cell.q.id]: { given: given.trim(), correct } })
     if (correct) {
       addScore(me.id, cell.points)
@@ -313,7 +313,10 @@ function QuestionModal({
                 className={`rounded-2xl border p-5 text-center ${result.correct ? 'border-green/50 bg-green/10' : 'border-red-400/40 bg-red-400/10'}`}
               >
                 <div className={`text-2xl font-extrabold ${result.correct ? 'text-green' : 'text-red-400'}`}>
-                  {result.correct ? `✅ Верно! +${cell.points}` : result.given ? '❌ Неверно' : '🤷 Без ответа'}
+                  <span className="inline-flex items-center gap-2">
+                    {result.correct ? <CheckCircle2 size={24} /> : result.given ? <XCircle size={24} /> : <MinusCircle size={24} />}
+                    {result.correct ? `Верно! +${cell.points}` : result.given ? 'Неверно' : 'Без ответа'}
+                  </span>
                 </div>
                 {!result.correct && result.given && <div className="mt-2 text-muted">Ваш ответ: {result.given}</div>}
                 <div className="mt-3 text-sm uppercase tracking-widest text-muted">Правильный ответ</div>

@@ -1,6 +1,6 @@
 import confetti from 'canvas-confetti'
 import { AnimatePresence, motion } from 'framer-motion'
-import { AlertTriangle, Ban, Check, Crown, Loader2, LockKeyhole, LogOut, Send, ShieldCheck, Trophy, Wifi, WifiOff, X } from '../../lib/icons'
+import { AlertTriangle, Ban, Check, CheckCircle2, Crown, Loader2, LockKeyhole, LogOut, Send, ShieldCheck, Trophy, Wifi, WifiOff, X } from '../../lib/icons'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import CircularTimer from '../../components/game/CircularTimer'
@@ -459,7 +459,7 @@ export default function Play() {
               </div>
             ) : data.status === 'lobby' || state.view === 'lobby' ? (
               <div className="glass rounded-3xl p-6 text-center">
-                <div className="text-5xl">✅</div>
+                <CheckCircle2 size={52} className="mx-auto text-green" />
                 <h1 className="mt-3 text-2xl font-extrabold">Вы в игре!</h1>
                 <p className="mt-1 text-muted">Ждём, когда ведущий начнёт. Не закрывайте эту страницу.</p>
                 {data.anticheat && (

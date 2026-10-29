@@ -35,15 +35,21 @@ def normalize(text: str) -> str:
     return re.sub(r"\s+", " ", text).strip()
 
 
-def answer_matches(given: str, correct: str) -> bool:
+def answer_matches(given: str, correct: str, alt_answers=None) -> bool:
     """Подсказка ведущему: совпадает ли ответ с правильным (без учёта регистра, знаков, «ё»).
 
-    Правильный ответ может содержать варианты через «/», «;», «,» или «или».
+    Засчитываются: основной ответ, дополнительные формулировки из `alt_answers`, а также
+    варианты, перечисленные прямо в тексте ответа через «/», «;», «,», скобки или «или».
     """
     g = normalize(given)
     if not g:
         return False
-    variants = [correct] + re.split(r"/|;|,|\(|\)|\bили\b", correct, flags=re.IGNORECASE)
+    variants = []
+    for source in [correct, *(alt_answers or [])]:
+        if not source:
+            continue
+        variants.append(source)
+        variants += re.split(r"/|;|,|\(|\)|\bили\b", source, flags=re.IGNORECASE)
     return any(g == normalize(v) for v in variants if normalize(v))
 
 

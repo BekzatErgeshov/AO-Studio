@@ -9,7 +9,7 @@ from .models import AORoom, Category, Question
 class QuestionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Question
-        fields = ["id", "text", "answer", "points", "photo", "category", "order"]
+        fields = ["id", "text", "answer", "alt_answers", "points", "photo", "category", "order"]
         read_only_fields = ["id", "category"]
 
 
@@ -18,7 +18,7 @@ class QuestionUpdateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Question
-        fields = ["id", "text", "answer", "points", "photo", "order", "remove_photo"]
+        fields = ["id", "text", "answer", "alt_answers", "points", "photo", "order", "remove_photo"]
 
     def update(self, instance, validated_data):
         if validated_data.pop("remove_photo", False):
@@ -110,6 +110,11 @@ class QuestionInputSerializer(serializers.Serializer):
     id = serializers.IntegerField(required=False)
     text = serializers.CharField(error_messages={"blank": "Введите текст вопроса."})
     answer = serializers.CharField(max_length=500, error_messages={"blank": "Введите ответ."})
+    # Дополнительные формулировки, которые тоже засчитываются
+    alt_answers = serializers.ListField(
+        child=serializers.CharField(max_length=500, allow_blank=True),
+        required=False, default=list, max_length=10,
+    )
     # Балл важен только в стратегическом формате; в остальных он всегда 1
     points = serializers.IntegerField(min_value=1, max_value=5, default=1)
     remove_photo = serializers.BooleanField(required=False, default=False)
@@ -175,6 +180,8 @@ class RoomWriteSerializer(serializers.ModelSerializer):
         q = existing.get(data.get("id")) or Question(room=room)
         q.text = data["text"]
         q.answer = data["answer"]
+        # Пустые строки из формы не храним
+        q.alt_answers = [a.strip() for a in data.get("alt_answers") or [] if a and a.strip()]
         # Баллы назначаются только в стратегическом формате, в остальных — всегда 1
         q.points = 1 if room.format in AORoom.ONE_POINT_FORMATS else data["points"]
         q.category = category

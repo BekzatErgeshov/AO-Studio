@@ -19,6 +19,8 @@ export interface QDraft {
   id?: number
   text: string
   answer: string
+  /** Ещё принимаемые формулировки: засчитываются наравне с основным ответом */
+  altAnswers: string[]
   points: number
   photoFile: File | null
   photoUrl: string | null
@@ -26,7 +28,7 @@ export interface QDraft {
 }
 
 export function newQuestion(points = 1): QDraft {
-  return { key: uid(), text: '', answer: '', points, photoFile: null, photoUrl: null, removePhoto: false }
+  return { key: uid(), text: '', answer: '', altAnswers: [], points, photoFile: null, photoUrl: null, removePhoto: false }
 }
 
 interface CardProps {
@@ -106,6 +108,47 @@ function QuestionCard({ q, index, showErrors, onChange, onDelete, canDelete, wit
               </label>
             ) : (
               <span className="flex items-center text-sm text-muted">1 балл</span>
+            )}
+          </div>
+
+          {/* Другие формулировки того же ответа — чтобы в игре не спорили, засчитывать или нет */}
+          <div className="space-y-2">
+            {q.altAnswers.map((alt, i) => (
+              <div key={i} className="flex gap-2">
+                <input
+                  className="input"
+                  placeholder="Ещё вариант ответа"
+                  value={alt}
+                  maxLength={500}
+                  onChange={(e) => {
+                    const next = [...q.altAnswers]
+                    next[i] = e.target.value
+                    onChange({ ...q, altAnswers: next })
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => onChange({ ...q, altAnswers: q.altAnswers.filter((_, j) => j !== i) })}
+                  className="btn btn-ghost shrink-0 px-3"
+                  aria-label="Убрать вариант"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            ))}
+            {q.altAnswers.length < 10 && (
+              <button
+                type="button"
+                onClick={() => onChange({ ...q, altAnswers: [...q.altAnswers, ''] })}
+                className="text-sm text-green hover:underline"
+              >
+                + Добавить вариант ответа
+              </button>
+            )}
+            {q.altAnswers.length === 0 && (
+              <p className="text-xs text-muted">
+                Можно добавить другие формулировки — например «Бишкек» и «город Бишкек». Засчитываются все.
+              </p>
             )}
           </div>
 

@@ -2,6 +2,8 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 
+from core.images import AVATAR_MAX_SIDE, shrink_image
+
 User = get_user_model()
 
 
@@ -70,8 +72,22 @@ class UpdateProfileSerializer(serializers.ModelSerializer):
         fields = ["username", "avatar", "remove_avatar"]
         extra_kwargs = {"username": {"error_messages": {"unique": "Этот логин уже занят."}}}
 
+    def validate_avatar(self, value):
+        """Ужимаем снимок до AVATAR_MAX_SIDE: иначе браузер давит его в кружок 120 px и мылит."""
+        content, name = shrink_image(value, AVATAR_MAX_SIDE, value.name)
+        if content is None:
+            # Формат не разобрался — пусть сохранится как есть, загрузку из-за этого не роняем
+            return value
+        value.file = content
+        value.name = name
+        value.size = content.size
+        return value
+
     def update(self, instance, validated_data):
         if validated_data.pop("remove_avatar", False):
             instance.avatar.delete(save=False)
             instance.avatar = None
+        # Старый файл в хранилище не нужен, иначе он остаётся висеть навсегда
+        elif validated_data.get("avatar") and instance.avatar:
+            instance.avatar.delete(save=False)
         return super().update(instance, validated_data)

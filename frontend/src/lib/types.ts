@@ -20,6 +20,8 @@ export interface Question {
   id: number
   text: string
   answer: string
+  /** Ещё принимаемые формулировки — засчитываются наравне с основным ответом */
+  alt_answers: string[]
   points: number
   photo: string | null
   category: number | null

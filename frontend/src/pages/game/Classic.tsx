@@ -211,11 +211,11 @@ export default function Classic() {
 
   // На одном экране: ведущий вписывает ответ команды — проверка и отметка сразу
   const [typed, setTyped] = useState<Record<string, { text: string; result?: boolean }>>({})
-  const checkTyped = (questionId: number, points: number, answer: string, teamId: number) => {
+  const checkTyped = (questionId: number, points: number, answer: string, altAnswers: string[], teamId: number) => {
     const key = `${questionId}-${teamId}`
     const text = typed[key]?.text ?? ''
     if (!text.trim()) return
-    const ok = checkAnswer(text, answer)
+    const ok = checkAnswer(text, answer, altAnswers)
     setTyped((m) => ({ ...m, [key]: { text, result: ok } }))
     const on = (marks[questionId] ?? []).includes(teamId)
     if (ok !== on) toggleMark(questionId, points, teamId)
@@ -390,7 +390,7 @@ export default function Classic() {
                                 key={t.id}
                                 onSubmit={(e) => {
                                   e.preventDefault()
-                                  checkTyped(cq.id, cq.points, cq.answer, t.id)
+                                  checkTyped(cq.id, cq.points, cq.answer, cq.alt_answers, t.id)
                                 }}
                               >
                                 <input

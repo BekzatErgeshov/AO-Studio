@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { Check, Crown, Eye, SkipForward, X } from '../../lib/icons'
+import { Check, CheckCircle2, Crown, Eye, SkipForward, X, XCircle } from '../../lib/icons'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import CircularTimer from '../../components/game/CircularTimer'
@@ -138,7 +138,7 @@ export default function Strategic() {
 
   const autoJudge = (text: string) => {
     if (!current || !active || !text.trim()) return
-    const ok = checkAnswer(text, current.answer)
+    const ok = checkAnswer(text, current.answer, current.alt_answers)
     setVerdict({ team: active.name, text: text.trim(), correct: ok })
     setShowAnswer(true)
     setRunning(false)
@@ -190,7 +190,10 @@ export default function Strategic() {
                   verdict.correct ? 'border-green/50 bg-green/10 text-green' : 'border-red-400/40 bg-red-400/10 text-red-400'
                 }`}
               >
-                {verdict.correct ? '✅' : '❌'} «{verdict.team}»: {verdict.text} — {verdict.correct ? 'верно, баллы начислены' : 'неверно'}
+                <span className="inline-flex items-center gap-2">
+                  {verdict.correct ? <CheckCircle2 size={18} /> : <XCircle size={18} />}
+                  «{verdict.team}»: {verdict.text} — {verdict.correct ? 'верно, баллы начислены' : 'неверно'}
+                </span>
               </motion.div>
             )}
           </AnimatePresence>
@@ -353,10 +356,10 @@ export default function Strategic() {
                 <Eye size={18} /> {showAnswer ? 'Скрыть' : 'Ответ'}
               </button>
               <button onClick={() => judge(true)} className="btn btn-primary py-3.5 text-base">
-                ✅ Правильно <kbd className="border-white/30 bg-white/10 text-white">Enter</kbd>
+                <CheckCircle2 size={18} /> Правильно <kbd className="border-white/30 bg-white/10 text-white">Enter</kbd>
               </button>
               <button onClick={() => judge(false)} className="btn btn-danger py-3.5 text-base">
-                ❌ Неправильно <kbd>Esc</kbd>
+                <XCircle size={18} /> Неправильно <kbd>Esc</kbd>
               </button>
             </div>
           </div>

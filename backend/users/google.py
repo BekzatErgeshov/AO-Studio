@@ -6,6 +6,7 @@ import requests
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
+from core.images import AVATAR_MAX_SIDE, shrink_image
 from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token
 
@@ -46,10 +47,15 @@ def _save_picture(user, url: str):
     """Скачивает аватар из Google (если у пользователя ещё нет своего). Ошибки не критичны."""
     if not url or user.avatar:
         return
+    # Google по умолчанию отдаёт 96×96 — в кружке профиля на 120 px это каша.
+    # Размер задаётся суффиксом в самой ссылке, просим покрупнее.
+    url = re.sub(r"=s\d+(-c)?$", f"=s{AVATAR_MAX_SIDE}-c", url)
     try:
         r = requests.get(url, timeout=5)
         if r.ok and r.headers.get("content-type", "").startswith("image/"):
-            user.avatar.save(f"google_{uuid.uuid4().hex[:10]}.jpg", ContentFile(r.content), save=True)
+            name = f"google_{uuid.uuid4().hex[:10]}.jpg"
+            content, shrunk_name = shrink_image(ContentFile(r.content), AVATAR_MAX_SIDE, name)
+            user.avatar.save(shrunk_name or name, content or ContentFile(r.content), save=True)
     except requests.RequestException:
         pass
 
