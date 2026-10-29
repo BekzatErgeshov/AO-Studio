@@ -12,7 +12,7 @@ export default function FormatBadge({ format, compact }: { format: GameFormat; c
   const f = FORMATS[format]
   return (
     <span className={`inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 text-xs font-semibold ${styles[format]}`}>
-      <span>{f.emoji}</span>
+      <f.icon size={14} />
       {compact ? f.short : f.label}
     </span>
   )

@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { Camera, Gamepad2, Loader2, LogOut, Mail, Pencil, Plus, Trash2, Trophy } from 'lucide-react'
+import { Camera, Loader2, LogOut, Mail, Pencil, Plus, Puzzle, Trash2, Trophy } from '../lib/icons'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Avatar from '../components/Avatar'
@@ -213,7 +213,7 @@ export default function Profile() {
         </div>
         <div className="grid grid-cols-2 border-t border-line">
           <div className="flex items-center justify-center gap-3 border-r border-line py-5">
-            <Gamepad2 className="text-green" />
+            <Puzzle className="text-green" />
             <div>
               <div className="text-2xl font-extrabold">{user.rooms_count}</div>
               <div className="text-xs text-muted">создано AO комнат</div>

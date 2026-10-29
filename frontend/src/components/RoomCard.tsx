@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { Bookmark, BookmarkCheck, FolderOpen, Globe, HelpCircle, Lock, Play } from 'lucide-react'
+import { Bookmark, BookmarkCheck, FolderOpen, Globe, HelpCircle, Lock, Play } from '../lib/icons'
 import { useState, type MouseEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../lib/api'

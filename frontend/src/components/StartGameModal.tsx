@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { ArrowLeft, Loader2, Rocket, Search } from 'lucide-react'
+import { ArrowLeft, Loader2, Rocket, Search } from '../lib/icons'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api, errorMessage } from '../lib/api'

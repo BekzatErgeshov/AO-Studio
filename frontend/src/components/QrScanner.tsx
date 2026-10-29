@@ -1,4 +1,4 @@
-import { CameraOff, Loader2 } from 'lucide-react'
+import { CameraOff, Loader2 } from '../lib/icons'
 import { useEffect, useRef, useState } from 'react'
 
 /**

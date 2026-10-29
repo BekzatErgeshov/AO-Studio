@@ -1,5 +1,6 @@
+import FormatIcon from '../components/FormatIcon'
 import { AnimatePresence, motion } from 'framer-motion'
-import { ArrowLeft, ArrowRight, Check, CheckCircle2, FolderPlus, Globe, Loader2, Lock, Trash2 } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Check, CheckCircle2, FolderPlus, Globe, Loader2, Lock, Trash2 } from '../lib/icons'
 import { useEffect, useState, type FormEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import Modal from '../components/Modal'
@@ -295,7 +296,7 @@ export default function CreateRoom() {
                         } ${showErrors && !format ? 'border-red-400/60' : ''}`}
                       >
                         {on && <CheckCircle2 className="absolute right-4 top-4 text-green" size={22} />}
-                        <div className="text-4xl">{FORMATS[f].emoji}</div>
+                        <FormatIcon format={f} size={38} className="text-green" />
                         <div className="mt-3 text-lg font-bold">{FORMATS[f].label}</div>
                         <p className="mt-1.5 text-sm text-muted">{FORMATS[f].description}</p>
                       </motion.button>

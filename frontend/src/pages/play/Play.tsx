@@ -1,6 +1,6 @@
 import confetti from 'canvas-confetti'
 import { AnimatePresence, motion } from 'framer-motion'
-import { AlertTriangle, Ban, Check, Crown, Loader2, LockKeyhole, LogOut, Send, ShieldCheck, Trophy, Wifi, WifiOff, X } from 'lucide-react'
+import { AlertTriangle, Ban, Check, Crown, Loader2, LockKeyhole, LogOut, Send, ShieldCheck, Trophy, Wifi, WifiOff, X } from '../../lib/icons'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import CircularTimer from '../../components/game/CircularTimer'

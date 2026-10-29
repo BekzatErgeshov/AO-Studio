@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { Check, Copy, Loader2, LogOut, Rocket, ShieldCheck, Sparkles, Users, X } from 'lucide-react'
+import { Check, Copy, Loader2, LogOut, Rocket, ShieldCheck, Sparkles, Users, X } from '../../lib/icons'
 import QRCode from 'qrcode'
 import { useEffect, useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'

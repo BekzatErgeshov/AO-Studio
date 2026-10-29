@@ -12,7 +12,7 @@
 | Слой | Технологии |
 |---|---|
 | Бэкенд | Django 6 + DRF, JWT (simplejwt), PostgreSQL / SQLite |
-| Фронтенд | React 19 + Vite + TypeScript, Tailwind CSS 4, Framer Motion, Zustand, Axios, @dnd-kit, canvas-confetti, lucide-react |
+| Фронтенд | React 19 + Vite + TypeScript, Tailwind CSS 4, Framer Motion, Zustand, Axios, @dnd-kit, canvas-confetti, Hugeicons |
 
 ## Структура
 
@@ -125,6 +125,17 @@ DATABASE_URL=<...> DJANGO_ADMIN_USERNAME=<логин> DJANGO_ADMIN_PASSWORD=<п�
 
 Создавать игры и запускать их может только зарегистрированный пользователь; команды на телефонах входят
 по коду без аккаунта.
+
+## Иконки
+
+Набор — **Hugeicons** (`@hugeicons/react` + `@hugeicons/core-free-icons`). Он завёрнут в
+`src/lib/icons.tsx`: компоненты там названы как иконки lucide, которые стояли раньше, и принимают
+те же пропсы (`size`, `className`, `fill`, `strokeWidth`). Поэтому разметка страниц при переходе
+не менялась — в каждом файле поменялся только источник импорта, а соответствие имён видно
+в одном месте. Новую иконку добавляют туда же, одной строкой.
+
+Значок формата игры живёт в `FORMATS` (`src/lib/utils.ts`) и рисуется компонентом
+`components/FormatIcon.tsx`: книга — классический, кубик — рандом, сетка клеток — стратегический.
 
 ## Сохранённые комнаты
 

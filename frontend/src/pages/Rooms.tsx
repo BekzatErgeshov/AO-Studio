@@ -1,6 +1,7 @@
+import FormatIcon from '../components/FormatIcon'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Loader2, Search, SlidersHorizontal, X } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { Loader2, Search, SlidersHorizontal, X } from '../lib/icons'
+import { useEffect, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import RoomCard from '../components/RoomCard'
 import { api } from '../lib/api'
@@ -15,7 +16,7 @@ type QCount = '' | '5-10' | '10-20' | '20+'
 function ChipGroup<T extends string>({ label, value, options, onChange }: {
   label: string
   value: T
-  options: { value: T; label: string }[]
+  options: { value: T; label: ReactNode }[]
   onChange: (v: T) => void
 }) {
   return (
@@ -140,7 +141,14 @@ export default function Rooms() {
             onChange={setFmt}
             options={[
               { value: '', label: 'Все' },
-              ...(Object.keys(FORMATS) as GameFormat[]).map((f) => ({ value: f, label: `${FORMATS[f].emoji} ${FORMATS[f].label}` })),
+              ...(Object.keys(FORMATS) as GameFormat[]).map((f) => ({
+                value: f,
+                label: (
+                  <span className="inline-flex items-center gap-1.5">
+                    <FormatIcon format={f} size={14} /> {FORMATS[f].label}
+                  </span>
+                ),
+              })),
             ]}
           />
           <ChipGroup<QCount>

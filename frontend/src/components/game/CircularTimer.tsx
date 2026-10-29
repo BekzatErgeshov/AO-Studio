@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { Pause, Play, RotateCcw } from 'lucide-react'
+import { Pause, Play, RotateCcw } from '../../lib/icons'
 
 interface Props {
   left: number

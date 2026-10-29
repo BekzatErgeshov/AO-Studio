@@ -10,7 +10,7 @@ import {
 import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { AnimatePresence, motion } from 'framer-motion'
-import { GripVertical, ImagePlus, Plus, Trash2, X } from 'lucide-react'
+import { GripVertical, ImagePlus, Plus, Trash2, X } from '../lib/icons'
 import { useRef } from 'react'
 import { uid } from '../lib/utils'
 

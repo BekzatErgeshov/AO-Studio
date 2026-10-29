@@ -1,23 +1,29 @@
+import type { ComponentType } from 'react'
+
+import { BookOpen, Dice, LayoutGrid, type IconProps } from './icons'
 import type { GameFormat } from './types'
 
-export const FORMATS: Record<GameFormat, { label: string; emoji: string; short: string; description: string }> = {
+export const FORMATS: Record<
+  GameFormat,
+  { label: string; icon: ComponentType<IconProps>; short: string; description: string }
+> = {
   classic: {
     label: 'Классический',
-    emoji: '📘',
+    icon: BookOpen,
     short: 'Классич.',
     description:
       'Вопросы разложены по категориям, каждый стоит 1 балл. Играют по категориям: открывают вопросы нужной темы.',
   },
   random: {
     label: 'Рандом',
-    emoji: '🎲',
+    icon: Dice,
     short: 'Рандом',
     description:
       'Без категорий: вопросы идут вперемешку, каждый стоит 1 балл. Карточки открываются вслепую.',
   },
   strategic: {
     label: 'Стратегический',
-    emoji: '🎯',
+    icon: LayoutGrid,
     short: 'Стратег.',
     description:
       'Категории и цена вопроса от 1 до 5 баллов — как в «Своей игре». Команды по очереди выбирают клетку.',

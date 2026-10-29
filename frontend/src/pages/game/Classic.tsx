@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { ArrowRight, Check, ChevronRight, Eye, Sparkles, Users } from 'lucide-react'
+import { ArrowRight, Check, ChevronRight, Eye, Sparkles, Users } from '../../lib/icons'
 import { useEffect, useRef, useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import CircularTimer from '../../components/game/CircularTimer'

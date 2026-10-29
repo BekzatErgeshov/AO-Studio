@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { Check, Crown, Eye, SkipForward, X } from 'lucide-react'
+import { Check, Crown, Eye, SkipForward, X } from '../../lib/icons'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import CircularTimer from '../../components/game/CircularTimer'

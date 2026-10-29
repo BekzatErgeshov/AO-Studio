@@ -1,4 +1,4 @@
-import { ArrowRight, Loader2, QrCode, Users, X } from 'lucide-react'
+import { ArrowRight, Loader2, QrCode, Users, X } from '../lib/icons'
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import QrScanner from '../components/QrScanner'

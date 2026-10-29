@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { Ban, Crown, Minus, Plus } from 'lucide-react'
+import { Ban, Crown, Minus, Plus } from '../../lib/icons'
 import type { Team } from '../../lib/types'
 
 interface Props {

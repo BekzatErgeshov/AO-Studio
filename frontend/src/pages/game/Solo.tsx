@@ -1,6 +1,6 @@
 import confetti from 'canvas-confetti'
 import { AnimatePresence, motion } from 'framer-motion'
-import { ArrowRight, Check, Flag, Home, HelpCircle, RotateCcw, Send, Target, X } from 'lucide-react'
+import { ArrowRight, Check, Flag, Home, HelpCircle, RotateCcw, Send, Target, X } from '../../lib/icons'
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import CircularTimer from '../../components/game/CircularTimer'

@@ -1,6 +1,6 @@
 import confetti from 'canvas-confetti'
 import { motion } from 'framer-motion'
-import { Home, RotateCcw } from 'lucide-react'
+import { Home, RotateCcw } from '../../lib/icons'
 import { useEffect } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import Logo from '../../components/Logo'

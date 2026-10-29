@@ -1,4 +1,4 @@
-import { Loader2 } from 'lucide-react'
+import { Loader2 } from './lib/icons'
 import { useEffect, type ReactNode } from 'react'
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import AuthModal from './components/AuthModal'

@@ -1,5 +1,6 @@
+import FormatIcon from '../components/FormatIcon'
 import { animate, motion, useInView } from 'framer-motion'
-import { ChevronDown, Gamepad2, Heart, Layers, ListChecks, Play, Rocket, Sparkles, Star, Target, Trophy, Users } from 'lucide-react'
+import { ChevronDown, Gamepad2, Heart, Layers, ListChecks, Play, Puzzle, Rocket, Sparkles, Star, Target, Trophy, Users } from '../lib/icons'
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Logo from '../components/Logo'
@@ -165,7 +166,7 @@ export default function Home() {
                   className="glass group rounded-3xl p-7 transition-colors hover:border-green/50"
                 >
                   <div className="mb-5 flex items-center justify-between">
-                    <span className="text-4xl">{FORMATS[f].emoji}</span>
+                    <FormatIcon format={f} size={38} className="text-green" />
                     <div className="rounded-2xl bg-green/15 p-3 text-green transition group-hover:bg-green group-hover:text-white">
                       <Icon size={22} />
                     </div>
@@ -215,7 +216,7 @@ export default function Home() {
           <div className="glass grid gap-8 rounded-3xl p-8 text-center sm:grid-cols-3 md:p-12">
             {[
               { icon: Users, value: stats?.users ?? 0, label: 'Пользователей', suffix: '' },
-              { icon: Gamepad2, value: stats?.rooms ?? 0, label: 'AO комнат создано', suffix: '' },
+              { icon: Puzzle, value: stats?.rooms ?? 0, label: 'AO комнат создано', suffix: '' },
               { icon: Star, value: stats?.rating ?? 0, label: 'Рейтинг приложения', suffix: '%' },
             ].map((s) => (
               <div key={s.label}>

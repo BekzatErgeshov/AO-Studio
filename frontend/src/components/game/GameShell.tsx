@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { Flag, Keyboard, LogOut, Maximize, Minimize, MonitorPlay } from 'lucide-react'
+import { Flag, Keyboard, LogOut, Maximize, Minimize, MonitorPlay } from '../../lib/icons'
 import { useEffect, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useHotkeys } from '../../hooks/useGameHooks'

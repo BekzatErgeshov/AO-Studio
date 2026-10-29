@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { Check, Crown, Eye, SkipForward, X } from 'lucide-react'
+import { Check, Crown, Eye, SkipForward, X } from '../../lib/icons'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Navigate, useNavigate } from 'react-router-dom'

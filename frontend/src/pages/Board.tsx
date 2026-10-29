@@ -1,5 +1,6 @@
+import FormatIcon from '../components/FormatIcon'
 import { motion } from 'framer-motion'
-import { Loader2, Monitor, QrCode, Search, ShieldCheck, Users } from 'lucide-react'
+import { Loader2, Monitor, QrCode, Search, ShieldCheck, Users } from '../lib/icons'
 import { useEffect, useState } from 'react'
 import RoomCard from '../components/RoomCard'
 import { api } from '../lib/api'
@@ -100,7 +101,7 @@ export default function Board() {
             </button>
             {(Object.keys(FORMATS) as GameFormat[]).map((f) => (
               <button key={f} onClick={() => setFmt(f)} className={`chip ${fmt === f ? 'active' : ''}`}>
-                {FORMATS[f].emoji} {FORMATS[f].short}
+                <FormatIcon format={f} size={14} /> {FORMATS[f].short}
               </button>
             ))}
           </div>

@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { Ban, ShieldCheck, Undo2, WifiOff, X } from 'lucide-react'
+import { Ban, ShieldCheck, Undo2, WifiOff, X } from '../../lib/icons'
 import { useEffect, useRef, useState } from 'react'
 import { api } from '../../lib/api'
 import { sounds } from '../../lib/sounds'
